@@ -6,7 +6,7 @@
 
 **Architecture:** Use a single Android application module with feature-oriented Compose packages and MVVM-ready boundaries. The startup Activity hosts a branded in-app startup surface only during genuine process initialization; the app shell owns the five top-level navigation destinations. Authentication integration is represented by a narrow session-state interface until the separate authentication plan is approved and backend compatibility is verified.
 
-**Tech Stack:** Kotlin, Jetpack Compose, Material 3, Navigation Compose, Hilt, Coroutines/Flow, DataStore, Room, Retrofit/OkHttp, Kotlin Serialization, Coil, WorkManager, AndroidX SplashScreen.
+**Tech Stack:** Kotlin 2.2.10 (AGP built-in Kotlin), Jetpack Compose (Compose compiler plugin 2.2.10), Material 3, Navigation Compose, Hilt, Coroutines/Flow, DataStore, Room, Retrofit/OkHttp, Kotlin Serialization, Coil, WorkManager, AndroidX SplashScreen. Android Gradle Plugin 9.1.1, Gradle 9.3.1, JDK 17; toolchain compatibility rechecked against official Android docs on 2026-11-03.
 
 **Spec:** `docs/superpowers/specs/2026-11-03-yubera-android-design.md`
 
@@ -52,7 +52,7 @@
 **Interfaces:**
 - Produces: Android application ID `com.yubera.app`; `YuberaApplication`; `MainActivity`; Gradle tasks `:app:assembleDebug` and `:app:testDebugUnitTest`.
 
-- [ ] **Step 1: Add Gradle wrapper and project configuration** with pinned compatible stable plugin/library versions and Java 17 toolchain.
+- [ ] **Step 1: Add Gradle wrapper and project configuration** with pinned compatible stable plugin/library versions and Java 17 toolchain. AGP 9.1.1 requires Gradle 9.3.1 and JDK 17; AGP supplies built-in Kotlin 2.2.10, so do not also apply `org.jetbrains.kotlin.android`. Apply `org.jetbrains.kotlin.plugin.compose` 2.2.10 where Compose is enabled.
 - [ ] **Step 2: Configure app module** with namespace/applicationId `com.yubera.app`, minSdk 26, selected stable target/compile SDK, Compose enabled, and release minification disabled until release hardening.
 - [ ] **Step 3: Add the Application and Activity entry points** and register them in the manifest.
 - [ ] **Step 4: Run the project configuration/build check** using `./gradlew :app:assembleDebug`; expected result: a successful debug APK build.
@@ -85,6 +85,8 @@
 - Create: `app/src/main/res/drawable-nodpi/yubera_startup_background.png`
 - Create: `app/src/main/res/drawable-nodpi/yubera_banner.png`
 - Create: `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`
+- Create: `app/src/main/res/drawable/ic_launcher_foreground.xml` (or a bitmap/vector foreground derived from the supplied icon)
+- Create: `app/src/main/res/values/ic_launcher_background.xml`
 - Create: `app/src/main/res/values/colors.xml`
 - Create: `app/src/main/res/values/themes.xml`
 - Create: `app/src/main/java/com/yubera/app/core/ui/theme/Color.kt`
@@ -95,7 +97,7 @@
 - Asset source: the latest user-provided archive; map files by visual inspection and dimensions before assigning resource names.
 
 - [ ] **Step 1: Inventory every PNG** by previewing it, recording dimensions, transparency and duplicate hashes; identify logo, app icon, startup art, banner and screen-specific artwork.
-- [ ] **Step 2: Copy originals unchanged** into Android-supported resource directories; avoid unsupported nested directories under `res/drawable`.
+- [ ] **Step 2: Copy originals unchanged** into Android-supported resource directories; avoid unsupported nested directories under `res/drawable`. Build a valid adaptive launcher icon with both foreground and background resources referenced by `mipmap-anydpi-v26/ic_launcher.xml`; a lone XML file is not a complete adaptive icon.
 - [ ] **Step 3: Define theme tokens** from the approved screen references; do not invent a new visual direction.
 - [ ] **Step 4: Verify resource compilation** with `./gradlew :app:processDebugResources`; expected result: all resources compile and resolve.
 - [ ] **Step 5: Commit** as `feat: add YUBERA visual resources and theme`.
