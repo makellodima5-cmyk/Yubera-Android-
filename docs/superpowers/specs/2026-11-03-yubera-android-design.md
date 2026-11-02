@@ -1,6 +1,6 @@
 # YUBERA Android — Design Specification
 
-**Status:** Draft for user approval  
+**Status:** Approved by user on 2026-11-03  
 **Product:** YUBERA Android  
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
 **Default branch:** `main`
