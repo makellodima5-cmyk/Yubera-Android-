@@ -51,6 +51,17 @@ class RoomPersonalLibraryRepositoryTest {
     }
 
     @Test
+    fun reSavingSubscriptionPreservesEpisodeWatermark() = runTest {
+        val subscriptionDao = FakeAnimeSubscriptionDao()
+        val repository = createRepository(FakeAnimeLibraryDao(), FakeAnimeProgressDao(), subscriptionDao)
+        subscriptionDao.upsert(AnimeSubscriptionEntity("anime-5", true, 50L, lastKnownEpisodesAired = 8))
+
+        repository.subscribeToAnime("anime-5", notificationsEnabled = true, updatedAtEpochMillis = 60L)
+
+        assertEquals(8, subscriptionDao.getByAnimeId("anime-5")?.lastKnownEpisodesAired)
+    }
+
+    @Test
     fun progressIsStoredSeparatelyFromLibraryMembership() = runTest {
         val libraryDao = FakeAnimeLibraryDao()
         val progressDao = FakeAnimeProgressDao()

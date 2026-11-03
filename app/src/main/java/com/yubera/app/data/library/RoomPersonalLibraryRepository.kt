@@ -50,8 +50,9 @@ class RoomPersonalLibraryRepository @Inject constructor(
     }
 
     override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) {
+        val current = animeSubscriptionDao.getByAnimeId(animeId)
         animeSubscriptionDao.upsert(
-            AnimeSubscriptionEntity(animeId, notificationsEnabled, updatedAtEpochMillis)
+            AnimeSubscriptionEntity(animeId, notificationsEnabled, updatedAtEpochMillis, current?.lastKnownEpisodesAired)
         )
     }
 

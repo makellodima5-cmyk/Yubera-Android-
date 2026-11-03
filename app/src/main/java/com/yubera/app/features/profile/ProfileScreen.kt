@@ -19,6 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +50,7 @@ fun ProfileScreen(
     val context = LocalContext.current
     val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
     var confirmLogout by remember { mutableStateOf(false) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     if (confirmLogout) {
         AlertDialog(
@@ -127,7 +132,10 @@ fun ProfileScreen(
                     SettingSwitch(
                         title = "Все уведомления",
                         checked = settings.notificationsEnabled,
-                        onCheckedChange = { enabled -> viewModel.setNotifications(enabled) }
+                        onCheckedChange = { enabled ->
+                            viewModel.setNotifications(enabled)
+                            if (enabled && Build.VERSION.SDK_INT >= 33) notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                     )
                     SettingSwitch(
                         title = "Новые серии",
@@ -142,7 +150,7 @@ fun ProfileScreen(
                         onCheckedChange = { enabled -> viewModel.setAnimeInfo(enabled) }
                     )
                     Text(
-                        "Параметры сохраняются локально. Фактическая отправка уведомлений будет включена после подключения фоновой проверки и системного разрешения Android.",
+                        "Приложение проверяет только ваши подписки в фоновом режиме примерно раз в 6 часов. Android может переносить запуск для экономии батареи.",
                         color = YuberaMuted,
                         style = MaterialTheme.typography.bodySmall
                     )

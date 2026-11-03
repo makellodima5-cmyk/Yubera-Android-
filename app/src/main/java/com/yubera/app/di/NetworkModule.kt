@@ -3,6 +3,7 @@ package com.yubera.app.di
 import com.yubera.app.core.network.RetrofitFactory
 import com.yubera.app.data.catalog.CatalogApi
 import com.yubera.app.data.news.ShikimoriNewsApi
+import com.yubera.app.data.news.ShikimoriEpisodeUpdatesApi
 import com.yubera.app.data.player.KodikApi
 import com.yubera.app.data.auth.TelegramSessionApi
 import dagger.Module
@@ -53,6 +54,10 @@ object NetworkModule {
 
     @Provides
     fun provideTelegramSessionApi(retrofit: Retrofit): TelegramSessionApi = retrofit.create(TelegramSessionApi::class.java)
+
+    @Provides
+    fun provideShikimoriEpisodeUpdatesApi(@Named("shikimori") retrofit: Retrofit): ShikimoriEpisodeUpdatesApi =
+        retrofit.create(ShikimoriEpisodeUpdatesApi::class.java)
 
     @Provides
     fun provideShikimoriNewsApi(@Named("shikimori") retrofit: Retrofit): ShikimoriNewsApi =
