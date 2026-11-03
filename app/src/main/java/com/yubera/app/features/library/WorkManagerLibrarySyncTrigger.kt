@@ -1,7 +1,7 @@
 package com.yubera.app.features.library
 
 import android.content.Context
-import androidx.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.CatalogRepository
+import com.yubera.app.core.database.entity.AnimeProgressEntity
+import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.core.player.KodikRepository
 import com.yubera.app.core.player.KodikSource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +31,8 @@ data class PlayerUiState(
 class PlayerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val catalogRepository: CatalogRepository,
-    private val kodikRepository: KodikRepository
+    private val kodikRepository: KodikRepository,
+    private val libraryRepository: PersonalLibraryRepository
 ) : ViewModel() {
     private val animeId = savedStateHandle.get<String>("animeId").orEmpty()
     private val mutableState = MutableStateFlow(PlayerUiState())
@@ -45,6 +49,9 @@ class PlayerViewModel @Inject constructor(
             selectedEpisodeNumber = episode?.number,
             selectedEpisodeUrl = episode?.link
         )
+        episode?.let { selected ->
+            viewModelScope.launch { recordOpenedEpisode(selected.number, selected.link) }
+        }
     }
 
     fun selectEpisode(number: Int) {
@@ -54,6 +61,7 @@ class PlayerViewModel @Inject constructor(
             selectedEpisodeNumber = episode.number,
             selectedEpisodeUrl = episode.link
         )
+        viewModelScope.launch { recordOpenedEpisode(episode.number, episode.link) }
     }
 
     fun retry() = load()
@@ -77,6 +85,9 @@ class PlayerViewModel @Inject constructor(
                     isLoading = false,
                     errorMessage = if (sources.isEmpty()) "Для этого тайтла сейчас нет доступных источников Kodik." else null
                 )
+                firstEpisode?.let { selected ->
+                    viewModelScope.launch { recordOpenedEpisode(selected.number, selected.link) }
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -88,5 +99,21 @@ class PlayerViewModel @Inject constructor(
                 requestInProgress = false
             }
         }
+    }
+
+    private suspend fun recordOpenedEpisode(number: Int, link: String) {
+        if (!KodikLinkPolicy.isTrustedHttpsUrl(link)) return
+        val existing = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
+        if (existing?.episodeNumber == number) return
+        libraryRepository.saveProgress(
+            AnimeProgressEntity(
+                animeId = animeId,
+                seasonNumber = null,
+                episodeNumber = number,
+                positionMillis = 0L,
+                durationMillis = 0L,
+                updatedAtEpochMillis = System.currentTimeMillis()
+            )
+        )
     }
 }

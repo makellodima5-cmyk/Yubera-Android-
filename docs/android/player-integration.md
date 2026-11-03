@@ -22,5 +22,6 @@ WebView is used only inside the dedicated native player destination. The rest of
 
 - The app relies on the existing server route and Kodik availability/configuration.
 - WebView playback behavior, ads, cookies and device compatibility still require real Android-device testing.
-- Playback progress is not inferred from selected episodes. A selected episode is not proof that it was watched.
+- Opening a trusted episode records the last-opened episode in local history and syncs that record across devices. The record starts at position 0 because selecting/opening an episode is not proof that it was watched.
+- Actual playback position and duration are not captured: the embedded third-party player does not currently expose a verified progress callback to the native app.
 - No offline video is supported.

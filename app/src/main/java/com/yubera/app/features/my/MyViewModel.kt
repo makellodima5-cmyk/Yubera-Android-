@@ -52,7 +52,7 @@ class MyViewModel @Inject constructor(
             history = progress.mapNotNull { item ->
                 byId[item.animeId]?.let { MyLibraryItem(it, item) }
             },
-            subscriptions = items(subscriptions.filter { it.notificationsEnabled }.map { it.animeId })
+            subscriptions = items(subscriptions.map { it.animeId })
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyUiState())
 }
