@@ -11,6 +11,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Yubera">
         <activity
+            android:name=".features.auth.AuthCallbackActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="yubera" android:host="auth" android:path="/callback" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Yubera.Starting">

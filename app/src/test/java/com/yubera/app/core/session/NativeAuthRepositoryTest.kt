@@ -9,7 +9,6 @@ import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.util.Base64
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,9 +31,8 @@ class NativeAuthRepositoryTest {
         assertEquals("1", query["native"])
         assertEquals(pending?.state, query["state"])
         assertNotNull(pending)
-        val expectedChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
-            MessageDigest.getInstance("SHA-256").digest(pending!!.verifier.toByteArray(StandardCharsets.US_ASCII))
-        )
+        val expectedChallenge = MessageDigest.getInstance("SHA-256").digest(pending!!.verifier.toByteArray(StandardCharsets.US_ASCII))
+            .joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
         assertEquals(expectedChallenge, query["code_challenge"])
     }
 

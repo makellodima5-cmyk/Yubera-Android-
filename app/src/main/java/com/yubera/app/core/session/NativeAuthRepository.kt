@@ -28,7 +28,7 @@ class NativeAuthRepository @Inject constructor(
         }
         val verifier = randomToken()
         val state = randomToken()
-        val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(StandardCharsets.US_ASCII)))
+        val challenge = hex(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(StandardCharsets.US_ASCII)))
         tokenStore.savePendingAuth(PendingNativeAuth(state, verifier, flow))
         val params = linkedMapOf(
             "native" to "1",
@@ -94,6 +94,7 @@ class NativeAuthRepository @Inject constructor(
     }
 
     private fun base64Url(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    private fun hex(bytes: ByteArray): String = bytes.joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
     private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
 
     private companion object {

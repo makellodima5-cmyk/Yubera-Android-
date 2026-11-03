@@ -26,7 +26,6 @@ class AuthCallbackActivity : ComponentActivity() {
                 }
                 authRepository.completeCallback(code, state)
             } catch (error: Exception) {
-                authRepository.clearPendingAuth()
                 Toast.makeText(
                     this@AuthCallbackActivity,
                     error.message ?: "Не удалось завершить вход через Telegram.",
