@@ -14,6 +14,9 @@ interface AnimeLibraryDao {
     @Query("SELECT * FROM anime_library WHERE isInWatchLater = 1 ORDER BY updatedAtEpochMillis DESC")
     fun observeWatchLater(): Flow<List<AnimeLibraryEntity>>
 
+    @Query("SELECT * FROM anime_library")
+    suspend fun getAll(): List<AnimeLibraryEntity>
+
     @Query("SELECT * FROM anime_library WHERE animeId = :animeId LIMIT 1")
     suspend fun getByAnimeId(animeId: String): AnimeLibraryEntity?
 

@@ -23,36 +23,52 @@ class RoomPersonalLibraryRepository @Inject constructor(
 
     override suspend fun setFavorite(animeId: String, isFavorite: Boolean, updatedAtEpochMillis: Long) {
         val current = animeLibraryDao.getByAnimeId(animeId)
+        val favoriteTimestamp = maxOf(updatedAtEpochMillis, (current?.favoriteUpdatedAtEpochMillis ?: 0L) + 1L)
         animeLibraryDao.upsert(
             AnimeLibraryEntity(
                 animeId = animeId,
                 isFavorite = isFavorite,
                 isInWatchLater = current?.isInWatchLater ?: false,
-                updatedAtEpochMillis = updatedAtEpochMillis
+                updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, favoriteTimestamp),
+                favoriteUpdatedAtEpochMillis = favoriteTimestamp,
+                watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L
             )
         )
     }
 
     override suspend fun setWatchLater(animeId: String, isInWatchLater: Boolean, updatedAtEpochMillis: Long) {
         val current = animeLibraryDao.getByAnimeId(animeId)
+        val watchLaterTimestamp = maxOf(updatedAtEpochMillis, (current?.watchLaterUpdatedAtEpochMillis ?: 0L) + 1L)
         animeLibraryDao.upsert(
             AnimeLibraryEntity(
                 animeId = animeId,
                 isFavorite = current?.isFavorite ?: false,
                 isInWatchLater = isInWatchLater,
-                updatedAtEpochMillis = updatedAtEpochMillis
+                updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, watchLaterTimestamp),
+                favoriteUpdatedAtEpochMillis = current?.favoriteUpdatedAtEpochMillis ?: 0L,
+                watchLaterUpdatedAtEpochMillis = watchLaterTimestamp
             )
         )
     }
 
     override suspend fun saveProgress(progress: AnimeProgressEntity) {
-        animeProgressDao.upsert(progress)
+        val current = animeProgressDao.getByAnimeId(progress.animeId)
+        animeProgressDao.upsert(progress.copy(
+            updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
+        ))
     }
 
     override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) {
         val current = animeSubscriptionDao.getByAnimeId(animeId)
+        val timestamp = maxOf(updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
         animeSubscriptionDao.upsert(
-            AnimeSubscriptionEntity(animeId, notificationsEnabled, updatedAtEpochMillis, current?.lastKnownEpisodesAired)
+            AnimeSubscriptionEntity(
+                animeId = animeId,
+                notificationsEnabled = notificationsEnabled,
+                updatedAtEpochMillis = timestamp,
+                lastKnownEpisodesAired = current?.lastKnownEpisodesAired,
+                isSubscribed = true
+            )
         )
     }
 
@@ -62,13 +78,30 @@ class RoomPersonalLibraryRepository @Inject constructor(
         updatedAtEpochMillis: Long
     ) {
         val current = animeSubscriptionDao.getByAnimeId(animeId) ?: return
+        if (!current.isSubscribed) return
+        val timestamp = maxOf(updatedAtEpochMillis, current.updatedAtEpochMillis + 1L)
         animeSubscriptionDao.upsert(current.copy(
             notificationsEnabled = enabled,
-            updatedAtEpochMillis = updatedAtEpochMillis
+            updatedAtEpochMillis = timestamp
         ))
     }
 
     override suspend fun removeSubscription(animeId: String) {
-        animeSubscriptionDao.deleteByAnimeId(animeId)
+        val current = animeSubscriptionDao.getByAnimeId(animeId)
+        val timestamp = maxOf(System.currentTimeMillis(), (current?.updatedAtEpochMillis ?: 0L) + 1L)
+        if (current == null) {
+            animeSubscriptionDao.upsert(AnimeSubscriptionEntity(
+                animeId = animeId,
+                notificationsEnabled = false,
+                updatedAtEpochMillis = timestamp,
+                isSubscribed = false
+            ))
+        } else {
+            animeSubscriptionDao.upsert(current.copy(
+                notificationsEnabled = false,
+                isSubscribed = false,
+                updatedAtEpochMillis = timestamp
+            ))
+        }
     }
 }

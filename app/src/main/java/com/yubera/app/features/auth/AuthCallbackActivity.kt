@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.yubera.app.MainActivity
 import com.yubera.app.core.session.NativeAuthRepository
+import com.yubera.app.features.library.LibrarySyncScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ class AuthCallbackActivity : ComponentActivity() {
                     "В ответе авторизации отсутствуют обязательные параметры."
                 }
                 authRepository.completeCallback(code, state)
+                LibrarySyncScheduler.enqueueNow(this@AuthCallbackActivity)
             } catch (error: Exception) {
                 Toast.makeText(
                     this@AuthCallbackActivity,

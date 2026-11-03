@@ -1,4 +1,5 @@
 package com.yubera.app.core.database
+
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
@@ -14,16 +15,25 @@ import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
 import com.yubera.app.core.database.entity.NewsArticleEntity
+
 @Database(
- entities = [AnimeLibraryEntity::class, AnimeProgressEntity::class, AnimeSubscriptionEntity::class,
-  AnimeEpisodeNotificationEntity::class, CatalogAnimeEntity::class, CatalogMetadataEntity::class, NewsArticleEntity::class],
- version = 4, exportSchema = true
+    entities = [
+        AnimeLibraryEntity::class,
+        AnimeProgressEntity::class,
+        AnimeSubscriptionEntity::class,
+        AnimeEpisodeNotificationEntity::class,
+        CatalogAnimeEntity::class,
+        CatalogMetadataEntity::class,
+        NewsArticleEntity::class
+    ],
+    version = 5,
+    exportSchema = true
 )
 abstract class YuberaDatabase : RoomDatabase() {
- abstract fun animeEpisodeNotificationDao(): AnimeEpisodeNotificationDao
- abstract fun animeLibraryDao(): AnimeLibraryDao
- abstract fun animeProgressDao(): AnimeProgressDao
- abstract fun animeSubscriptionDao(): AnimeSubscriptionDao
- abstract fun catalogDao(): CatalogDao
- abstract fun newsDao(): NewsDao
+    abstract fun animeEpisodeNotificationDao(): AnimeEpisodeNotificationDao
+    abstract fun animeLibraryDao(): AnimeLibraryDao
+    abstract fun animeProgressDao(): AnimeProgressDao
+    abstract fun animeSubscriptionDao(): AnimeSubscriptionDao
+    abstract fun catalogDao(): CatalogDao
+    abstract fun newsDao(): NewsDao
 }

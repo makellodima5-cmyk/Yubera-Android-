@@ -8,5 +8,7 @@ data class AnimeLibraryEntity(
     @PrimaryKey val animeId: String,
     val isFavorite: Boolean = false,
     val isInWatchLater: Boolean = false,
-    val updatedAtEpochMillis: Long
+    val updatedAtEpochMillis: Long,
+    val favoriteUpdatedAtEpochMillis: Long = updatedAtEpochMillis,
+    val watchLaterUpdatedAtEpochMillis: Long = updatedAtEpochMillis
 )

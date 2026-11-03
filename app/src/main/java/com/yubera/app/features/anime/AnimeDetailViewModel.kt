@@ -44,30 +44,23 @@ class AnimeDetailViewModel @Inject constructor(
             anime = anime,
             isFavorite = favorites.any { it.animeId == animeId && it.isFavorite },
             isInWatchLater = watchLater.any { it.animeId == animeId && it.isInWatchLater },
-            isSubscribed = subscriptions.any { it.animeId == animeId && it.notificationsEnabled },
+            isSubscribed = subscriptions.any { it.animeId == animeId },
             isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnimeDetailUiState())
 
     fun toggleFavorite(enabled: Boolean) {
-        viewModelScope.launch {
-            libraryRepository.setFavorite(animeId, enabled, System.currentTimeMillis())
-        }
+        viewModelScope.launch { libraryRepository.setFavorite(animeId, enabled, System.currentTimeMillis()) }
     }
 
     fun toggleWatchLater(enabled: Boolean) {
-        viewModelScope.launch {
-            libraryRepository.setWatchLater(animeId, enabled, System.currentTimeMillis())
-        }
+        viewModelScope.launch { libraryRepository.setWatchLater(animeId, enabled, System.currentTimeMillis()) }
     }
 
     fun toggleSubscription(enabled: Boolean) {
         viewModelScope.launch {
-            if (enabled) {
-                libraryRepository.subscribeToAnime(animeId, true, System.currentTimeMillis())
-            } else {
-                libraryRepository.removeSubscription(animeId)
-            }
+            if (enabled) libraryRepository.subscribeToAnime(animeId, true, System.currentTimeMillis())
+            else libraryRepository.removeSubscription(animeId)
         }
     }
 }
