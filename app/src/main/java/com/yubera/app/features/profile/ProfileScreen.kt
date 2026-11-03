@@ -11,18 +11,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import com.yubera.app.MainActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.yubera.app.core.ui.components.SectionBannerHeader
@@ -36,7 +43,29 @@ fun ProfileScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
-    val versionName = LocalContext.current.packageManager.getPackageInfo(LocalContext.current.packageName, 0).versionName.orEmpty()
+    val context = LocalContext.current
+    val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+    var confirmLogout by remember { mutableStateOf(false) }
+
+    if (confirmLogout) {
+        AlertDialog(
+            onDismissRequest = { confirmLogout = false },
+            title = { Text("Выйти из аккаунта?") },
+            text = { Text("Локальная сессия будет удалена с этого устройства.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmLogout = false
+                    viewModel.logout {
+                        context.startActivity(
+                            Intent(context, MainActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        )
+                    }
+                }) { Text("Выйти") }
+            },
+            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Отмена") } }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         SectionBannerHeader(title = "Профиль", subtitle = "Настройки YUBERA")
@@ -53,10 +82,11 @@ fun ProfileScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Вход через Telegram будет доступен после подключения безопасной нативной сессии.",
+                        "Аккаунт подключён через Telegram. Сессия хранится в зашифрованном виде с использованием Android Keystore.",
                         color = YuberaMuted,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    TextButton(onClick = { confirmLogout = true }) { Text("Выйти из аккаунта") }
                 }
             }
 

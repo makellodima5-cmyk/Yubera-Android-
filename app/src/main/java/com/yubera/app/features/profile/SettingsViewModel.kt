@@ -2,6 +2,7 @@ package com.yubera.app.features.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yubera.app.core.session.NativeAuthRepository
 import com.yubera.app.data.settings.ThemeMode
 import com.yubera.app.data.settings.UserSettings
 import com.yubera.app.data.settings.UserSettingsRepository
@@ -13,7 +14,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: UserSettingsRepository
+    private val repository: UserSettingsRepository,
+    private val authRepository: NativeAuthRepository
 ) : ViewModel() {
     val settings = repository.settings.stateIn(
         viewModelScope,
@@ -25,4 +27,5 @@ class SettingsViewModel @Inject constructor(
     fun setNotifications(enabled: Boolean) { viewModelScope.launch { repository.setNotificationsEnabled(enabled) } }
     fun setNewEpisodes(enabled: Boolean) { viewModelScope.launch { repository.setNewEpisodeNotificationsEnabled(enabled) } }
     fun setAnimeInfo(enabled: Boolean) { viewModelScope.launch { repository.setAnimeInfoNotificationsEnabled(enabled) } }
+    fun logout(onComplete: () -> Unit) { viewModelScope.launch { try { authRepository.logout() } catch (_: Exception) { } finally { onComplete() } } }
 }

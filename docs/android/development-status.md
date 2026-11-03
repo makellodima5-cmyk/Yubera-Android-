@@ -4,53 +4,60 @@
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
 **Branch:** `main`
 
-## Implemented in the repository
+## Implemented
 
-- Native Kotlin + Jetpack Compose app scaffold, MVVM/repository layers, Hilt, Room, Retrofit, DataStore, Navigation Compose and WorkManager dependency foundation.
-- Original YUBERA drawable resources are committed under `app/src/main/res/drawable-nodpi`; app icon and adaptive launcher resources are present.
-- Revisioned R2-backed mobile catalogue API exists in the website repository; Android fetches pages and commits complete snapshots atomically to Room.
-- Catalog screen includes search, genre filters, poster cards, offline snapshot display and retry states.
-- Anime detail screen uses the original portrait poster ratio, shows catalogue metadata and supports local favorites, watch-later and personal title subscriptions.
-- Dedicated Kodik player screen uses the existing YUBERA server route. The Kodik API token remains server-side; Android validates HTTPS links against the same trusted host allowlist and confines WebView to the player.
-- Home screen reads catalogue items and local viewing progress; My screen reads favorites, watch-later, history and personal subscriptions from Room.
-- News feed reads Shikimori's public news forum, stores a local Room cache, attributes each item and uses heuristic category filters. It is explicitly not represented as complete industry coverage.
-- Profile screen stores theme and notification preferences locally; theme palette switches between system/light/dark.
-- Android CI run [#27](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41668049373) passed for the catalogue commit.
-- Android CI run [#28](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41669796846) failed during Kotlin compilation because Navigation's SavedStateHandle argument type was not explicit.
-- Android CI run [#29](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41671118175) failed on the same SavedStateHandle inference issue in the detail and player ViewModels. The code is corrected in the next commit; its CI result must be checked before calling this milestone verified.
+- Native Kotlin + Jetpack Compose foundation, MVVM/repository layers, Hilt, Room, Retrofit, DataStore and Navigation Compose.
+- Original YUBERA drawable assets and launcher resources are committed.
+- R2-backed mobile catalogue API and Android revision-aware atomic Room snapshot cache.
+- Catalogue search, genre filters, poster cards, offline fallback and retry UI.
+- Anime detail screen with portrait poster, metadata and local favorites/watch-later/subscription actions.
+- Kodik player screen using the existing YUBERA server route. Provider credentials remain server-side; Android validates trusted HTTPS hosts and confines WebView to the player.
+- Home and My screens backed by local catalogue, favorites, watch-later, progress/history and personal subscriptions.
+- Shikimori news forum feed with Room cache, source attribution and keyword-based category filters. It is explicitly a single-source feed, not complete industry coverage.
+- Profile theme settings (system/light/dark) and local notification preferences.
+- Native Telegram OIDC backend handoff has been added to the website repository: browser-based Telegram callback, one-time app exchange code, PKCE verification, revocable bearer session and bearer support on account endpoints. Website CI still needs to pass before treating this integration as validated.
+- Android native auth code is prepared: Android Keystore AES-GCM token storage, PKCE state/verifier, fixed deep link callback, bearer session validation and logout. Android CI must pass before considering it build-verified.
+- Registration is intentionally disabled in the Android UI until final legal documents are approved and published.
+
+## Validation history
+
+- Android CI #27 passed for the catalogue implementation.
+- Android CI #28 and #29 failed on missing explicit SavedStateHandle argument types; those call sites were corrected.
+- Android CI #30 failed because the profile screen referenced BuildConfig while BuildConfig generation was disabled; the version label now reads package metadata.
+- Android CI #31 failed at Hilt compilation because the `PersonalLibraryRepository` binding was missing. A `LibraryBindings` module is included in the next change. Do not mark the Home/My/detail milestone validated until the next CI run passes.
+- Website native-auth CI currently requires a passing run for the PKCE base64url exchange fix.
 
 ## Still incomplete or awaiting external verification
 
-- Native Telegram OIDC handoff and bearer app sessions are not implemented yet. The website currently has a browser-cookie OIDC flow; Android must not copy browser cookies or embed server secrets.
-- Account synchronization is not connected. Local library data is preserved, but there is no verified conflict-safe upload/download path for Android sessions yet.
-- Cloudflare production deployment of `GET /api/mobile/catalog` is not confirmed by GitHub CI alone.
-- Notifications are preference-only at this point. WorkManager polling, notification channels, deduplication and Android permission flow are not yet active.
-- Shikimori news categories are keyword heuristics, not editorial metadata. The API contract and response shape still require runtime verification against the live service.
-- The player, navigation, themes and layout need real-device testing. WebView provider behavior cannot be validated by a JVM unit test.
-- The debug APK is not a release package. Release signing and distribution require a secure signing-key handoff.
-- The user has an iPhone; Android APK installation/testing requires an Android device or cloud emulator.
+- Remote account library/history/subscription synchronization is not yet implemented on Android. Backend bearer support exists, but no conflict-safe Android sync workflow has been validated.
+- Cloudflare production deployment of `GET /api/mobile/catalog` and the new native-auth endpoints is not confirmed by GitHub CI alone.
+- Notifications remain preference-only. WorkManager polling, deduplication, channels and Android runtime permission are not active.
+- Shikimori news API response shape and category coverage require runtime verification against the live service.
+- Real-device QA is pending for navigation, WebView player behavior, deep-link handoff, theme rendering and Room migrations.
+- Release signing and distribution are not configured. The debug APK is not a release package.
+- The user has an iPhone; installing/testing the Android APK requires an Android device or cloud emulator.
 
-## Milestone overview
+## Milestones
 
 | Milestone | Status |
 |---|---|
-| 0. Foundation and CI | Core foundation exists; latest validation pending |
-| 1. Asset inventory | Original assets mapped and drawable resources committed |
-| 2. Architecture | Core layers exist; sync/auth integration remains |
-| 3. Startup and navigation | Native navigation exists; session-aware startup still uses the unconfigured auth provider |
-| 4. Native authentication | Pending secure native OIDC exchange |
-| 5. Catalogue | Implemented; live Cloudflare deployment/device verification pending |
-| 6. Home | Implemented against local catalogue/progress flows; device QA pending |
-| 7. Anime detail and player | Implemented; device/provider QA pending |
-| 8. Personal library and sync | Local Room lists/actions implemented; remote sync pending |
-| 9. News | Shikimori source/cache/filter implemented; live API verification pending |
-| 10. Profile | Local theme and notification preferences implemented; account UI pending |
-| 11. Notifications | Preferences only; worker and notification delivery pending |
+| 0. Foundation and CI | Core foundation exists; latest CI failure is being corrected |
+| 1. Assets | Mapped and committed |
+| 2. Architecture | Core layers exist; sync remains |
+| 3. Startup and navigation | Implemented; session-aware startup now uses native bearer validation in pending CI |
+| 4. Native authentication | Backend and Android code prepared; CI/deployment/device verification pending |
+| 5. Catalogue | Implemented; Cloudflare deployment/device verification pending |
+| 6. Home | Implemented; Hilt binding fix awaiting CI |
+| 7. Anime detail and player | Implemented; build/device/provider QA pending |
+| 8. Personal library and sync | Local actions implemented; remote sync pending |
+| 9. News | Implemented against Shikimori source; live API verification pending |
+| 10. Profile | Theme/preferences/logout implemented in pending change |
+| 11. Notifications | Preferences only; delivery pending |
 | 12. QA and release | Pending |
 
 ## Verification rules
 
-- Do not claim CI success without checking the exact workflow conclusion.
-- Do not claim production API availability without checking Cloudflare deployment.
-- Do not claim playback is verified until tested on Android.
-- Do not mark native login or account sync complete until the real PKCE exchange and token lifecycle are tested.
+- Never claim CI success without checking the exact workflow conclusion.
+- Never claim production API availability without checking Cloudflare deployment.
+- Never claim playback or Telegram login is verified until tested on Android.
+- Never claim remote account sync is complete until conflict and retry behavior are tested.
