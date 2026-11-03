@@ -72,17 +72,19 @@
 - `StartupCoordinator`: `suspend fun initialize(): StartupDestination`.
 - `StartupDestination`: sealed destinations `SignIn` and `Home`.
 
-- [ ] **Step 1: Write unit tests** for initialization completion and destination selection using a fake `SessionStateProvider`.
-- [ ] **Step 2: Run tests** with `./gradlew :app:testDebugUnitTest`; expected result: tests fail because coordinator is not implemented.
-- [ ] **Step 3: Implement the session abstraction and coordinator** without adding provider-specific authentication behavior.
-- [ ] **Step 4: Run unit tests**; expected result: all startup coordinator tests pass.
-- [ ] **Step 5: Commit** as `feat: add startup coordination and session boundary`.
+- [x] **Step 1: Write unit tests** for initialization completion and destination selection using a fake `SessionStateProvider`.
+- [x] **Step 2: Run tests** with `./gradlew :app:testDebugUnitTest`; the expected RED result was observed in CI run [#9](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41631028143): dependencies and main-source compilation succeeded, and test compilation failed only because the three planned production types did not yet exist.
+- [x] **Step 3: Implement the session abstraction and coordinator** without adding provider-specific authentication behavior.
+- [x] **Step 4: Run unit tests**; the expected GREEN result was observed in CI run [#10](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41640840948).
+- [x] **Step 5: Commit** as `feat: add startup coordination and session boundary` (`544aacabd4b3268a656d0213fa412b1547085d93`).
 
 ### Task 3: Integrate original visual assets and design tokens
 
 **Files:**
 - Create: `app/src/main/res/drawable-nodpi/yubera_logo.png`
-- Create: `app/src/main/res/drawable-nodpi/yubera_startup_background.png`
+- Create: `app/src/main/res/drawable-nodpi/yubera_splash_background.png`
+- Create: `app/src/main/res/drawable-nodpi/yubera_app_icon_source.png`
+- Create: `app/src/main/res/drawable-nodpi/yubera_auth_background.png`
 - Create: `app/src/main/res/drawable-nodpi/yubera_banner.png`
 - Create: `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`
 - Create: `app/src/main/res/drawable/ic_launcher_foreground.xml` (or a bitmap/vector foreground derived from the supplied icon)
@@ -153,8 +155,8 @@
 - Create: `docs/android/asset-map.md`
 - Create: `docs/android/foundation-verification.md`
 
-- [ ] **Step 1: Document the exact source-to-resource mapping** for all supplied images, including unused references and duplicate file.
-- [ ] **Step 2: Run** `./gradlew clean :app:assembleDebug :app:testDebugUnitTest`; expected result: successful build and passing unit tests.
+- [x] **Step 1: Document the exact source-to-resource mapping** for all supplied images, including unused references and duplicate file.
+- [x] **Step 2: Run** `./gradlew clean :app:assembleDebug :app:testDebugUnitTest`; CI run [#10](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41640840948) completed the clean resource, APK and unit-test tasks successfully.
 - [ ] **Step 3: Run instrumentation tests** on an Android 8.0/API 26 emulator and a current Android emulator when available; record any unavailable environment.
 - [ ] **Step 4: Verify startup behavior** for cold launch, warm foreground return, Activity recreation and process recreation.
 - [ ] **Step 5: Commit** as `test: verify Android foundation milestone`.

@@ -36,4 +36,14 @@
 
 ## User upload handoff
 
-When the resource-integration commit is ready, the user will be given the exact source filenames and target repository folders. No new artwork is requested at this inventory stage. The source archive is already available to the implementation process.
+At the resource-integration checkpoint, upload only these five production image files from the supplied archive. The remaining full-screen screenshots and the branded splash screenshot are design references, not production resources.
+
+| Original source filename in `Архив.zip` | Target path in the GitHub repository |
+|---|---|
+| `5DDEF5BA-61D8-4147-91BD-3BEDC3DDCCED.PNG` | `app/src/main/res/drawable-nodpi/yubera_splash_background.png` |
+| `1D6140AC-3ACC-46F1-8392-2B4FDE0FF97A.PNG` | `app/src/main/res/drawable-nodpi/yubera_banner.png` |
+| `6FEC0088-C034-4715-A64A-91075C10984F 2.PNG` | `app/src/main/res/drawable-nodpi/yubera_app_icon_source.png` |
+| `66777F03-CFBD-49C1-B8E0-10230752C9BA.PNG` | `app/src/main/res/drawable-nodpi/yubera_auth_background.png` |
+| `E84CEB15-DC6D-4FC4-B1D7-2C21837CB7B9.PNG` | `app/src/main/res/drawable-nodpi/yubera_logo.png` |
+
+Preserve the original image contents and transparency. Rename each file to the exact destination filename above. Do not upload #2 (the complete splash screenshot), #4/#6/#8-#11/#13/#14 (full-screen UI references), or #7 (the duplicate of #5) as production resources.

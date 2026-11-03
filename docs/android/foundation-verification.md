@@ -68,3 +68,38 @@ Not yet proven:
 - Release signing or release APK readiness.
 
 Current screens remain placeholders. This milestone is the buildable project foundation, not a user-ready app.
+
+
+## Follow-up verification: dependency injection and startup session boundary
+
+**Verified date:** 2026-11-03  
+**Verified commit:** `544aacabd4b3268a656d0213fa412b1547085d93`
+
+GitHub Actions run #10: [Android CI](https://github.com/makellodima5-cmyk/Yubera-Android-/actions/runs/41640840948)
+
+The same clean verification command completed with `BUILD SUCCESSFUL in 4m 8s`:
+
+```bash
+./gradlew --no-daemon clean :app:processDebugResources :app:assembleDebug :app:testDebugUnitTest
+```
+
+Observed:
+- `:app:processDebugResources` completed.
+- `:app:assembleDebug` completed.
+- `:app:compileDebugUnitTestKotlin` completed.
+- `:app:testDebugUnitTest` completed.
+- Hilt KSP and aggregation tasks completed.
+- The CI workflow uploaded a new `yubera-debug-apk` artifact.
+
+The TDD RED check was run in CI run #9 before implementation. It failed on the expected missing startup/session types after dependency setup and main-source compilation succeeded. Run #10 is the GREEN check after those types and the Hilt application binding were added. The build output does not provide a reliable test-count summary, so no test count is claimed.
+
+New artifact:
+- Artifact ID: `13232577386`.
+- Name: `yubera-debug-apk`.
+- Size: `18,512,589` bytes.
+- SHA-256 (artifact ZIP): `10413d8cbc0679714b3bce620832ea37e3519e93a6f0a786719468a86c16921d`.
+- Expires: 2026-11-17 13:07:17 UTC.
+
+This increment adds the `SessionStateProvider` boundary and `StartupCoordinator`, with an explicitly temporary `UnconfiguredSessionStateProvider` that always reports no restorable session. It is not native authentication. The coordinator is not yet connected to Activity startup, and the branded startup UI is not yet implemented.
+
+The earlier limitations still apply: no physical-device or emulator runtime verification, no real authentication/backend/catalog/player integration, and no release readiness.
