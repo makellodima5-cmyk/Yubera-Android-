@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
+import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
+import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,7 +37,11 @@ class MyViewModel @Inject constructor(
         libraryRepository.watchLater,
         libraryRepository.progress,
         libraryRepository.subscriptions
-    ) { catalog, favorites, watchLater, progress, subscriptions ->
+    ) { catalog: List<AnimeCatalogItem>,
+        favorites: List<AnimeLibraryEntity>,
+        watchLater: List<AnimeLibraryEntity>,
+        progress: List<AnimeProgressEntity>,
+        subscriptions: List<AnimeSubscriptionEntity> ->
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         fun items(ids: List<String>) = ids.distinct().mapNotNull { id ->
             byId[id]?.let { anime -> MyLibraryItem(anime) }

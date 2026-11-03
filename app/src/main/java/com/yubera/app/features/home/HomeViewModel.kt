@@ -9,6 +9,7 @@ import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -31,15 +32,18 @@ class HomeViewModel @Inject constructor(
     catalogRepository: CatalogRepository,
     libraryRepository: PersonalLibraryRepository
 ) : ViewModel() {
-    private val refreshState = kotlinx.coroutines.flow.MutableStateFlow(false)
-    private val errorState = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    private val refreshState = MutableStateFlow(false)
+    private val errorState = MutableStateFlow<String?>(null)
 
     val uiState = combine(
         catalogRepository.observeCatalog(),
         libraryRepository.progress,
         refreshState,
         errorState
-    ) { catalog, progress, refreshing, error ->
+    ) { catalog: List<AnimeCatalogItem>,
+        progress: List<AnimeProgressEntity>,
+        refreshing: Boolean,
+        error: String? ->
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         HomeUiState(
             continueWatching = progress.mapNotNull { item ->
@@ -51,9 +55,7 @@ class HomeViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
-    init {
-        refresh(catalogRepository)
-    }
+    init { refresh(catalogRepository) }
 
     private fun refresh(repository: CatalogRepository) {
         viewModelScope.launch {

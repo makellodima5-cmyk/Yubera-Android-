@@ -13,20 +13,22 @@ import com.yubera.app.core.startup.StartupUiState
 import com.yubera.app.core.startup.StartupViewModel
 import com.yubera.app.core.ui.theme.YuberaTheme
 import com.yubera.app.features.auth.AuthNavHost
+import com.yubera.app.features.profile.SettingsViewModel
 import com.yubera.app.navigation.AppNavHost
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     private val startupViewModel: StartupViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
         setContent {
-            YuberaTheme {
+            val settings by settingsViewModel.settings.collectAsState()
+            YuberaTheme(themeMode = settings.themeMode) {
                 val startupState by startupViewModel.uiState.collectAsState()
                 when (val state = startupState) {
                     StartupUiState.Initializing,

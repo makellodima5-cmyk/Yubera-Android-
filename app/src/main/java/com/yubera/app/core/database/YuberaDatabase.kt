@@ -6,11 +6,13 @@ import com.yubera.app.core.database.dao.AnimeLibraryDao
 import com.yubera.app.core.database.dao.AnimeProgressDao
 import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.CatalogDao
+import com.yubera.app.core.database.dao.NewsDao
 import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
+import com.yubera.app.core.database.entity.NewsArticleEntity
 
 @Database(
     entities = [
@@ -18,9 +20,10 @@ import com.yubera.app.core.database.entity.CatalogMetadataEntity
         AnimeProgressEntity::class,
         AnimeSubscriptionEntity::class,
         CatalogAnimeEntity::class,
-        CatalogMetadataEntity::class
+        CatalogMetadataEntity::class,
+        NewsArticleEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class YuberaDatabase : RoomDatabase() {
@@ -28,4 +31,5 @@ abstract class YuberaDatabase : RoomDatabase() {
     abstract fun animeProgressDao(): AnimeProgressDao
     abstract fun animeSubscriptionDao(): AnimeSubscriptionDao
     abstract fun catalogDao(): CatalogDao
+    abstract fun newsDao(): NewsDao
 }

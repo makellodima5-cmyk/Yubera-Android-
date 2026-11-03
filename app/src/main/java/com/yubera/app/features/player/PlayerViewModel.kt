@@ -30,7 +30,7 @@ class PlayerViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val kodikRepository: KodikRepository
 ) : ViewModel() {
-    private val animeId = savedStateHandle["animeId"].orEmpty()
+    private val animeId = savedStateHandle.get<String>("animeId").orEmpty()
     private val mutableState = MutableStateFlow(PlayerUiState())
     private var requestInProgress = false
     val uiState = mutableState.asStateFlow()

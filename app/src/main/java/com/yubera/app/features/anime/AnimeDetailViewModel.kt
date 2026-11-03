@@ -29,7 +29,7 @@ class AnimeDetailViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val libraryRepository: PersonalLibraryRepository
 ) : ViewModel() {
-    private val animeId: String = savedStateHandle["animeId"].orEmpty()
+    private val animeId: String = savedStateHandle.get<String>("animeId").orEmpty()
 
     val uiState = combine(
         catalogRepository.observeAnime(animeId),
