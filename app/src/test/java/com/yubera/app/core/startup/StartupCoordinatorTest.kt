@@ -3,7 +3,6 @@ package com.yubera.app.core.startup
 import com.yubera.app.core.session.SessionStateProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class StartupCoordinatorTest {
