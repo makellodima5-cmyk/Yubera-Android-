@@ -21,5 +21,5 @@ The website repository CI validates the route and Worker build, but GitHub Actio
 ## Current limitations
 
 - Search and genre filtering currently operate against the locally cached catalogue.
-- Detail-page navigation and account-linked library actions are separate upcoming stages.
+- Detail-page navigation and local favorite/watch-later/subscription actions are implemented. Remote account synchronization still depends on native authentication.
 - No user session or private account data is required to read the catalogue.

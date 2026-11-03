@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import com.yubera.app.core.network.RetrofitFactory
 import com.yubera.app.data.catalog.CatalogApi
+import com.yubera.app.data.player.KodikApi
 import retrofit2.Retrofit
 import dagger.Module
 import dagger.Provides
@@ -31,6 +32,9 @@ object NetworkModule {
 
     @Provides
     fun provideCatalogApi(retrofit: Retrofit): CatalogApi = retrofit.create(CatalogApi::class.java)
+
+    @Provides
+    fun provideKodikApi(retrofit: Retrofit): KodikApi = retrofit.create(KodikApi::class.java)
 
     const val YUBERA_API_BASE_URL = "https://yume-website.yumesupport833.workers.dev/"
 }

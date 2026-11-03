@@ -44,6 +44,7 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 @Composable
 fun AnimeDetailScreen(
     onBack: () -> Unit,
+    onWatchClick: () -> Unit,
     viewModel: AnimeDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -133,6 +134,12 @@ fun AnimeDetailScreen(
                     color = YuberaOnBackground.copy(alpha = 0.88f),
                     style = MaterialTheme.typography.bodyMedium
                 )
+
+                if (anime.kodikAvailable == false) {
+                    Text("Просмотр через Kodik сейчас недоступен.", color = YuberaMuted)
+                } else {
+                    Button(onClick = onWatchClick, modifier = Modifier.fillMaxWidth()) { Text("Смотреть") }
+                }
 
                 Text("Моя библиотека", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 OutlinedButton(

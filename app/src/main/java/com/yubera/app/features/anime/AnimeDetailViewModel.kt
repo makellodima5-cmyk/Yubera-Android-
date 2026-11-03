@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeLibraryEntity
+import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,13 +36,16 @@ class AnimeDetailViewModel @Inject constructor(
         libraryRepository.favorites,
         libraryRepository.watchLater,
         libraryRepository.subscriptions
-    ) { anime, favorites, watchLater, subscriptions ->
+    ) { anime: AnimeCatalogItem?,
+        favorites: List<AnimeLibraryEntity>,
+        watchLater: List<AnimeLibraryEntity>,
+        subscriptions: List<AnimeSubscriptionEntity> ->
         AnimeDetailUiState(
             anime = anime,
             isFavorite = favorites.any { it.animeId == animeId && it.isFavorite },
             isInWatchLater = watchLater.any { it.animeId == animeId && it.isInWatchLater },
             isSubscribed = subscriptions.any { it.animeId == animeId && it.notificationsEnabled },
-            isLoading = anime == null
+            isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnimeDetailUiState())
 

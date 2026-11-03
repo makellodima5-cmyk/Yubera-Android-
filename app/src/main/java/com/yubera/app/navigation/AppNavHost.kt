@@ -25,6 +25,7 @@ import com.yubera.app.features.catalog.CatalogScreen
 import com.yubera.app.features.home.HomeScreen
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
+import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
 
 @Composable
@@ -32,7 +33,8 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
-    val isDetailRoute = currentRoute?.startsWith("anime/") == true
+    val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
+        currentRoute?.startsWith("player/") == true
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -76,18 +78,34 @@ fun AppNavHost() {
             startDestination = AppDestination.Home.route,
             modifier = Modifier.padding(padding)
         ) {
-            composable(AppDestination.Home.route) { HomeScreen() }
-            composable(AppDestination.Catalog.route) { CatalogScreen(
-                onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }
-            ) }
-            composable(AppDestination.My.route) { MyScreen() }
+            composable(AppDestination.Home.route) {
+                HomeScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
+            }
+            composable(AppDestination.Catalog.route) {
+                CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") })
+            }
+            composable(AppDestination.My.route) {
+                MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
+            }
             composable(AppDestination.News.route) { NewsScreen() }
             composable(AppDestination.Profile.route) { ProfileScreen() }
             composable(
                 route = "anime/{animeId}",
                 arguments = listOf(navArgument("animeId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                AnimeDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onWatchClick = {
+                        val id = backStackEntry.arguments?.getString("animeId").orEmpty()
+                        navController.navigate("player/${Uri.encode(id)}")
+                    }
+                )
+            }
+            composable(
+                route = "player/{animeId}",
+                arguments = listOf(navArgument("animeId") { type = NavType.StringType })
             ) {
-                AnimeDetailScreen(onBack = { navController.popBackStack() })
+                PlayerScreen(onBack = { navController.popBackStack() })
             }
         }
     }
