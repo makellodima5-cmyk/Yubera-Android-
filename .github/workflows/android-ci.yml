@@ -41,8 +41,8 @@ jobs:
 
       - name: Verify Android SDK packages
         run: |
-          sdkmanager --list_installed
-          test -d "$ANDROID_HOME/platforms/android-37"
+          sdkmanager --list_installed | grep "platforms;android-37.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
 
       - name: Build debug APK and run unit tests
         run: |
