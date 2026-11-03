@@ -34,12 +34,14 @@
 - CI #33 uploaded the `yubera-debug-apk` artifact (27,737,672 bytes; SHA-256 `2ca260939b24079d52cf7eb49c6160a0ed0db15fea3233977f101da1934ad848`).
 - Android CI #36 passed in full on commit `6fe52b8f5c5780f8f96a1e9cbed2f3f641be2d2f`: SDK verification, debug APK build, unit tests and artifact upload all succeeded. Artifact `yubera-debug-apk`, 27,769,348 bytes, SHA-256 `7daf26dcbde0a7f912e011815d4344fb0af1f8812ad68e99a95ad76e98365767`, expires 2026-11-17.
 - Website CI for native Telegram authentication passed automated tests, TypeScript lint, Worker build and deployment-artifact validation. GitHub CI is validation-only; Cloudflare Workers Builds owns production deployment.
-- Notification hardening after CI #36 is committed separately and awaits its own CI run.
+- Android CI #37 passed in full on commit `c5e33deb45af53c5078e561c5dbd53e023e2aeae`: SDK verification, debug APK build, unit tests and artifact upload all succeeded. Artifact `yubera-debug-apk`, 27,770,377 bytes, SHA-256 `583aaac75d241c1a467abedd0bb73512e2cc1b7f37923acaea3218136ee7f3d3`, expires 2026-11-17.
+- Android notification hardening (app-wide notifications enabled, channel importance, and active-subscription recheck) passed CI #37.
+- Website repository now contains a versioned, per-item timestamp/tombstone sync endpoint for favorites, watchlist, subscriptions and playback progress, plus legacy-site write-through and D1 migration. Website CI #2568 is still running; production migration/deployment is not performed.
 
 ## Still incomplete or awaiting external verification
 
 - Android remote account library/history/subscription synchronization is not implemented. Backend bearer support exists, but no conflict-safe Android sync workflow has been validated.
-- The current saved-list backend supports merge-only additions for initial migration plus individual add/remove operations. It has no per-item revision/tombstone contract, so Android must not implement naive full-list replacement or union-only sync; removals across devices need a versioned conflict-safe contract.
+- Android has not yet integrated the new per-item sync endpoint. Client-side outbox, conflict handling, retry behavior and Room migration remain to be implemented and tested.
 - Cloudflare production deployment of the mobile catalogue and native-auth endpoints is not confirmed by GitHub CI alone.
 - Notification worker, Room v3-to-v4 migration and live Shikimori GraphQL response shape passed Android compilation/unit tests in CI #36, but still require live API/runtime/device verification. WorkManager's six-hour interval is best-effort and can be delayed by Android battery and scheduling policies.
 - Notification delivery currently covers new episode counts only. The separate Profile preference for tracked-title information changes is not yet implemented.
@@ -52,18 +54,18 @@
 
 | Milestone | Status |
 |---|---|
-| 0. Foundation and CI | Core foundation exists; CI #36 green and debug APK artifact uploaded |
+| 0. Foundation and CI | Core foundation exists; CI #37 green and debug APK artifact uploaded |
 | 1. Assets | Mapped and committed |
 | 2. Architecture | Core layers exist; remote sync remains |
 | 3. Startup and navigation | Implemented; session-aware startup uses bearer validation |
 | 4. Native authentication | Android/backend code implemented; production deployment and device verification pending |
 | 5. Catalogue | Implemented; Cloudflare deployment/device verification pending |
-| 6. Home | Implemented; full CI #33 passed, subsequent CI #36 passed |
+| 6. Home | Implemented; CI #33, #36 and #37 passed |
 | 7. Anime detail and player | Implemented; device/provider QA pending |
 | 8. Personal library and sync | Local actions implemented; remote sync pending |
 | 9. News | Implemented against Shikimori source; live API verification pending |
 | 10. Profile | Theme/preferences/logout implemented; notification permission request wired |
-| 11. Notifications | Client-side WorkManager polling, dedupe and system/channel availability guards implemented; CI #36 passed; live API/device verification pending |
+| 11. Notifications | Client-side WorkManager polling, dedupe and system/channel availability guards implemented; CI #37 passed; live API/device verification pending |
 | 12. QA and release | Pending |
 
 ## Verification rules
@@ -78,4 +80,5 @@
 
 - 2026-11-03: Recorded verified Android CI #36 success, debug APK artifact metadata and current outstanding deployment/device/sync/notification work.
 - 2026-11-03: Added local subscription-only episode polling with WorkManager, Shikimori GraphQL batches, per-episode deduplication, watermark protection, Android notification permission and Room v4 migration. Awaiting runtime verification.
-- 2026-11-03: Hardened notification delivery against app-wide/channel notification disablement and subscription removal during a network poll; preserves retry semantics when system notification availability changes mid-run.
+- 2026-11-03: Hardened notification delivery against app-wide/channel notification disablement and subscription removal during a network poll; CI #37 passed.
+- 2026-11-03: Recorded the website's versioned personal-library sync endpoint and migration as pending website CI/deployment; Android client integration remains outstanding.
