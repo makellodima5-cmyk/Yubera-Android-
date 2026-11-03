@@ -1,6 +1,7 @@
 package com.yubera.app.features.library
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LibrarySyncPolicyTest {
@@ -12,8 +13,8 @@ class LibrarySyncPolicyTest {
 
     @Test
     fun sourceIdBreaksTimestampTiesDeterministically() {
-        assertEquals(1, LibrarySyncPolicy.compareVersions(100, "web", 100, "android"))
-        assertEquals(-1, LibrarySyncPolicy.compareVersions(100, "android", 100, "web"))
+        assertTrue(LibrarySyncPolicy.compareVersions(100, "web", 100, "android") > 0)
+        assertTrue(LibrarySyncPolicy.compareVersions(100, "android", 100, "web") < 0)
         assertEquals(0, LibrarySyncPolicy.compareVersions(100, "same", 100, "same"))
     }
 }

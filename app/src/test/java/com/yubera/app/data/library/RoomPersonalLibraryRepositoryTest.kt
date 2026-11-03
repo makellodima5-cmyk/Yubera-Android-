@@ -7,6 +7,7 @@ import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.features.library.LibrarySyncTrigger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -18,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RoomPersonalLibraryRepositoryTest {
+    private object NoOpLibrarySyncTrigger : LibrarySyncTrigger { override fun enqueue() = Unit }
     @Test
     fun favoriteAndWatchLaterAreIndependentAndDoNotCreateSubscription() = runTest {
         val libraryDao = FakeAnimeLibraryDao()
@@ -109,11 +111,21 @@ class RoomPersonalLibraryRepositoryTest {
         assertTrue(subscriptionDao.getAll().any { it.animeId == "anime-6" && !it.isSubscribed })
     }
 
+    @Test
+    fun removingUnknownSubscriptionStillCreatesRemoteDeletionTombstone() = runTest {
+        val subscriptionDao = FakeAnimeSubscriptionDao()
+        val repository = createRepository(FakeAnimeLibraryDao(), FakeAnimeProgressDao(), subscriptionDao)
+
+        repository.removeSubscription("anime-7")
+
+        assertFalse(subscriptionDao.getByAnimeId("anime-7")?.isSubscribed ?: true)
+    }
+
     private fun createRepository(
         libraryDao: AnimeLibraryDao,
         progressDao: AnimeProgressDao,
         subscriptionDao: AnimeSubscriptionDao
-    ): PersonalLibraryRepository = RoomPersonalLibraryRepository(libraryDao, progressDao, subscriptionDao)
+    ): PersonalLibraryRepository = RoomPersonalLibraryRepository(libraryDao, progressDao, subscriptionDao, NoOpLibrarySyncTrigger)
 
     private class FakeAnimeLibraryDao : AnimeLibraryDao {
         private val rows = linkedMapOf<String, AnimeLibraryEntity>()

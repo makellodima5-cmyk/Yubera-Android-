@@ -7,13 +7,15 @@ import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.features.library.LibrarySyncTrigger
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 class RoomPersonalLibraryRepository @Inject constructor(
     private val animeLibraryDao: AnimeLibraryDao,
     private val animeProgressDao: AnimeProgressDao,
-    private val animeSubscriptionDao: AnimeSubscriptionDao
+    private val animeSubscriptionDao: AnimeSubscriptionDao,
+    private val syncTrigger: LibrarySyncTrigger
 ) : PersonalLibraryRepository {
 
     override val favorites: Flow<List<AnimeLibraryEntity>> = animeLibraryDao.observeFavorites()
@@ -34,6 +36,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
                 watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L
             )
         )
+        syncTrigger.enqueue()
     }
 
     override suspend fun setWatchLater(animeId: String, isInWatchLater: Boolean, updatedAtEpochMillis: Long) {
@@ -49,6 +52,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
                 watchLaterUpdatedAtEpochMillis = watchLaterTimestamp
             )
         )
+        syncTrigger.enqueue()
     }
 
     override suspend fun saveProgress(progress: AnimeProgressEntity) {
@@ -56,6 +60,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
         animeProgressDao.upsert(progress.copy(
             updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
         ))
+        syncTrigger.enqueue()
     }
 
     override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) {
@@ -70,6 +75,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
                 isSubscribed = true
             )
         )
+        syncTrigger.enqueue()
     }
 
     override suspend fun setSubscriptionNotificationsEnabled(
@@ -84,6 +90,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
             notificationsEnabled = enabled,
             updatedAtEpochMillis = timestamp
         ))
+        syncTrigger.enqueue()
     }
 
     override suspend fun removeSubscription(animeId: String) {
@@ -103,5 +110,6 @@ class RoomPersonalLibraryRepository @Inject constructor(
                 updatedAtEpochMillis = timestamp
             ))
         }
+        syncTrigger.enqueue()
     }
 }

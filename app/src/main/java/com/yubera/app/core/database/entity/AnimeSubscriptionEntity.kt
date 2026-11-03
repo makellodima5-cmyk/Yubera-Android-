@@ -1,5 +1,6 @@
 package com.yubera.app.core.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,5 +10,5 @@ data class AnimeSubscriptionEntity(
     val notificationsEnabled: Boolean,
     val updatedAtEpochMillis: Long,
     val lastKnownEpisodesAired: Int? = null,
-    val isSubscribed: Boolean = true
+    @ColumnInfo(defaultValue = "1") val isSubscribed: Boolean = true
 )

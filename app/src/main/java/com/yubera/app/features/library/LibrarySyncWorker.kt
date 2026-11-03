@@ -79,6 +79,8 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                         local.updatedAtEpochMillis, local.sourceId,
                         server.updatedAtEpochMillis, server.sourceId
                     ) > 0
+                }.sortedBy { item ->
+                    if (item.deleted || ((item.itemType == TYPE_FAVORITE || item.itemType == TYPE_WATCHLIST) && item.payload.saved == false)) 0 else 1
                 }
             }
 
@@ -198,7 +200,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val current = libraryDao.getByAnimeId(item.animeId)
                 libraryDao.upsert(AnimeLibraryEntity(
                     animeId = item.animeId,
-                    isFavorite = item.payload.saved ?: false,
+                    isFavorite = !item.deleted && (item.payload.saved ?: false),
                     isInWatchLater = current?.isInWatchLater ?: false,
                     updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, item.updatedAtEpochMillis),
                     favoriteUpdatedAtEpochMillis = item.updatedAtEpochMillis,
@@ -210,7 +212,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 libraryDao.upsert(AnimeLibraryEntity(
                     animeId = item.animeId,
                     isFavorite = current?.isFavorite ?: false,
-                    isInWatchLater = item.payload.saved ?: false,
+                    isInWatchLater = !item.deleted && (item.payload.saved ?: false),
                     updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, item.updatedAtEpochMillis),
                     favoriteUpdatedAtEpochMillis = current?.favoriteUpdatedAtEpochMillis ?: 0L,
                     watchLaterUpdatedAtEpochMillis = item.updatedAtEpochMillis

@@ -1,5 +1,6 @@
 package com.yubera.app.core.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,6 +10,6 @@ data class AnimeLibraryEntity(
     val isFavorite: Boolean = false,
     val isInWatchLater: Boolean = false,
     val updatedAtEpochMillis: Long,
-    val favoriteUpdatedAtEpochMillis: Long = updatedAtEpochMillis,
-    val watchLaterUpdatedAtEpochMillis: Long = updatedAtEpochMillis
+    @ColumnInfo(defaultValue = "0") val favoriteUpdatedAtEpochMillis: Long = updatedAtEpochMillis,
+    @ColumnInfo(defaultValue = "0") val watchLaterUpdatedAtEpochMillis: Long = updatedAtEpochMillis
 )
