@@ -5,6 +5,7 @@ import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -110,6 +111,7 @@ class RemoteCatalogRepositoryTest {
         var metadata: CatalogMetadataEntity? = null
 
         override fun observeAll(): Flow<List<CatalogAnimeEntity>> = rows
+        override fun observeById(animeId: String): Flow<CatalogAnimeEntity?> = rows.map { items -> items.firstOrNull { it.animeId == animeId } }
         override suspend fun getAll(): List<CatalogAnimeEntity> = rows.value
         override suspend fun getMetadata(): CatalogMetadataEntity? = metadata
         override suspend fun clearCatalog() { rows.value = emptyList() }

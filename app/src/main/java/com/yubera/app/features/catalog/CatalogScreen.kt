@@ -43,7 +43,10 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
-fun CatalogScreen(viewModel: CatalogViewModel = hiltViewModel()) {
+fun CatalogScreen(
+    onAnimeClick: (AnimeCatalogItem) -> Unit,
+    viewModel: CatalogViewModel = hiltViewModel()
+) {
     val state by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -117,7 +120,11 @@ fun CatalogScreen(viewModel: CatalogViewModel = hiltViewModel()) {
                         }
                     }
                     items(state.items, key = AnimeCatalogItem::id) { anime ->
-                        CatalogAnimeCard(anime, Modifier.padding(horizontal = 16.dp))
+                        CatalogAnimeCard(
+                            anime = anime,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            onClick = { onAnimeClick(anime) }
+                        )
                     }
                     item { Spacer(Modifier.height(12.dp)) }
                 }
@@ -127,8 +134,13 @@ fun CatalogScreen(viewModel: CatalogViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun CatalogAnimeCard(anime: AnimeCatalogItem, modifier: Modifier = Modifier) {
+private fun CatalogAnimeCard(
+    anime: AnimeCatalogItem,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = YuberaSurface),
         shape = RoundedCornerShape(18.dp)

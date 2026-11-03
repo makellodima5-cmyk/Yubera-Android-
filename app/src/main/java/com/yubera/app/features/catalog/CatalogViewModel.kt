@@ -6,6 +6,7 @@ import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -60,13 +61,8 @@ class CatalogViewModel @Inject constructor(
         refresh()
     }
 
-    fun onQueryChange(value: String) {
-        query.value = value
-    }
-
-    fun onGenreSelected(value: String?) {
-        selectedGenre.value = value
-    }
+    fun onQueryChange(value: String) { query.value = value }
+    fun onGenreSelected(value: String?) { selectedGenre.value = value }
 
     fun refresh() {
         if (isRefreshing.value) return
@@ -75,6 +71,8 @@ class CatalogViewModel @Inject constructor(
             errorMessage.value = null
             try {
                 repository.refresh()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Exception) {
                 errorMessage.value = "Не удалось обновить каталог. Проверьте подключение к интернету."
             } finally {

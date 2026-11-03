@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -24,6 +25,11 @@ class RemoteCatalogRepository @Inject constructor(
     override fun observeCatalog(): Flow<List<AnimeCatalogItem>> =
         catalogDao.observeAll().map { rows ->
             rows.map { row -> json.decodeFromString<AnimeCatalogDto>(row.payloadJson).toDomain() }
+        }
+
+    override fun observeAnime(animeId: String): Flow<AnimeCatalogItem?> =
+        catalogDao.observeById(animeId).map { row ->
+            row?.let { json.decodeFromString<AnimeCatalogDto>(it.payloadJson).toDomain() }
         }
 
     override suspend fun refresh() = withContext(Dispatchers.IO) {

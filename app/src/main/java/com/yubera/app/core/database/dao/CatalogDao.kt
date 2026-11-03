@@ -14,6 +14,9 @@ interface CatalogDao {
     @Query("SELECT * FROM catalog_anime ORDER BY position ASC")
     fun observeAll(): Flow<List<CatalogAnimeEntity>>
 
+    @Query("SELECT * FROM catalog_anime WHERE animeId = :animeId LIMIT 1")
+    fun observeById(animeId: String): Flow<CatalogAnimeEntity?>
+
     @Query("SELECT * FROM catalog_anime ORDER BY position ASC")
     suspend fun getAll(): List<CatalogAnimeEntity>
 
