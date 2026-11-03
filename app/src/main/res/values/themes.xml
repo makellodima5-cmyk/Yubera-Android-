@@ -3,8 +3,16 @@
     <style name="Theme.Yubera" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#101116</item>
         <item name="android:navigationBarColor">#101116</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:colorAccent">#8E73FF</item>
+        <item name="android:windowBackground">#101116</item>
+        <item name="android:colorAccent">#FF5A3D</item>
+    </style>
+
+    <style name="Theme.Yubera.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/yubera_icon_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/yubera_app_icon_source</item>
+        <item name="postSplashScreenTheme">@style/Theme.Yubera</item>
     </style>
 </resources>
