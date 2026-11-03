@@ -118,7 +118,7 @@ Five bottom-navigation destinations:
 
 ## 6. Asset handling
 
-The supplied archive contains 14 PNG files, including one byte-identical duplicate (13 unique images). It includes portrait screen/reference artwork, a square app icon, wide banner artwork, a logo asset and portrait background artwork for startup/authentication. Preserve originals without destructive editing. During asset integration, assign descriptive filenames, place resources in Android-supported resource directories, and verify transparency, aspect ratio and density behavior. Do not use complete screen screenshots as production UI backgrounds; use the original component artwork and implement text, controls and layouts natively.
+The supplied archive contains 15 PNG files, including one byte-identical duplicate (14 unique images). It includes portrait screen/reference artwork, a square app icon, wide banner artwork, a logo asset and portrait background artwork for startup/authentication. Preserve originals without destructive editing. During asset integration, assign descriptive filenames, place resources in Android-supported resource directories, and verify transparency, aspect ratio and density behavior. Do not use complete screen screenshots as production UI backgrounds; use the original component artwork and implement text, controls and layouts natively.
 
 ## 7. Approaches considered
 

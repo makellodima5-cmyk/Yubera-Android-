@@ -52,11 +52,11 @@
 **Interfaces:**
 - Produces: Android application ID `com.yubera.app`; `YuberaApplication`; `MainActivity`; Gradle tasks `:app:assembleDebug` and `:app:testDebugUnitTest`.
 
-- [ ] **Step 1: Add Gradle wrapper and project configuration** with pinned compatible stable plugin/library versions and Java 17 toolchain. AGP 9.1.1 requires Gradle 9.3.1 and JDK 17; AGP supplies built-in Kotlin 2.2.10, so do not also apply `org.jetbrains.kotlin.android`. Apply `org.jetbrains.kotlin.plugin.compose` 2.2.10 where Compose is enabled.
-- [ ] **Step 2: Configure app module** with namespace/applicationId `com.yubera.app`, minSdk 26, selected stable target/compile SDK, Compose enabled, and release minification disabled until release hardening.
-- [ ] **Step 3: Add the Application and Activity entry points** and register them in the manifest.
-- [ ] **Step 4: Run the project configuration/build check** using `./gradlew :app:assembleDebug`; expected result: a successful debug APK build.
-- [ ] **Step 5: Commit** as `build: scaffold native Android application`.
+- [x] **Step 1: Add Gradle wrapper and project configuration** with pinned compatible stable plugin/library versions and Java 17 toolchain. AGP 9.1.1 requires Gradle 9.3.1 and JDK 17; AGP supplies built-in Kotlin 2.2.10, so do not also apply `org.jetbrains.kotlin.android`. Apply `org.jetbrains.kotlin.plugin.compose` 2.2.10 where Compose is enabled.
+- [x] **Step 2: Configure app module** with namespace/applicationId `com.yubera.app`, minSdk 26, selected stable target/compile SDK, Compose enabled, and release minification disabled until release hardening.
+- [x] **Step 3: Add the Application and Activity entry points** and register them in the manifest.
+- [x] **Step 4: Run the project configuration/build check** using `./gradlew :app:assembleDebug`; expected result: a successful debug APK build.
+- [x] **Step 5: Commit**. The scaffold, CI workflow and wrapper were added in separate verified commits.
 
 ### Task 2: Establish app architecture and dependency injection
 
@@ -96,7 +96,7 @@
 - Produces: central YUBERA color/theme definitions and named drawable resources.
 - Asset source: the latest user-provided archive; map files by visual inspection and dimensions before assigning resource names.
 
-- [ ] **Step 1: Inventory every PNG** by previewing it, recording dimensions, transparency and duplicate hashes; identify logo, app icon, startup art, banner and screen-specific artwork.
+- [x] **Step 1: Inventory every PNG** by previewing it, recording dimensions, transparency and duplicate hashes; identify logo, app icon, startup art, banner and screen-specific artwork.
 - [ ] **Step 2: Copy originals unchanged** into Android-supported resource directories; avoid unsupported nested directories under `res/drawable`. Build a valid adaptive launcher icon with both foreground and background resources referenced by `mipmap-anydpi-v26/ic_launcher.xml`; a lone XML file is not a complete adaptive icon.
 - [ ] **Step 3: Define theme tokens** from the approved screen references; do not invent a new visual direction.
 - [ ] **Step 4: Verify resource compilation** with `./gradlew :app:processDebugResources`; expected result: all resources compile and resolve.
