@@ -37,21 +37,17 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
 
-      - name: Set up Gradle 9.3.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
-
-      - name: Verify Gradle and Java
+      - name: Verify Android SDK packages
         run: |
-          java -version
-          gradle --version
+          sdkmanager --list_installed
+          test -d "$ANDROID_HOME/platforms/android-37"
 
       - name: Build debug APK and run unit tests
         run: |
-          gradle --no-daemon clean :app:processDebugResources :app:assembleDebug :app:testDebugUnitTest
+          chmod +x ./gradlew
+          ./gradlew --no-daemon clean :app:processDebugResources :app:assembleDebug :app:testDebugUnitTest
 
       - name: Upload debug APK
         if: success()
