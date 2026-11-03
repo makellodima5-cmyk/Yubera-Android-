@@ -143,6 +143,12 @@ class RoomPersonalLibraryRepositoryTest {
 
         override suspend fun getByAnimeId(animeId: String): AnimeSubscriptionEntity? = rows[animeId]
 
+        override suspend fun getNotificationSubscriptions(): List<AnimeSubscriptionEntity> = rows.values.filter { it.notificationsEnabled }
+
+        override suspend fun updateEpisodeWatermark(animeId: String, episodesAired: Int) {
+            rows[animeId]?.let { rows[animeId] = it.copy(lastKnownEpisodesAired = episodesAired) }
+        }
+
         override suspend fun upsert(entity: AnimeSubscriptionEntity) {
             rows[entity.animeId] = entity
             state.value = rows.values.toList()
