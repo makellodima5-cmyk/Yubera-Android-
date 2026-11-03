@@ -23,8 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.yubera.app.BuildConfig
 import com.yubera.app.core.ui.components.SectionBannerHeader
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
@@ -36,6 +36,7 @@ fun ProfileScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
+    val versionName = LocalContext.current.packageManager.getPackageInfo(LocalContext.current.packageName, 0).versionName.orEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
         SectionBannerHeader(title = "Профиль", subtitle = "Настройки YUBERA")
@@ -125,7 +126,7 @@ fun ProfileScreen(
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("О приложении", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("YUBERA Android ${BuildConfig.VERSION_NAME}", color = YuberaOnBackground)
+                    Text("YUBERA Android ${versionName}", color = YuberaOnBackground)
                     Text("Язык интерфейса: русский", color = YuberaMuted)
                 }
             }
