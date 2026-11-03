@@ -59,7 +59,7 @@ object DatabaseModule {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE anime_library ADD COLUMN favoriteUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
             database.execSQL("ALTER TABLE anime_library ADD COLUMN watchLaterUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
-            database.execSQL("UPDATE anime_library SET favoriteUpdatedAtEpochMillis = updatedAtEpochMillis, watchLaterUpdatedAtEpochMillis = updatedAtEpochMillis")
+            database.execSQL("UPDATE anime_library SET favoriteUpdatedAtEpochMillis = CASE WHEN isFavorite = 1 THEN updatedAtEpochMillis ELSE 0 END, watchLaterUpdatedAtEpochMillis = CASE WHEN isInWatchLater = 1 THEN updatedAtEpochMillis ELSE 0 END")
             database.execSQL("ALTER TABLE anime_subscriptions ADD COLUMN isSubscribed INTEGER NOT NULL DEFAULT 1")
         }
     }
