@@ -18,7 +18,7 @@ class RemoteCatalogRepositoryTest {
         val api = FakeCatalogApi(
             listOf(
                 page(1, 7, items("old", 48)),
-                page(2, 7, items("old", 1))
+                page(2, 7, items("old", 1, 48))
             )
         )
 
@@ -35,9 +35,9 @@ class RemoteCatalogRepositoryTest {
         val api = FakeCatalogApi(
             listOf(
                 page(1, 7, items("old", 48)),
-                page(2, 8, items("stale", 1)),
+                page(2, 8, items("stale", 1, 48)),
                 page(1, 8, items("new", 48)),
-                page(2, 8, items("new", 1))
+                page(2, 8, items("new", 1, 48))
             )
         )
 
@@ -76,7 +76,7 @@ class RemoteCatalogRepositoryTest {
         items = items
     )
 
-    private fun items(prefix: String, count: Int) = (0 until count).map { index ->
+    private fun items(prefix: String, count: Int, start: Int = 0) = (start until start + count).map { index ->
         AnimeCatalogDto(
             id = "$prefix-$index",
             title = "Title $prefix $index",
