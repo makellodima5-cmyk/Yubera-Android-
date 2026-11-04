@@ -2,9 +2,9 @@ package com.yubera.app.features.catalog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,17 +61,7 @@ fun CatalogScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp)
             )
-            Text(
-                "Сортировка",
-                color = YuberaMuted,
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
-            )
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp)
-            ) {
+            FilterRow(title = "Сортировка") {
                 items(CatalogSortOrder.entries) { order ->
                     FilterChip(
                         selected = state.sortOrder == order,
@@ -80,16 +70,12 @@ fun CatalogScreen(
                     )
                 }
             }
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item { Spacer(Modifier.width(8.dp)) }
+            FilterRow(title = "Жанр") {
                 item {
                     FilterChip(
                         selected = state.selectedGenre == null,
                         onClick = { viewModel.onGenreSelected(null) },
-                        label = { Text("Все жанры") }
+                        label = { Text("Все") }
                     )
                 }
                 items(state.genres) { genre ->
@@ -99,7 +85,38 @@ fun CatalogScreen(
                         label = { Text(genre) }
                     )
                 }
-                item { Spacer(Modifier.width(8.dp)) }
+            }
+            FilterRow(title = "Год") {
+                item {
+                    FilterChip(
+                        selected = state.selectedYear == null,
+                        onClick = { viewModel.onYearSelected(null) },
+                        label = { Text("Любой") }
+                    )
+                }
+                items(state.years) { year ->
+                    FilterChip(
+                        selected = state.selectedYear == year,
+                        onClick = { viewModel.onYearSelected(if (state.selectedYear == year) null else year) },
+                        label = { Text(year.toString()) }
+                    )
+                }
+            }
+            FilterRow(title = "Статус") {
+                item {
+                    FilterChip(
+                        selected = state.selectedStatus == null,
+                        onClick = { viewModel.onStatusSelected(null) },
+                        label = { Text("Любой") }
+                    )
+                }
+                items(state.statuses) { status ->
+                    FilterChip(
+                        selected = state.selectedStatus == status,
+                        onClick = { viewModel.onStatusSelected(if (state.selectedStatus == status) null else status) },
+                        label = { Text(status) }
+                    )
+                }
             }
 
             if (state.isRefreshing && state.items.isEmpty()) {
@@ -116,7 +133,7 @@ fun CatalogScreen(
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = state.errorMessage ?: "Попробуйте изменить запрос или снять фильтр жанра.",
+                            text = state.errorMessage ?: "Попробуйте изменить запрос или снять фильтры.",
                             color = YuberaMuted
                         )
                         if (state.errorMessage != null) {
@@ -158,6 +175,27 @@ fun CatalogScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FilterRow(
+    title: String,
+    content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            title,
+            color = YuberaMuted,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            content = content
+        )
     }
 }
 

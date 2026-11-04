@@ -9,6 +9,25 @@ enum class CatalogSortOrder(val title: String) {
     TITLE("По названию")
 }
 
+fun List<AnimeCatalogItem>.filterForCatalog(
+    query: String,
+    genre: String?,
+    year: Int?,
+    status: String?
+): List<AnimeCatalogItem> {
+    val normalizedQuery = query.trim().lowercase()
+    return filter { anime ->
+        val matchesQuery = normalizedQuery.isBlank() ||
+            anime.title.lowercase().contains(normalizedQuery) ||
+            (anime.englishTitle?.lowercase()?.contains(normalizedQuery) == true) ||
+            anime.originalTitle.lowercase().contains(normalizedQuery)
+        val matchesGenre = genre == null || genre in anime.genres
+        val matchesYear = year == null || anime.year == year
+        val matchesStatus = status == null || anime.status == status
+        matchesQuery && matchesGenre && matchesYear && matchesStatus
+    }
+}
+
 fun List<AnimeCatalogItem>.sortedForCatalog(order: CatalogSortOrder): List<AnimeCatalogItem> =
     when (order) {
         CatalogSortOrder.CATALOG -> this

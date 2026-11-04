@@ -2,16 +2,17 @@ package com.yubera.app.features
 
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.features.catalog.CatalogSortOrder
+import com.yubera.app.features.catalog.filterForCatalog
 import com.yubera.app.features.catalog.sortedForCatalog
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class CatalogSortOrderTest {
     private val items = listOf(
-        anime("b", "Beta", year = 2022, rating = 8.2),
-        anime("c", "Gamma", year = 2025, rating = null),
-        anime("a", "Alpha", year = 2024, rating = 9.1),
-        anime("d", "Delta", year = 0, rating = 7.5)
+        anime("b", "Beta", year = 2022, rating = 8.2, status = "Завершён", genres = listOf("Фэнтези")),
+        anime("c", "Gamma", year = 2025, rating = null, status = "Онгоинг", genres = listOf("Драма")),
+        anime("a", "Alpha", year = 2024, rating = 9.1, status = "Завершён", genres = listOf("Фэнтези")),
+        anime("d", "Delta", year = 0, rating = 7.5, status = "Анонс", genres = listOf("Комедия"))
     )
 
     @Test
@@ -34,7 +35,26 @@ class CatalogSortOrderTest {
         assertEquals(listOf("a", "b", "d", "c"), items.sortedForCatalog(CatalogSortOrder.TITLE).map { it.id })
     }
 
-    private fun anime(id: String, title: String, year: Int, rating: Double?) = AnimeCatalogItem(
+    @Test
+    fun filtersCanBeCombinedWithoutChangingOriginalCatalog() {
+        assertEquals(
+            listOf("b", "a"),
+            items.filterForCatalog(query = "", genre = "Фэнтези", year = null, status = "Завершён").map { it.id }
+        )
+        assertEquals(
+            listOf("c"),
+            items.filterForCatalog(query = "gamma", genre = null, year = 2025, status = "Онгоинг").map { it.id }
+        )
+    }
+
+    private fun anime(
+        id: String,
+        title: String,
+        year: Int,
+        rating: Double?,
+        status: String,
+        genres: List<String>
+    ) = AnimeCatalogItem(
         id = id,
         title = title,
         englishTitle = null,
@@ -42,8 +62,8 @@ class CatalogSortOrderTest {
         year = year,
         episodes = 12,
         rating = rating,
-        genres = listOf("Фэнтези"),
-        status = "Завершён",
+        genres = genres,
+        status = status,
         description = "",
         posterUrl = null,
         bannerUrl = null,
