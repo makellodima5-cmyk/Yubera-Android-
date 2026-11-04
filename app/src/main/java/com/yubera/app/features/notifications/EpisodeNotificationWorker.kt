@@ -37,6 +37,8 @@ interface EpisodeNotificationWorkerEntryPoint {
     fun userSettingsRepository(): UserSettingsRepository
 }
 
+private class GlobalNotificationsDisabledException : Exception()
+
 class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val entry = EntryPointAccessors.fromApplication(applicationContext, EpisodeNotificationWorkerEntryPoint::class.java)
@@ -96,7 +98,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                                         subscriptionNotificationsEnabled = currentSubscription.notificationsEnabled,
                                         systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
                                     )
-                                    if (!canDeliver) return@withContext Result.success()
+                                    if (!canDeliver) {
+                                        if (!currentSettings.notificationsEnabled || !currentSettings.newEpisodeNotificationsEnabled) {
+                                            throw GlobalNotificationsDisabledException()
+                                        }
+                                        throw IllegalStateException("Notifications became unavailable during delivery")
+                                    }
 
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
@@ -116,6 +123,8 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                 }
                 if (batchIndex < batches.lastIndex) delay(REQUEST_SPACING_MILLIS)
             }
+            Result.success()
+        } catch (_: GlobalNotificationsDisabledException) {
             Result.success()
         } catch (_: Exception) {
             Result.retry()
