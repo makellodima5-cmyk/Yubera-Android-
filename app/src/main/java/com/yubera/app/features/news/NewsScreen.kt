@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -42,7 +43,7 @@ fun NewsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         SectionBannerHeader(title = "Новости", subtitle = "Публикации новостного форума Shikimori")
         Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 10.dp),
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             androidx.compose.foundation.layout.Spacer(Modifier.padding(start = 4.dp))
@@ -55,6 +56,13 @@ fun NewsScreen(
             }
             androidx.compose.foundation.layout.Spacer(Modifier.padding(end = 4.dp))
         }
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = viewModel::onQueryChange,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            placeholder = { Text("Поиск по заголовку и тексту") },
+            singleLine = true
+        )
         Text(
             "Источник: Shikimori. Это лента публикаций одного источника, а не полный обзор всех новостей индустрии.",
             color = YuberaMuted,
@@ -67,9 +75,13 @@ fun NewsScreen(
             }
         } else if (state.articles.isEmpty()) {
             Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
-                Text("Публикаций пока нет", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    state.errorMessage ?: "Проверьте подключение или выберите другую категорию.",
+                    if (state.query.isNotBlank()) "Ничего не найдено" else "Публикаций пока нет",
+                    color = YuberaOnBackground,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    state.errorMessage ?: "Измените запрос или выберите другую категорию.",
                     color = YuberaMuted,
                     modifier = Modifier.padding(top = 8.dp)
                 )
