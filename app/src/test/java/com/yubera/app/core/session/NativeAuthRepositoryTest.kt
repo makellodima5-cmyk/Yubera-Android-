@@ -140,6 +140,47 @@ class NativeAuthRepositoryTest {
         assertNull(activeAccountStore.currentAccountId())
     }
 
+    @Test
+    fun currentProfileExposesOnlyFieldsForTheStoredAccount() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val user = TelegramSessionUser(
+            id = "user-1",
+            telegramId = "123456",
+            firstName = "Алексей",
+            lastName = "Иванов",
+            username = "yubera_user",
+            languageCode = "ru"
+        )
+        val api = FakeApi().apply {
+            sessionResponse = TelegramSessionResponse(authenticated = true, user = user)
+        }
+
+        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store)).getCurrentProfile()
+
+        assertEquals(user, profile)
+    }
+
+    @Test
+    fun currentProfileRejectsAResponseForAnotherAccount() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val api = FakeApi().apply {
+            sessionResponse = TelegramSessionResponse(
+                authenticated = true,
+                user = TelegramSessionUser(id = "user-2", firstName = "Другой пользователь")
+            )
+        }
+
+        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store)).getCurrentProfile()
+
+        assertNull(profile)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null

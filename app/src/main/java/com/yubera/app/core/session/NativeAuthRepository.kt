@@ -2,6 +2,7 @@ package com.yubera.app.core.session
 
 import com.yubera.app.data.auth.MobileAuthExchangeRequest
 import com.yubera.app.data.auth.TelegramSessionApi
+import com.yubera.app.data.auth.TelegramSessionUser
 import com.yubera.app.di.NetworkModule
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -105,6 +106,21 @@ class NativeAuthRepository @Inject constructor(
             // Preserve offline access only while the same stored token remains active.
             tokenStore.getAccessToken() == token
         }
+    }
+
+    /**
+     * Fetches the public profile fields for the currently authenticated YUBERA account.
+     * Both the bearer token and returned account ID are checked so a delayed response
+     * cannot display profile information from an account that has since been switched.
+     */
+    suspend fun getCurrentProfile(): TelegramSessionUser? {
+        val token = tokenStore.getAccessToken() ?: return null
+        val accountId = tokenStore.getAccountId() ?: return null
+        val response = api.getSession("Bearer $token")
+        if (tokenStore.getAccessToken() != token) return null
+        if (!response.authenticated) return null
+        val user = response.user ?: return null
+        return user.takeIf { it.id == accountId }
     }
 
     suspend fun logout() {

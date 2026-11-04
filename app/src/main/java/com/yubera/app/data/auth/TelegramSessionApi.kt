@@ -42,7 +42,7 @@ data class MobileAuthExchangeResponse(
 @Serializable
 data class TelegramSessionUser(
     val id: String,
-    val telegramUserId: String? = null,
+    val telegramId: String? = null,
     val firstName: String? = null,
     val lastName: String? = null,
     val username: String? = null,
