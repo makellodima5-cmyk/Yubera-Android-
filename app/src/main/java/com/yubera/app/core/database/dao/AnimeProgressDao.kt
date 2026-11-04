@@ -22,4 +22,7 @@ interface AnimeProgressDao {
 
     @Upsert
     suspend fun upsert(entity: AnimeProgressEntity)
+
+    @Query("DELETE FROM anime_progress WHERE accountId = :accountId AND animeId = :animeId")
+    suspend fun deleteByAnimeId(accountId: String, animeId: String)
 }

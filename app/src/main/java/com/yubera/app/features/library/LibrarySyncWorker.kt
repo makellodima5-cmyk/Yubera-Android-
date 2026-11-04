@@ -261,15 +261,21 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                     accountId = accountId
                 ))
             }
-            TYPE_PROGRESS -> progressDao.upsert(AnimeProgressEntity(
-                animeId = item.animeId,
-                seasonNumber = item.payload.seasonNumber,
-                episodeNumber = item.payload.episodeNumber,
-                positionMillis = item.payload.positionMillis ?: 0L,
-                durationMillis = item.payload.durationMillis ?: 0L,
-                updatedAtEpochMillis = item.updatedAtEpochMillis,
-                accountId = accountId
-            ))
+            TYPE_PROGRESS -> {
+                if (item.deleted) {
+                    progressDao.deleteByAnimeId(accountId, item.animeId)
+                } else {
+                    progressDao.upsert(AnimeProgressEntity(
+                        animeId = item.animeId,
+                        seasonNumber = item.payload.seasonNumber,
+                        episodeNumber = item.payload.episodeNumber,
+                        positionMillis = item.payload.positionMillis ?: 0L,
+                        durationMillis = item.payload.durationMillis ?: 0L,
+                        updatedAtEpochMillis = item.updatedAtEpochMillis,
+                        accountId = accountId
+                    ))
+                }
+            }
             TYPE_SUBSCRIPTION -> {
                 val current = subscriptionDao.getByAnimeId(accountId, item.animeId)
                 subscriptionDao.upsert(AnimeSubscriptionEntity(

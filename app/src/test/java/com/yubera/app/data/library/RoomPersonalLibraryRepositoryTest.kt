@@ -215,6 +215,10 @@ class RoomPersonalLibraryRepositoryTest {
             rows[entity.accountId to entity.animeId] = entity
             state.value = rows.values.toList()
         }
+        override suspend fun deleteByAnimeId(accountId: String, animeId: String) {
+            rows.remove(accountId to animeId)
+            state.value = rows.values.toList()
+        }
     }
 
     private class FakeAnimeSubscriptionDao : AnimeSubscriptionDao {
