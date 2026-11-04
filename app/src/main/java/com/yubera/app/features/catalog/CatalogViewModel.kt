@@ -18,6 +18,7 @@ data class CatalogUiState(
     val genres: List<String> = emptyList(),
     val query: String = "",
     val selectedGenre: String? = null,
+    val sortOrder: CatalogSortOrder = CatalogSortOrder.CATALOG,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 )
@@ -28,6 +29,7 @@ class CatalogViewModel @Inject constructor(
 ) : ViewModel() {
     private val query = MutableStateFlow("")
     private val selectedGenre = MutableStateFlow<String?>(null)
+    private val sortOrder = MutableStateFlow(CatalogSortOrder.CATALOG)
     private val isRefreshing = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
 
@@ -35,9 +37,10 @@ class CatalogViewModel @Inject constructor(
         repository.observeCatalog(),
         query,
         selectedGenre,
+        sortOrder,
         isRefreshing,
         errorMessage
-    ) { catalog, search, genre, refreshing, error ->
+    ) { catalog, search, genre, order, refreshing, error ->
         val normalizedQuery = search.trim().lowercase()
         val filtered = catalog.filter { anime ->
             val matchesQuery = normalizedQuery.isBlank() ||
@@ -48,10 +51,11 @@ class CatalogViewModel @Inject constructor(
             matchesQuery && matchesGenre
         }
         CatalogUiState(
-            items = filtered,
+            items = filtered.sortedForCatalog(order),
             genres = catalog.flatMap { it.genres }.distinct().sorted(),
             query = search,
             selectedGenre = genre,
+            sortOrder = order,
             isRefreshing = refreshing,
             errorMessage = error
         )
@@ -63,6 +67,7 @@ class CatalogViewModel @Inject constructor(
 
     fun onQueryChange(value: String) { query.value = value }
     fun onGenreSelected(value: String?) { selectedGenre.value = value }
+    fun onSortOrderSelected(value: CatalogSortOrder) { sortOrder.value = value }
 
     fun refresh() {
         if (isRefreshing.value) return

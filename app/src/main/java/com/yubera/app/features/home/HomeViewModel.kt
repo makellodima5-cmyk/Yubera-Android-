@@ -23,6 +23,7 @@ data class ContinueWatchingItem(
 data class HomeUiState(
     val continueWatching: List<ContinueWatchingItem> = emptyList(),
     val cataloguePicks: List<AnimeCatalogItem> = emptyList(),
+    val topRatedPicks: List<AnimeCatalogItem> = emptyList(),
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 )
@@ -50,6 +51,9 @@ class HomeViewModel @Inject constructor(
                 byId[item.animeId]?.let { ContinueWatchingItem(it, item) }
             },
             cataloguePicks = catalog.take(12),
+            topRatedPicks = catalog.filter { it.rating != null }
+                .sortedWith(compareByDescending<AnimeCatalogItem> { it.rating }.thenBy { it.title })
+                .take(12),
             isRefreshing = refreshing,
             errorMessage = error
         )

@@ -60,6 +60,25 @@ fun CatalogScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp)
             )
+            Text(
+                "Сортировка",
+                color = YuberaMuted,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+            )
+            LazyRow(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp)
+            ) {
+                items(CatalogSortOrder.entries) { order ->
+                    FilterChip(
+                        selected = state.sortOrder == order,
+                        onClick = { viewModel.onSortOrderSelected(order) },
+                        label = { Text(order.title) }
+                    )
+                }
+            }
             LazyRow(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -110,6 +129,14 @@ fun CatalogScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    item {
+                        Text(
+                            "Найдено: ${state.items.size}",
+                            color = YuberaMuted,
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                        )
+                    }
                     if (state.errorMessage != null) {
                         item {
                             Text(

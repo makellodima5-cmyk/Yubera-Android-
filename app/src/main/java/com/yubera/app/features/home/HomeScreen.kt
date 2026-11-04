@@ -71,6 +71,26 @@ fun HomeScreen(
                     }
                 }
             }
+            if (state.topRatedPicks.isNotEmpty()) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            "Высокий рейтинг",
+                            color = YuberaOnBackground,
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(horizontal = 18.dp)
+                        )
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 18.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.topRatedPicks, key = AnimeCatalogItem::id) { anime ->
+                                HomeAnimeTile(anime = anime, onClick = { onAnimeClick(anime.id) })
+                            }
+                        }
+                    }
+                }
+            }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
