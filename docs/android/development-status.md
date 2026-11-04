@@ -3,7 +3,7 @@
 **Last updated:** 2026-11-04  
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
 **Branch:** `main`  
-**Current source commit:** `336fbaf5be543500114377901629bf8e85cc699a`  
+**Current source commit:** `2e35c77bc612f8a3d8c1720c08ee838696ee8068`  
 **Latest verified CI:** Android CI #61, passed on `336fbaf5be543500114377901629bf8e85cc699a`.  
 **Debug APK artifact:** `yubera-debug-apk`, ID `13333986176`, 27,882,307 bytes; expires 2026-11-18. SHA-256 of the uploaded artifact ZIP: `17a04d9cf0e588d9b85de8f74fafb58c372905b90504f2a83fea4fec8dae11b8`.
 
@@ -80,6 +80,8 @@ The CI currently uses the default Android debug signing configuration. Comparing
 A separate review is recorded in `docs/android/news-sources-review.md`. It identifies Anime News Network as the first source worth approaching for permission to display headlines in a native Android app. ANN documents RSS/Atom feeds and a website newsfeed program, but its published instructions do not clearly grant reuse inside an Android APK. Crunchyroll also exposes RSS, but its terms restrict substantial-content copying/integration without explicit written permission. No new publisher feed has been integrated; Shikimori remains the only active source until rights and the technical contract are confirmed.
 
 ## Change log
+
+- 2026-11-04: Profile notification preference rows now toggle from the full row and expose switch semantics to accessibility services. Added date-formatting tests for ISO timestamps, date-only values and invalid input; CI pending.
 
 - 2026-11-04: Android CI #52 and #53 passed for continue-watching, catalog sorting/filters and rating-ranked home collection.
 - 2026-11-04: Android CI #54 passed for news search.
