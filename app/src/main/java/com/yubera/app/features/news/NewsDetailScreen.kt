@@ -21,7 +21,8 @@ fun NewsDetailScreen(onBack: () -> Unit, viewModel: NewsDetailViewModel = hiltVi
  val article = state.article
  val context = LocalContext.current
  Column(Modifier.fillMaxSize()) {
-  SectionBannerHeader(title = "Публикация", subtitle = "Материал и первоисточник", showBack = true, onBack = onBack)
+  TextButton(onClick = onBack) { Text("← Назад") }
+  SectionBannerHeader(title = "Публикация", subtitle = "Материал и первоисточник")
   if (article == null) {
    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
     Text("Публикация не найдена в сохранённой ленте.", color = YuberaOnBackground)
