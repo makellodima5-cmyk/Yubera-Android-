@@ -63,8 +63,8 @@ fun HomeScreen(
                     } else {
                         state.continueWatching.forEach { item ->
                             HomeProgressCard(
-                                title = item.anime.title,
-                                episode = item.progress.episodeNumber,
+                                anime = item.anime,
+                                progress = item.progress,
                                 onClick = { onAnimeClick(item.anime.id) }
                             )
                         }
