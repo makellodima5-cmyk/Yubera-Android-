@@ -11,6 +11,7 @@ import com.yubera.app.core.database.dao.AnimeProgressDao
 import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.dao.NewsDao
+import com.yubera.app.core.database.dao.NewsBookmarkDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,7 +26,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): YuberaDatabase =
         Room.databaseBuilder(context, YuberaDatabase::class.java, "yubera.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .build()
 
     @Provides fun provideAnimeEpisodeNotificationDao(database: YuberaDatabase): AnimeEpisodeNotificationDao = database.animeEpisodeNotificationDao()
@@ -34,6 +35,7 @@ object DatabaseModule {
     @Provides fun provideAnimeSubscriptionDao(database: YuberaDatabase): AnimeSubscriptionDao = database.animeSubscriptionDao()
     @Provides fun provideCatalogDao(database: YuberaDatabase): CatalogDao = database.catalogDao()
     @Provides fun provideNewsDao(database: YuberaDatabase): NewsDao = database.newsDao()
+    @Provides fun provideNewsBookmarkDao(database: YuberaDatabase): NewsBookmarkDao = database.newsBookmarkDao()
 
     private val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(database: SupportSQLiteDatabase) {
@@ -61,6 +63,12 @@ object DatabaseModule {
             database.execSQL("ALTER TABLE anime_library ADD COLUMN watchLaterUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
             database.execSQL("UPDATE anime_library SET favoriteUpdatedAtEpochMillis = CASE WHEN isFavorite = 1 THEN updatedAtEpochMillis ELSE 0 END, watchLaterUpdatedAtEpochMillis = CASE WHEN isInWatchLater = 1 THEN updatedAtEpochMillis ELSE 0 END")
             database.execSQL("ALTER TABLE anime_subscriptions ADD COLUMN isSubscribed INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS news_bookmarks (articleId INTEGER NOT NULL, savedAtEpochMillis INTEGER NOT NULL, PRIMARY KEY(articleId))")
         }
     }
 

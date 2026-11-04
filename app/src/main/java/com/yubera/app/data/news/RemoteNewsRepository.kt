@@ -1,19 +1,33 @@
 package com.yubera.app.data.news
 
 import com.yubera.app.core.database.dao.NewsDao
+import com.yubera.app.core.database.dao.NewsBookmarkDao
+import com.yubera.app.core.database.entity.NewsBookmarkEntity
 import com.yubera.app.core.database.entity.NewsArticleEntity
 import com.yubera.app.core.news.NewsCategory
 import com.yubera.app.core.news.NewsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class RemoteNewsRepository @Inject constructor(
     private val api: ShikimoriNewsApi,
-    private val newsDao: NewsDao
+    private val newsDao: NewsDao,
+    private val bookmarkDao: NewsBookmarkDao
 ) : NewsRepository {
     override fun observeNews(): Flow<List<NewsArticleEntity>> = newsDao.observeAll()
+
+    override fun observeBookmarkedIds(): Flow<List<Long>> = bookmarkDao.observeBookmarkedIds()
+
+    override fun observeNewsArticle(articleId: Long): Flow<NewsArticleEntity?> =
+        newsDao.observeAll().map { articles -> articles.firstOrNull { it.id == articleId } }
+
+    override suspend fun setBookmarked(articleId: Long, bookmarked: Boolean) = withContext(Dispatchers.IO) {
+        if (bookmarked) bookmarkDao.save(NewsBookmarkEntity(articleId, System.currentTimeMillis()))
+        else bookmarkDao.remove(articleId)
+    }
 
     override suspend fun refresh() = withContext(Dispatchers.IO) {
         val topics = api.getNews(page = 1, limit = PAGE_SIZE)
