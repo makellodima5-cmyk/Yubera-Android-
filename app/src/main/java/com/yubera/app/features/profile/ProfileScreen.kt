@@ -3,6 +3,9 @@ package com.yubera.app.features.profile
 import android.Manifest
 import android.content.Intent
 import android.os.Build
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -113,6 +116,9 @@ fun ProfileScreen(
                             Text(displayName, color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge)
                             user.username?.takeIf(String::isNotBlank)?.let {
                                 Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            formatRegistrationDate(user.createdAt)?.let { date ->
+                                Text("Дата регистрации: $date", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                             }
                             Text(
                                 "Вход выполнен через Telegram. Сессия хранится в зашифрованном виде с использованием Android Keystore.",
@@ -226,4 +232,12 @@ private fun SettingSwitch(
         Text(title, color = if (enabled) YuberaOnBackground else YuberaMuted, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
+}
+
+
+private fun formatRegistrationDate(value: String?): String? {
+    val datePart = value?.trim()?.take(10)?.takeIf(String::isNotBlank) ?: return null
+    return runCatching {
+        LocalDate.parse(datePart).format(DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.ROOT))
+    }.getOrNull()
 }

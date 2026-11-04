@@ -152,7 +152,8 @@ class NativeAuthRepositoryTest {
             firstName = "Алексей",
             lastName = "Иванов",
             username = "yubera_user",
-            languageCode = "ru"
+            languageCode = "ru",
+            createdAt = "2026-10-24 09:15:00"
         )
         val api = FakeApi().apply {
             sessionResponse = TelegramSessionResponse(authenticated = true, user = user)
@@ -161,6 +162,7 @@ class NativeAuthRepositoryTest {
         val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store)).getCurrentProfile()
 
         assertEquals(user, profile)
+        assertEquals("2026-10-24 09:15:00", profile?.createdAt)
     }
 
     @Test
