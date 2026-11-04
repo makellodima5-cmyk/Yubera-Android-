@@ -8,17 +8,20 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AnimeLibraryDao {
-    @Query("SELECT * FROM anime_library WHERE isFavorite = 1 ORDER BY updatedAtEpochMillis DESC")
-    fun observeFavorites(): Flow<List<AnimeLibraryEntity>>
+    @Query("SELECT * FROM anime_library WHERE accountId = :accountId AND isFavorite = 1 ORDER BY updatedAtEpochMillis DESC")
+    fun observeFavorites(accountId: String): Flow<List<AnimeLibraryEntity>>
 
-    @Query("SELECT * FROM anime_library WHERE isInWatchLater = 1 ORDER BY updatedAtEpochMillis DESC")
-    fun observeWatchLater(): Flow<List<AnimeLibraryEntity>>
+    @Query("SELECT * FROM anime_library WHERE accountId = :accountId AND isInWatchLater = 1 ORDER BY updatedAtEpochMillis DESC")
+    fun observeWatchLater(accountId: String): Flow<List<AnimeLibraryEntity>>
 
-    @Query("SELECT * FROM anime_library")
-    suspend fun getAll(): List<AnimeLibraryEntity>
+    @Query("SELECT * FROM anime_library WHERE accountId = :accountId")
+    suspend fun getAll(accountId: String): List<AnimeLibraryEntity>
 
-    @Query("SELECT * FROM anime_library WHERE animeId = :animeId LIMIT 1")
-    suspend fun getByAnimeId(animeId: String): AnimeLibraryEntity?
+    @Query("SELECT * FROM anime_library WHERE accountId = :accountId AND animeId = :animeId LIMIT 1")
+    suspend fun getByAnimeId(accountId: String, animeId: String): AnimeLibraryEntity?
+
+    @Query("UPDATE anime_library SET accountId = :accountId WHERE accountId = 'legacy-unassigned'")
+    suspend fun claimLegacyRows(accountId: String): Int
 
     @Upsert
     suspend fun upsert(entity: AnimeLibraryEntity)

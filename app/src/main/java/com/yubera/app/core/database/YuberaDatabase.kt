@@ -26,7 +26,7 @@ import com.yubera.app.core.database.entity.NewsArticleEntity
         CatalogMetadataEntity::class,
         NewsArticleEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class YuberaDatabase : RoomDatabase() {

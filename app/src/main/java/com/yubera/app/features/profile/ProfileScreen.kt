@@ -56,7 +56,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { confirmLogout = false },
             title = { Text("Выйти из аккаунта?") },
-            text = { Text("Локальная сессия будет удалена с этого устройства.") },
+            text = { Text("Сессия будет удалена с устройства. Личная библиотека сохранится отдельно для каждого аккаунта.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirmLogout = false

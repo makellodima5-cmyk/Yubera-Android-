@@ -15,7 +15,8 @@ import retrofit2.HttpException
 @Singleton
 class NativeAuthRepository @Inject constructor(
     private val api: TelegramSessionApi,
-    private val tokenStore: SecureTokenStore
+    private val tokenStore: SecureTokenStore,
+    private val activeAccountStore: ActiveAccountStore
 ) {
     fun createAuthorizationUrl(
         flow: String,
@@ -30,12 +31,7 @@ class NativeAuthRepository @Inject constructor(
         val state = randomToken()
         val challenge = hex(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(StandardCharsets.US_ASCII)))
         tokenStore.savePendingAuth(PendingNativeAuth(state, verifier, flow))
-        val params = linkedMapOf(
-            "native" to "1",
-            "flow" to flow,
-            "state" to state,
-            "code_challenge" to challenge
-        )
+        val params = linkedMapOf("native" to "1", "flow" to flow, "state" to state, "code_challenge" to challenge)
         if (flow == FLOW_REGISTER) {
             params["privacy_consent"] = "true"
             params["terms_accepted"] = "true"
@@ -53,7 +49,9 @@ class NativeAuthRepository @Inject constructor(
             "Сервер не подтвердил авторизацию."
         }
         require(response.accessToken.matches(EXCHANGE_CODE_PATTERN)) { "Сервер вернул некорректную сессию." }
-        tokenStore.saveAccessToken(response.accessToken)
+        val accountId = response.user.id.trim()
+        require(accountId.isNotEmpty()) { "Сервер не вернул идентификатор аккаунта." }
+        activeAccountStore.activateAccount(accountId, response.accessToken, claimLegacyRows = false)
         tokenStore.clearPendingAuth()
     }
 
@@ -61,13 +59,20 @@ class NativeAuthRepository @Inject constructor(
         val token = tokenStore.getAccessToken() ?: return false
         return try {
             val response = api.getSession("Bearer $token")
-            if (response.authenticated) true else {
-                tokenStore.clearAccessToken()
+            val accountId = response.user?.id?.trim().orEmpty()
+            if (!response.authenticated || accountId.isEmpty()) {
+                activeAccountStore.clearActiveAccount()
                 false
+            } else {
+                val currentAccountId = activeAccountStore.currentAccountId()
+                val claimLegacy = currentAccountId == null ||
+                    currentAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+                activeAccountStore.activateAccount(accountId, token, claimLegacyRows = claimLegacy)
+                true
             }
         } catch (error: HttpException) {
             if (error.code() == 401) {
-                tokenStore.clearAccessToken()
+                activeAccountStore.clearActiveAccount()
                 false
             } else true
         } catch (_: Exception) {
@@ -80,7 +85,7 @@ class NativeAuthRepository @Inject constructor(
         try {
             if (token != null) api.logout("Bearer $token")
         } finally {
-            tokenStore.clearAccessToken()
+            activeAccountStore.clearActiveAccount()
             tokenStore.clearPendingAuth()
         }
     }

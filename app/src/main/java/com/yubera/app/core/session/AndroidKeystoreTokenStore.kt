@@ -42,12 +42,32 @@ class AndroidKeystoreTokenStore @Inject constructor(
     }
 
     @Synchronized
+    override fun saveAuthenticatedSession(token: String, accountId: String) {
+        require(token.isNotBlank() && accountId.isNotBlank())
+        val encryptedToken = encrypt(token)
+        val encryptedAccountId = encrypt(accountId)
+        preferences.edit()
+            .putString(KEY_ACCESS_TOKEN, encryptedToken)
+            .putString(KEY_ACCOUNT_ID, encryptedAccountId)
+            .apply()
+    }
+
+    @Synchronized
+    override fun clearAuthenticatedSession() {
+        preferences.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_ACCOUNT_ID).apply()
+    }
+
+    @Synchronized
+    override fun getAccountId(): String? = preferences.getString(KEY_ACCOUNT_ID, null)?.let { encrypted ->
+        try { decrypt(encrypted).takeIf(String::isNotBlank) } catch (_: Exception) {
+            preferences.edit().remove(KEY_ACCOUNT_ID).apply()
+            null
+        }
+    }
+
+    @Synchronized
     override fun savePendingAuth(auth: PendingNativeAuth) {
-        val json = JSONObject()
-            .put("state", auth.state)
-            .put("verifier", auth.verifier)
-            .put("flow", auth.flow)
-            .toString()
+        val json = JSONObject().put("state", auth.state).put("verifier", auth.verifier).put("flow", auth.flow).toString()
         preferences.edit().putString(KEY_PENDING_AUTH, encrypt(json)).apply()
     }
 
@@ -102,6 +122,7 @@ class AndroidKeystoreTokenStore @Inject constructor(
     private companion object {
         const val PREFERENCES_NAME = "yubera_secure_auth"
         const val KEY_ACCESS_TOKEN = "access_token_encrypted"
+        const val KEY_ACCOUNT_ID = "account_id_encrypted"
         const val KEY_PENDING_AUTH = "pending_auth_encrypted"
         const val KEY_ALIAS = "com.yubera.app.auth.aes"
         const val ANDROID_KEYSTORE = "AndroidKeyStore"

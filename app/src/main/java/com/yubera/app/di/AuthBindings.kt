@@ -1,6 +1,8 @@
 package com.yubera.app.di
 
+import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.session.AndroidKeystoreTokenStore
+import com.yubera.app.core.session.RoomActiveAccountStore
 import com.yubera.app.core.session.SecureTokenStore
 import dagger.Binds
 import dagger.Module
@@ -14,4 +16,8 @@ abstract class AuthBindings {
     @Binds
     @Singleton
     abstract fun bindSecureTokenStore(implementation: AndroidKeystoreTokenStore): SecureTokenStore
+
+    @Binds
+    @Singleton
+    abstract fun bindActiveAccountStore(implementation: RoomActiveAccountStore): ActiveAccountStore
 }

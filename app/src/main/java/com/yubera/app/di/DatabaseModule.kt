@@ -25,7 +25,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): YuberaDatabase =
         Room.databaseBuilder(context, YuberaDatabase::class.java, "yubera.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .build()
 
     @Provides fun provideAnimeEpisodeNotificationDao(database: YuberaDatabase): AnimeEpisodeNotificationDao = database.animeEpisodeNotificationDao()
@@ -61,6 +61,30 @@ object DatabaseModule {
             database.execSQL("ALTER TABLE anime_library ADD COLUMN watchLaterUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
             database.execSQL("UPDATE anime_library SET favoriteUpdatedAtEpochMillis = CASE WHEN isFavorite = 1 THEN updatedAtEpochMillis ELSE 0 END, watchLaterUpdatedAtEpochMillis = CASE WHEN isInWatchLater = 1 THEN updatedAtEpochMillis ELSE 0 END")
             database.execSQL("ALTER TABLE anime_subscriptions ADD COLUMN isSubscribed INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE anime_library RENAME TO anime_library_v5")
+            database.execSQL("CREATE TABLE anime_library (animeId TEXT NOT NULL, isFavorite INTEGER NOT NULL, isInWatchLater INTEGER NOT NULL, updatedAtEpochMillis INTEGER NOT NULL, favoriteUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0, watchLaterUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0, accountId TEXT NOT NULL DEFAULT 'legacy-unassigned', PRIMARY KEY(accountId, animeId))")
+            database.execSQL("INSERT INTO anime_library (animeId, isFavorite, isInWatchLater, updatedAtEpochMillis, favoriteUpdatedAtEpochMillis, watchLaterUpdatedAtEpochMillis, accountId) SELECT animeId, isFavorite, isInWatchLater, updatedAtEpochMillis, favoriteUpdatedAtEpochMillis, watchLaterUpdatedAtEpochMillis, 'legacy-unassigned' FROM anime_library_v5")
+            database.execSQL("DROP TABLE anime_library_v5")
+
+            database.execSQL("ALTER TABLE anime_progress RENAME TO anime_progress_v5")
+            database.execSQL("CREATE TABLE anime_progress (animeId TEXT NOT NULL, seasonNumber INTEGER, episodeNumber INTEGER, positionMillis INTEGER NOT NULL, durationMillis INTEGER NOT NULL, updatedAtEpochMillis INTEGER NOT NULL, accountId TEXT NOT NULL DEFAULT 'legacy-unassigned', PRIMARY KEY(accountId, animeId))")
+            database.execSQL("INSERT INTO anime_progress (animeId, seasonNumber, episodeNumber, positionMillis, durationMillis, updatedAtEpochMillis, accountId) SELECT animeId, seasonNumber, episodeNumber, positionMillis, durationMillis, updatedAtEpochMillis, 'legacy-unassigned' FROM anime_progress_v5")
+            database.execSQL("DROP TABLE anime_progress_v5")
+
+            database.execSQL("ALTER TABLE anime_subscriptions RENAME TO anime_subscriptions_v5")
+            database.execSQL("CREATE TABLE anime_subscriptions (animeId TEXT NOT NULL, notificationsEnabled INTEGER NOT NULL, updatedAtEpochMillis INTEGER NOT NULL, lastKnownEpisodesAired INTEGER, isSubscribed INTEGER NOT NULL DEFAULT 1, accountId TEXT NOT NULL DEFAULT 'legacy-unassigned', PRIMARY KEY(accountId, animeId))")
+            database.execSQL("INSERT INTO anime_subscriptions (animeId, notificationsEnabled, updatedAtEpochMillis, lastKnownEpisodesAired, isSubscribed, accountId) SELECT animeId, notificationsEnabled, updatedAtEpochMillis, lastKnownEpisodesAired, isSubscribed, 'legacy-unassigned' FROM anime_subscriptions_v5")
+            database.execSQL("DROP TABLE anime_subscriptions_v5")
+
+            database.execSQL("ALTER TABLE anime_episode_notifications RENAME TO anime_episode_notifications_v5")
+            database.execSQL("CREATE TABLE anime_episode_notifications (animeId TEXT NOT NULL, episodeNumber INTEGER NOT NULL, createdAtEpochMillis INTEGER NOT NULL, deliveredAtEpochMillis INTEGER, accountId TEXT NOT NULL DEFAULT 'legacy-unassigned', PRIMARY KEY(accountId, animeId, episodeNumber))")
+            database.execSQL("INSERT INTO anime_episode_notifications (animeId, episodeNumber, createdAtEpochMillis, deliveredAtEpochMillis, accountId) SELECT animeId, episodeNumber, createdAtEpochMillis, deliveredAtEpochMillis, 'legacy-unassigned' FROM anime_episode_notifications_v5")
+            database.execSQL("DROP TABLE anime_episode_notifications_v5")
         }
     }
 }

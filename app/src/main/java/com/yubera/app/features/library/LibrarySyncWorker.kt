@@ -6,9 +6,13 @@ import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.yubera.app.core.database.YuberaDatabase
+import com.yubera.app.core.database.dao.AnimeLibraryDao
+import com.yubera.app.core.database.dao.AnimeProgressDao
+import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
+import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.session.SecureTokenStore
 import com.yubera.app.data.library.TelegramLibrarySyncApi
 import com.yubera.app.data.library.TelegramLibrarySyncItem
@@ -29,13 +33,20 @@ interface LibrarySyncWorkerEntryPoint {
     fun database(): YuberaDatabase
     fun telegramLibrarySyncApi(): TelegramLibrarySyncApi
     fun secureTokenStore(): SecureTokenStore
+    fun activeAccountStore(): ActiveAccountStore
 }
 
 class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val entry = EntryPointAccessors.fromApplication(applicationContext, LibrarySyncWorkerEntryPoint::class.java)
         val tokenStore = entry.secureTokenStore()
+        val activeAccountStore = entry.activeAccountStore()
         val token = tokenStore.getAccessToken() ?: return@withContext Result.success()
+        val accountId = tokenStore.getAccountId()
+            ?.takeIf { it.isNotBlank() && it != ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID }
+            ?: return@withContext Result.success()
+        if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
+
         val authorization = "Bearer $token"
         val database = entry.database()
         val api = entry.telegramLibrarySyncApi()
@@ -44,9 +55,10 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
         try {
             val initial = api.getLibrary(authorization)
             if (!initial.authenticated) {
-                tokenStore.clearAccessToken()
+                clearSessionIfCurrent(tokenStore, activeAccountStore, token, accountId)
                 return@withContext Result.success()
             }
+            if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
 
             val remote = initial.items.associateBy { key(it.itemType, it.animeId) }
             val outbound = database.withTransaction {
@@ -54,9 +66,9 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val progressDao = database.animeProgressDao()
                 val subscriptionDao = database.animeSubscriptionDao()
 
-                val localLibrary = libraryDao.getAll().associateBy { it.animeId }
-                val localProgress = progressDao.getAll().associateBy { it.animeId }
-                val localSubscriptions = subscriptionDao.getAll().associateBy { it.animeId }
+                val localLibrary = libraryDao.getAll(accountId).associateBy { it.animeId }
+                val localProgress = progressDao.getAll(accountId).associateBy { it.animeId }
+                val localSubscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
 
                 initial.items.forEach { item ->
                     val localTimestamp = localTimestamp(item.itemType, item.animeId, localLibrary, localProgress, localSubscriptions)
@@ -64,14 +76,14 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                             item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
                         ) > 0
                     ) {
-                        applyRemote(item, libraryDao, progressDao, subscriptionDao)
+                        applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
                     }
                 }
 
                 buildLocalItems(
-                    libraryDao.getAll(),
-                    progressDao.getAll(),
-                    subscriptionDao.getAll(),
+                    libraryDao.getAll(accountId),
+                    progressDao.getAll(accountId),
+                    subscriptionDao.getAll(accountId),
                     sourceId
                 ).filter { local ->
                     val server = remote[key(local.itemType, local.animeId)]
@@ -86,41 +98,69 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
 
             var canonicalItems = initial.items
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
+                if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
+                    return@withContext Result.success()
+                }
                 val response = api.syncLibrary(authorization, TelegramLibrarySyncRequest(batch))
                 if (!response.authenticated) {
-                    tokenStore.clearAccessToken()
+                    clearSessionIfCurrent(tokenStore, activeAccountStore, token, accountId)
+                    return@withContext Result.success()
+                }
+                if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
                     return@withContext Result.success()
                 }
                 canonicalItems = response.items
             }
 
+            if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
             database.withTransaction {
                 val libraryDao = database.animeLibraryDao()
                 val progressDao = database.animeProgressDao()
                 val subscriptionDao = database.animeSubscriptionDao()
-                val library = libraryDao.getAll().associateBy { it.animeId }
-                val progress = progressDao.getAll().associateBy { it.animeId }
-                val subscriptions = subscriptionDao.getAll().associateBy { it.animeId }
+                val library = libraryDao.getAll(accountId).associateBy { it.animeId }
+                val progress = progressDao.getAll(accountId).associateBy { it.animeId }
+                val subscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
                 canonicalItems.forEach { item ->
                     val localTimestamp = localTimestamp(item.itemType, item.animeId, library, progress, subscriptions)
                     if (LibrarySyncPolicy.compareVersions(
                             item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
                         ) > 0
                     ) {
-                        applyRemote(item, libraryDao, progressDao, subscriptionDao)
+                        applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
                     }
                 }
             }
             Result.success()
         } catch (error: HttpException) {
             if (error.code() == 401) {
-                tokenStore.clearAccessToken()
+                clearSessionIfCurrent(tokenStore, activeAccountStore, token, accountId)
                 Result.success()
             } else {
                 Result.retry()
             }
         } catch (_: Exception) {
             Result.retry()
+        }
+    }
+
+    private fun sessionMatches(
+        tokenStore: SecureTokenStore,
+        activeAccountStore: ActiveAccountStore,
+        token: String,
+        accountId: String
+    ): Boolean =
+        tokenStore.getAccessToken() == token &&
+            tokenStore.getAccountId() == accountId &&
+            activeAccountStore.currentAccountId() == accountId
+
+    private suspend fun clearSessionIfCurrent(
+        tokenStore: SecureTokenStore,
+        activeAccountStore: ActiveAccountStore,
+        token: String,
+        accountId: String
+    ) {
+        if (sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
+            activeAccountStore.clearActiveAccount()
         }
     }
 
@@ -175,7 +215,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
         }
     }
 
-    private suspend fun localTimestamp(
+    private fun localTimestamp(
         type: String,
         animeId: String,
         library: Map<String, AnimeLibraryEntity>,
@@ -190,32 +230,35 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
     }
 
     private suspend fun applyRemote(
+        accountId: String,
         item: TelegramLibrarySyncItem,
-        libraryDao: com.yubera.app.core.database.dao.AnimeLibraryDao,
-        progressDao: com.yubera.app.core.database.dao.AnimeProgressDao,
-        subscriptionDao: com.yubera.app.core.database.dao.AnimeSubscriptionDao
+        libraryDao: AnimeLibraryDao,
+        progressDao: AnimeProgressDao,
+        subscriptionDao: AnimeSubscriptionDao
     ) {
         when (item.itemType) {
             TYPE_FAVORITE -> {
-                val current = libraryDao.getByAnimeId(item.animeId)
+                val current = libraryDao.getByAnimeId(accountId, item.animeId)
                 libraryDao.upsert(AnimeLibraryEntity(
                     animeId = item.animeId,
                     isFavorite = !item.deleted && (item.payload.saved ?: false),
                     isInWatchLater = current?.isInWatchLater ?: false,
                     updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, item.updatedAtEpochMillis),
                     favoriteUpdatedAtEpochMillis = item.updatedAtEpochMillis,
-                    watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L
+                    watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L,
+                    accountId = accountId
                 ))
             }
             TYPE_WATCHLIST -> {
-                val current = libraryDao.getByAnimeId(item.animeId)
+                val current = libraryDao.getByAnimeId(accountId, item.animeId)
                 libraryDao.upsert(AnimeLibraryEntity(
                     animeId = item.animeId,
                     isFavorite = current?.isFavorite ?: false,
                     isInWatchLater = !item.deleted && (item.payload.saved ?: false),
                     updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, item.updatedAtEpochMillis),
                     favoriteUpdatedAtEpochMillis = current?.favoriteUpdatedAtEpochMillis ?: 0L,
-                    watchLaterUpdatedAtEpochMillis = item.updatedAtEpochMillis
+                    watchLaterUpdatedAtEpochMillis = item.updatedAtEpochMillis,
+                    accountId = accountId
                 ))
             }
             TYPE_PROGRESS -> progressDao.upsert(AnimeProgressEntity(
@@ -224,16 +267,18 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 episodeNumber = item.payload.episodeNumber,
                 positionMillis = item.payload.positionMillis ?: 0L,
                 durationMillis = item.payload.durationMillis ?: 0L,
-                updatedAtEpochMillis = item.updatedAtEpochMillis
+                updatedAtEpochMillis = item.updatedAtEpochMillis,
+                accountId = accountId
             ))
             TYPE_SUBSCRIPTION -> {
-                val current = subscriptionDao.getByAnimeId(item.animeId)
+                val current = subscriptionDao.getByAnimeId(accountId, item.animeId)
                 subscriptionDao.upsert(AnimeSubscriptionEntity(
                     animeId = item.animeId,
                     notificationsEnabled = item.payload.notificationsEnabled ?: true,
                     updatedAtEpochMillis = item.updatedAtEpochMillis,
                     lastKnownEpisodesAired = current?.lastKnownEpisodesAired,
-                    isSubscribed = !item.deleted
+                    isSubscribed = !item.deleted,
+                    accountId = accountId
                 ))
             }
         }

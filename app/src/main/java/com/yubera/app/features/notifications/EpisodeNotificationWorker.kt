@@ -107,7 +107,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
 
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
-                                    showNotification(stableId(subscription.animeId, episode), title, episode)
+                                    showNotification(stableId(accountId, subscription.animeId, episode), title, episode)
                                     notificationDao.markDelivered(
                                         subscription.animeId,
                                         episode,
@@ -170,7 +170,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
         NotificationManagerCompat.from(applicationContext).notify(id, notification)
     }
 
-    private fun stableId(animeId: String, episode: Int): Int = 31 * animeId.hashCode() + episode
+    private fun stableId(accountId: String, animeId: String, episode: Int): Int = 31 * (31 * accountId.hashCode() + animeId.hashCode()) + episode
 
     companion object {
         const val CHANNEL_ID = "yubera_new_episodes"
