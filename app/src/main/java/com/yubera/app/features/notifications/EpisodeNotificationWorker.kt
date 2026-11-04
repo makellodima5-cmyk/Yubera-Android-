@@ -41,14 +41,19 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
     override suspend fun doWork(): Result {
         val entry = EntryPointAccessors.fromApplication(applicationContext, EpisodeNotificationWorkerEntryPoint::class.java)
         return try {
-            val settings = entry.userSettingsRepository().settings.first()
-            if (!settings.notificationsEnabled || !settings.newEpisodeNotificationsEnabled || !hasPermission()) {
-                return Result.success()
-            }
-
+            val settingsRepository = entry.userSettingsRepository()
+            val settings = settingsRepository.settings.first()
             val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             createChannel(manager)
-            if (!notificationsAvailable(manager)) return Result.success()
+            if (!EpisodeNotificationPolicy.shouldDeliverNotification(
+                    notificationsEnabled = settings.notificationsEnabled,
+                    newEpisodeNotificationsEnabled = settings.newEpisodeNotificationsEnabled,
+                    subscriptionNotificationsEnabled = true,
+                    systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
+                )
+            ) {
+                return Result.success()
+            }
 
             val subscriptions = entry.animeSubscriptionDao().getNotificationSubscriptions()
             if (subscriptions.isEmpty()) return Result.success()
@@ -81,11 +86,18 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                             if (saved?.deliveredAtEpochMillis == null) {
                                 val currentSubscription = subscriptionDao.getByAnimeId(subscription.animeId)
                                 if (currentSubscription?.notificationsEnabled == true) {
-                                    // If system settings change during the request, preserve the watermark
-                                    // by retrying rather than silently consuming an undelivered episode.
-                                    if (!notificationsAvailable(manager)) {
-                                        throw IllegalStateException("Notifications became unavailable during delivery")
-                                    }
+                                    // Re-read every delivery gate because the user can change settings
+                                    // while the network request is in flight. Do not advance the watermark
+                                    // when global or system notifications are disabled mid-run.
+                                    val currentSettings = settingsRepository.settings.first()
+                                    val canDeliver = EpisodeNotificationPolicy.shouldDeliverNotification(
+                                        notificationsEnabled = currentSettings.notificationsEnabled,
+                                        newEpisodeNotificationsEnabled = currentSettings.newEpisodeNotificationsEnabled,
+                                        subscriptionNotificationsEnabled = currentSubscription.notificationsEnabled,
+                                        systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
+                                    )
+                                    if (!canDeliver) return@withContext Result.success()
+
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
                                     showNotification(stableId(subscription.animeId, episode), title, episode)
