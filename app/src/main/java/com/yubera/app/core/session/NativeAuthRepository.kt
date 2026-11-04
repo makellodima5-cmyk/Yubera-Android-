@@ -56,27 +56,54 @@ class NativeAuthRepository @Inject constructor(
     }
 
     suspend fun hasRestorableSession(): Boolean {
-        val token = tokenStore.getAccessToken() ?: return false
+        val token = tokenStore.getAccessToken()
+        if (token == null) {
+            activeAccountStore.clearActiveAccount()
+            return false
+        }
+
         return try {
             val response = api.getSession("Bearer $token")
             val accountId = response.user?.id?.trim().orEmpty()
+
+            // A logout or account switch may have happened while the request was in flight.
+            // Never let a stale response restore the old credentials.
+            if (tokenStore.getAccessToken() != token) return false
+
             if (!response.authenticated || accountId.isEmpty()) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
+                val storedAccountId = tokenStore.getAccountId()
                 val currentAccountId = activeAccountStore.currentAccountId()
-                val claimLegacy = currentAccountId == null ||
+                val legacyAccountPending = storedAccountId == null &&
                     currentAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+                val storedIdentityMatches = legacyAccountPending ||
+                    (storedAccountId != null && storedAccountId == currentAccountId)
+                if (!storedIdentityMatches) {
+                    return false
+                }
+                if (storedAccountId != null && storedAccountId != accountId) {
+                    activeAccountStore.clearActiveAccount()
+                    return false
+                }
+
+                val claimLegacy = legacyAccountPending
                 activeAccountStore.activateAccount(accountId, token, claimLegacyRows = claimLegacy)
                 true
             }
         } catch (error: HttpException) {
-            if (error.code() == 401) {
+            if (tokenStore.getAccessToken() != token) {
+                false
+            } else if (error.code() == 401) {
                 activeAccountStore.clearActiveAccount()
                 false
-            } else true
+            } else {
+                true
+            }
         } catch (_: Exception) {
-            true
+            // Preserve offline access only while the same stored token remains active.
+            tokenStore.getAccessToken() == token
         }
     }
 
@@ -99,7 +126,7 @@ class NativeAuthRepository @Inject constructor(
     }
 
     private fun base64Url(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
-    private fun hex(bytes: ByteArray): String = bytes.joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
+    private fun hex(bytes: ByteArray): String = bytes.joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
     private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
 
     private companion object {

@@ -15,8 +15,9 @@ class RoomActiveAccountStore @Inject constructor(
     private val database: YuberaDatabase
 ) : ActiveAccountStore {
     private val mutex = Mutex()
-    private val initialAccountId = tokenStore.getAccountId()
-        ?: if (tokenStore.getAccessToken() != null) ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID else null
+    private val initialAccountId = tokenStore.getAccessToken()?.let {
+        tokenStore.getAccountId() ?: ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+    }
     private val mutableAccountId = MutableStateFlow(initialAccountId)
 
     override val activeAccountId = mutableAccountId.asStateFlow()

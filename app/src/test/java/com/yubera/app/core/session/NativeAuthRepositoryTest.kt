@@ -73,7 +73,7 @@ class NativeAuthRepositoryTest {
         val activeAccountStore = FakeActiveAccountStore(store)
         NativeAuthRepository(api, store, activeAccountStore).completeCallback("C".repeat(43), "expected-state")
         assertEquals("A".repeat(43), store.token)
-        assertEquals("user-1", store.accountId)
+        assertEquals("user-1", store.storedAccountId)
         assertEquals("user-1", activeAccountStore.currentAccountId())
         assertNull(store.pending)
         assertTrue(api.exchangeCalled)
@@ -83,15 +83,35 @@ class NativeAuthRepositoryTest {
     @Test
     fun existingSessionClaimsUnassignedRowsOnlyAfterServerIdentifiesItsOwner() = runTest {
         val store = FakeTokenStore().apply { token = "A".repeat(43) }
-        val activeAccountStore = FakeActiveAccountStore(
-            store,
-            ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
-        )
+        val activeAccountStore = FakeActiveAccountStore(store, ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID)
         val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
         assertTrue(restored)
-        assertEquals("user-1", store.accountId)
+        assertEquals("user-1", store.storedAccountId)
         assertEquals("user-1", activeAccountStore.currentAccountId())
         assertTrue(activeAccountStore.claimedLegacyRows)
+    }
+
+    @Test
+    fun storedAccountMismatchWithServerIdentityClearsSessionInsteadOfRebindingLocalData() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "account-a"
+        }
+        val api = FakeApi().apply {
+            sessionResponse = TelegramSessionResponse(
+                authenticated = true,
+                user = TelegramSessionUser(id = "account-b")
+            )
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "account-a")
+
+        val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertNull(store.token)
+        assertNull(store.storedAccountId)
+        assertNull(activeAccountStore.currentAccountId())
+        assertFalse(activeAccountStore.claimedLegacyRows)
     }
 
     @Test
@@ -104,26 +124,38 @@ class NativeAuthRepositoryTest {
         val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
         assertFalse(restored)
         assertNull(store.token)
-        assertNull(store.accountId)
+        assertNull(store.storedAccountId)
+        assertNull(activeAccountStore.currentAccountId())
+    }
+
+    @Test
+    fun missingTokenCannotLeaveAnActiveAccountSelected() = runTest {
+        val store = FakeTokenStore().apply { storedAccountId = "account-a" }
+        val activeAccountStore = FakeActiveAccountStore(store, "account-a")
+
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertNull(store.storedAccountId)
         assertNull(activeAccountStore.currentAccountId())
     }
 
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
-        var accountId: String? = null
+        var storedAccountId: String? = null
         var pending: PendingNativeAuth? = null
         override fun saveAccessToken(token: String) { this.token = token }
         override fun getAccessToken(): String? = token
         override fun clearAccessToken() { token = null }
         override fun saveAuthenticatedSession(token: String, accountId: String) {
             this.token = token
-            this.accountId = accountId
+            this.storedAccountId = accountId
         }
         override fun clearAuthenticatedSession() {
             token = null
-            accountId = null
+            storedAccountId = null
         }
-        override fun getAccountId(): String? = accountId
+        override fun getAccountId(): String? = storedAccountId
         override fun savePendingAuth(auth: PendingNativeAuth) { pending = auth }
         override fun getPendingAuth(): PendingNativeAuth? = pending
         override fun clearPendingAuth() { pending = null }
