@@ -3,14 +3,15 @@
 **Last updated:** 2026-11-04  
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
 **Branch:** `main`  
-**Current verified Android commit:** `21341f4240b4601417a1f8bb567347ea59fe9499`
+**Current source commit:** `ff8edc6313ed8a04f9a808d8058734226c065a2f`  
+**Last verified CI commit:** `ebe3e260e568ffd3ecd6b5a714af2df56c90de1c` (Android CI #52 passed; CI #53 is running and CI #54 will cover the subsequent news-search change)
 
 ## Implemented
 
 - Native Kotlin + Jetpack Compose foundation, MVVM/repository layers, Hilt, Room, Retrofit, DataStore and Navigation Compose.
 - Original YUBERA assets, launcher resources, startup and bottom navigation.
-- R2-backed mobile catalogue API, revision-aware Room snapshot cache, search, genre filters, offline fallback and retry UI.
-- Home, catalogue, anime detail and player screens. The Kodik player uses the existing YUBERA server route; provider credentials remain server-side and WebView is confined to the player.
+- R2-backed mobile catalogue API, revision-aware Room snapshot cache, search, genre/year/status filters, sorting by API order/rating/year/title, offline fallback and retry UI.
+- Home, catalogue, anime detail and player screens. Home includes continue-watching cards with stored episode/time progress, a real-data high-rating collection (only titles with a supplied rating), and the original catalogue picks. News search is implemented in source across title, summary, linked title and author; CI verification pending. The Kodik player uses the existing YUBERA server route; provider credentials remain server-side and WebView is confined to the player.
 - Local-first favorites, watch-later, last-opened episode history and personal subscriptions.
 - Shikimori news feed with Room cache, attribution and category filters.
 - Profile theme settings, notification preferences, Android notification permission request and server-session logout.
@@ -32,7 +33,7 @@
 - Android CI #46 failed at `compileDebugKotlin` because the first account-scoped DAO update left the notification worker calling the old DAO signatures. The worker was updated to use the active account ID in commit `f2be99345f3478619d6a8372065120c992870672`.
 - Android CI #47 compiled the production Kotlin sources and assembled the debug APK, but failed at `compileDebugUnitTestKotlin` because a test fake property generated a JVM getter with the same signature as the interface method. The fake was renamed; account-identity mismatch and missing-token tests were added.
 - **Android CI #48 passed** on `76397dd9ddfbcc24448da6e951906790e779b17c`: SDK verification, `:app:processDebugResources`, `:app:assembleDebug`, `:app:testDebugUnitTest` and artifact upload all succeeded. Artifact `yubera-debug-apk`, ID `13310689399`, 27,827,345 bytes, expires 2026-11-18.
-- **Android CI #50 passed** on `21341f4240b4601417a1f8bb567347ea59fe9499`: debug resources, debug APK assembly, unit tests and artifact upload all succeeded. Remote progress-deletion tombstones now remove the matching account-scoped Room progress row.
+- **Android CI #50 passed** on `21341f4240b4601417a1f8bb567347ea59fe9499`: debug resources, debug APK assembly, unit tests and artifact upload all succeeded. Remote progress-deletion tombstones now remove the matching account-scoped Room progress row.\n- **Android CI #51 passed** on `9183f9aa74c34ad71f64334a2aa2e6c61b0a6504`: APK build and unit tests succeeded.\n- **Android CI #52 passed** on `ebe3e260e568ffd3ecd6b5a714af2df56c90de1c`: continue-watching cards display poster, season/episode, stored playback progress and a progress bar; debug APK build, unit tests and artifact upload succeeded.\n- Android CI #53 is running for `df2ead6cdcafda351308387af5665bcb7cab8dac`, covering catalogue sorting, year/status filters, rating-based home collection and policy tests. CI #54 will cover local news search added after #53 started.
 - Website CI #2568, #2569, #2570 and #2572 passed. Website CI #2572 validates the Android episode-progress projection into viewing history, deletion behavior, Worker build and the clean migration/test pipeline.
 - CI confirms source/build/test validation only. It does not confirm Cloudflare production deployment, live-account API behavior or real Android runtime behavior.
 
@@ -55,11 +56,11 @@
 | 2. Architecture | Implemented; local-first data and account-scoped sync path present |
 | 3. Startup and navigation | Implemented; runtime verification pending |
 | 4. Native authentication | Implemented; CI tests pass; live/runtime verification pending |
-| 5. Catalogue | Implemented; production/runtime verification pending |
-| 6. Home | Implemented; runtime verification pending |
+| 5. Catalogue | Search, genre/year/status filters and sorting implemented in source; CI #53 running; production/runtime verification pending |
+| 6. Home | Continue-watching progress card and rating-ranked real-data collection implemented in source; CI #52 passed, CI #53 covers current changes; runtime verification pending |
 | 7. Anime detail and player | Implemented; player/device QA pending |
 | 8. Personal library and sync | Account-scoped storage and sync implemented; episode progress projects to website history; production migration 0003, live conflict/retry and cross-device checks pending |
-| 9. News | Implemented; live API verification pending |
+| 9. News | Cached feed, category filters and source attribution implemented; local search added in source, CI #54 pending; article detail/bookmarks/sharing still pending |
 | 10. Profile | Implemented; runtime verification pending |
 | 11. Notifications | Implemented; account-scoped worker and delivery guards pass CI; live Shikimori and device-delivery verification pending |
 | 12. QA and release | Pending |
@@ -72,3 +73,4 @@
 - 2026-11-04: Account partitioning added to Room schema v6, repository flows, library sync and episode-notification workers. Existing rows are preserved in `legacy-unassigned` until an existing session is verified.
 - 2026-11-04: Native session restoration hardened against a missing token, a stale response after logout/account switch and mismatch between the persisted account ID and backend `user.id`. Account isolation and authentication edge-case unit tests passed Android CI #48.
 - 2026-11-04: Website episode-progress projection and deletion tombstones implemented; website CI #2572 and Android CI #50 passed. Added clean D1 migration 0003; production migration/deployment remains pending. User reports website migrations 0001 and 0002 are already applied.
+\n\n- 2026-11-04: Android CI #51 passed. Home continue-watching cards now show poster, episode, playback position/duration and stored progress bar; Android CI #52 passed. Added catalogue sorting (catalog order, rating, year, title), combined year/status filters, result count and high-rating home collection based only on catalog ratings; Android CI #53 running. Added local news search across title, summary, linked title and author with unit tests; CI #54 pending.\n
