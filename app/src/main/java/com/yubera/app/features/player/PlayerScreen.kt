@@ -1,6 +1,10 @@
 package com.yubera.app.features.player
 
 import android.annotation.SuppressLint
+import android.app.Dialog
+import android.content.Context
+import android.view.View
+import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -124,7 +128,7 @@ private fun PlayerWebView(url: String, modifier: Modifier = Modifier) {
                 settings.mediaPlaybackRequiresUserGesture = true
                 settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 settings.safeBrowsingEnabled = true
-                webChromeClient = WebChromeClient()
+                webChromeClient = FullscreenKodikWebChromeClient(context)
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                         val target = request?.url?.toString() ?: return true
@@ -145,9 +149,63 @@ private fun PlayerWebView(url: String, modifier: Modifier = Modifier) {
         },
         onRelease = { webView ->
             webView.stopLoading()
+            (webView.webChromeClient as? FullscreenKodikWebChromeClient)?.hideCustomView()
             webView.webChromeClient = null
             webView.webViewClient = WebViewClient()
             webView.destroy()
         }
     )
+}
+
+
+/**
+ * Kodik embeds may request HTML5 video fullscreen. Keep that view in a dedicated
+ * fullscreen window and always return control to WebView when it is dismissed.
+ */
+private class FullscreenKodikWebChromeClient(
+    private val context: Context
+) : WebChromeClient() {
+    private var fullscreenDialog: Dialog? = null
+    private var customViewCallback: CustomViewCallback? = null
+
+    override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+        if (view == null || fullscreenDialog != null) {
+            callback?.onCustomViewHidden()
+            return
+        }
+
+        val dialog = Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        dialog.setContentView(view)
+        dialog.window?.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        )
+        customViewCallback = callback
+        fullscreenDialog = dialog
+        dialog.setOnDismissListener {
+            fullscreenDialog = null
+            val activeCallback = customViewCallback
+            customViewCallback = null
+            activeCallback?.onCustomViewHidden()
+        }
+        dialog.show()
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
+    }
+
+    override fun onHideCustomView() {
+        hideCustomView()
+    }
+
+    fun hideCustomView() {
+        val dialog = fullscreenDialog ?: return
+        fullscreenDialog = null
+        dialog.setOnDismissListener(null)
+        dialog.dismiss()
+        val callback = customViewCallback
+        customViewCallback = null
+        callback?.onCustomViewHidden()
+    }
 }
