@@ -27,10 +27,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -101,14 +99,12 @@ fun ProfileScreen(
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IconButton(onClick = { }) {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Аватар профиля",
-                                tint = YuberaMuted,
-                                modifier = Modifier.size(52.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Аватар профиля",
+                            tint = YuberaMuted,
+                            modifier = Modifier.size(52.dp)
+                        )
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                             Text("Настройка аватара появится позже", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
@@ -227,8 +223,8 @@ fun ProfileScreen(
                     Text("О приложении", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                     Text("YUBERA Android ${versionName}", color = YuberaOnBackground)
                     Text("Язык интерфейса: русский", color = YuberaMuted)
-                    TextButton(onClick = { }) { Text("Пользовательское соглашение · скоро") }
-                    TextButton(onClick = { }) { Text("Политика конфиденциальности · скоро") }
+                    Text("Пользовательское соглашение · скоро", color = YuberaMuted)
+                    Text("Политика конфиденциальности · скоро", color = YuberaMuted)
                 }
             }
             Spacer(Modifier.height(8.dp))
