@@ -143,7 +143,7 @@ class NativeAuthRepository @Inject constructor(
 
     private fun base64Url(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     private fun hex(bytes: ByteArray): String = bytes.joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
-    private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
+    private fun encode(value: String): String = URLEncoder.encode(value, "UTF-8")
 
     private companion object {
         const val FLOW_LOGIN = "login"
