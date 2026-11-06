@@ -47,7 +47,7 @@ jobs:
       - name: Build debug APK and run unit tests
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon clean :app:processDebugResources :app:assembleDebug :app:testDebugUnitTest
+          ./gradlew --no-daemon clean :app:processDebugResources :app:lintDebug :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest
 
       - name: Upload debug APK
         if: success()

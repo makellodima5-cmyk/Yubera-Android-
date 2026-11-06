@@ -4,8 +4,8 @@
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
 **Branch:** `main`  
 **Current source commit:** `2e35c77bc612f8a3d8c1720c08ee838696ee8068`  
-**Latest verified CI:** Android CI #61, passed on `336fbaf5be543500114377901629bf8e85cc699a`.  
-**Debug APK artifact:** `yubera-debug-apk`, ID `13333986176`, 27,882,307 bytes; expires 2026-11-18. SHA-256 of the uploaded artifact ZIP: `17a04d9cf0e588d9b85de8f74fafb58c372905b90504f2a83fea4fec8dae11b8`.
+**Latest verified CI:** Android CI #63, passed on `d77abfbcfb97aa3bb4dd8a6e91c4a61d1e4fc4d1`.  
+**Debug APK artifact:** `yubera-debug-apk`, ID `13334869341`, 27,882,530 bytes; expires 2026-11-18. SHA-256 of the uploaded artifact ZIP: `01ffd960bd940bfc987b285b52143361492ead380547f867d2eebfd07d5c4973`.
 
 ## Implemented
 
@@ -37,7 +37,7 @@
 - **Android CI #61 passed** on `336fbaf5be543500114377901629bf8e85cc699a`. Android DTO supports nullable `createdAt`, profile screen formats valid registration dates as `dd.MM.yyyy`, and the repository test covers parsing of the field. Debug resources, APK assembly, unit tests and artifact upload all succeeded; artifact ID `13333986176`.
 - Website CI #2568, #2569, #2570 and #2572 passed for the earlier library sync and episode-progress projection changes.
 
-CI confirms compilation, unit tests and artifact packaging. It does not confirm production deployment, live backend compatibility or app runtime behavior on a real device.
+CI confirms compilation, unit tests and artifact packaging. It does not confirm production deployment, live backend compatibility or app runtime behavior on a real device. CI #64 adds Android Lint and a release-variant compilation check; it still does not sign a production APK.
 
 ## Known integration gaps and constraints
 
@@ -80,6 +80,9 @@ The CI currently uses the default Android debug signing configuration. Comparing
 A separate review is recorded in `docs/android/news-sources-review.md`. It identifies Anime News Network as the first source worth approaching for permission to display headlines in a native Android app. ANN documents RSS/Atom feeds and a website newsfeed program, but its published instructions do not clearly grant reuse inside an Android APK. Crunchyroll also exposes RSS, but its terms restrict substantial-content copying/integration without explicit written permission. No new publisher feed has been integrated; Shikimori remains the only active source until rights and the technical contract are confirmed.
 
 ## Change log
+
+- 2026-11-06: Android CI #63 passed after improving profile notification-row touch/accessibility behavior and adding registration-date formatter tests. Debug APK artifact ID `13334869341`.
+- 2026-11-06: CI workflow expanded to run `lintDebug` and compile the release variant in addition to debug resources, APK assembly and unit tests; validation pending.
 
 - 2026-11-04: Profile notification preference rows now toggle from the full row and expose switch semantics to accessibility services. Added date-formatting tests for ISO timestamps, date-only values and invalid input; CI pending.
 
