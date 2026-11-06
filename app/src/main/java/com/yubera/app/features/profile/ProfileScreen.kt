@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.size
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -105,7 +106,7 @@ fun ProfileScreen(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Аватар профиля",
                                 tint = YuberaMuted,
-                                modifier = Modifier.height(52.dp)
+                                modifier = Modifier.size(52.dp)
                             )
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
