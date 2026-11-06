@@ -17,12 +17,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
@@ -95,7 +99,20 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        IconButton(onClick = { }) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Аватар профиля",
+                                tint = YuberaMuted,
+                                modifier = Modifier.height(52.dp)
+                            )
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                            Text("Настройка аватара появится позже", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                     when {
                         accountProfile.isLoading -> {
                             Row(
@@ -209,6 +226,8 @@ fun ProfileScreen(
                     Text("О приложении", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                     Text("YUBERA Android ${versionName}", color = YuberaOnBackground)
                     Text("Язык интерфейса: русский", color = YuberaMuted)
+                    TextButton(onClick = { }) { Text("Пользовательское соглашение · скоро") }
+                    TextButton(onClick = { }) { Text("Политика конфиденциальности · скоро") }
                 }
             }
             Spacer(Modifier.height(8.dp))

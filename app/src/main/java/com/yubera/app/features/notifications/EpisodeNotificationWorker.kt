@@ -122,7 +122,9 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                                     ensureCurrentAccount(tokenStore, activeAccountStore, token, accountId)
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
-                                    showNotification(stableId(accountId, subscription.animeId, episode), title, episode)
+                                    if (!showNotification(stableId(accountId, subscription.animeId, episode), title, episode)) {
+                                        throw IllegalStateException("Notification permission became unavailable during delivery")
+                                    }
                                     notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
                                 }
                             }
@@ -186,12 +188,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             manager.getNotificationChannel(CHANNEL_ID)?.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    private fun showNotification(id: Int, title: String, episode: Int) {
+    private fun showNotification(id: Int, title: String, episode: Int): Boolean {
         // Permission can be revoked between the worker's initial check and delivery.
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
-        ) return
+        ) return false
 
         val intent = android.content.Intent(applicationContext, MainActivity::class.java)
         val pending = PendingIntent.getActivity(
@@ -208,10 +210,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
-        try {
+        return try {
             NotificationManagerCompat.from(applicationContext).notify(id, notification)
+            true
         } catch (_: SecurityException) {
-            // Notification permission may be revoked while this notification is posted.
+            // Retry later so the episode watermark is not advanced without delivery.
+            false
         }
     }
 
