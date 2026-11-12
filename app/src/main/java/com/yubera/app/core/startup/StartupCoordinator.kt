@@ -4,19 +4,17 @@ import com.yubera.app.core.session.SessionStateProvider
 import javax.inject.Inject
 
 /**
- * Prepares local storage before resolving the first app destination.
- * Authentication-specific behavior belongs in SessionStateProvider.
+ * Resolves the first app destination from the currently available session state.
+ *
+ * Authentication-specific behavior belongs in SessionStateProvider, not here.
  */
 class StartupCoordinator @Inject constructor(
-    private val localStorageInitializer: StartupLocalStorageInitializer,
     private val sessionStateProvider: SessionStateProvider
 ) {
-    suspend fun initialize(): StartupDestination {
-        localStorageInitializer.initialize()
-        return if (sessionStateProvider.hasRestorableSession()) {
+    suspend fun initialize(): StartupDestination =
+        if (sessionStateProvider.hasRestorableSession()) {
             StartupDestination.Home
         } else {
             StartupDestination.SignIn
         }
-    }
 }
