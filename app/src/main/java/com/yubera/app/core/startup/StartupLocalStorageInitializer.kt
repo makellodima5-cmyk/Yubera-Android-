@@ -1,6 +1,5 @@
 package com.yubera.app.core.startup
 
-import androidx.room.RoomDatabase
 import com.yubera.app.core.database.YuberaDatabase
 import javax.inject.Inject
 import javax.inject.Singleton
