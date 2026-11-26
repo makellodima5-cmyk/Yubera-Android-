@@ -48,8 +48,14 @@ class RoomActiveAccountStore @Inject constructor(
 
     override suspend fun clearActiveAccount() {
         mutex.withLock {
+            val previousAccountId = mutableAccountId.value
             mutableAccountId.value = null
-            tokenStore.clearAuthenticatedSession()
+            try {
+                tokenStore.clearAuthenticatedSession()
+            } catch (error: Exception) {
+                mutableAccountId.value = previousAccountId
+                throw error
+            }
         }
     }
 }
