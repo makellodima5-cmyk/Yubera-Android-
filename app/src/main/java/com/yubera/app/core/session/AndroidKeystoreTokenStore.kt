@@ -41,7 +41,9 @@ class AndroidKeystoreTokenStore @Inject constructor(
 
     @Synchronized
     override fun clearAccessToken() {
-        preferences.edit().remove(KEY_ACCESS_TOKEN).apply()
+        check(preferences.edit().remove(KEY_ACCESS_TOKEN).commit()) {
+            "Не удалось завершить локальную сессию."
+        }
     }
 
     @Synchronized
