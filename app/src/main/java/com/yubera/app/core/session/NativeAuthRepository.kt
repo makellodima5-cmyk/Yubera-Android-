@@ -67,10 +67,11 @@ class NativeAuthRepository @Inject constructor(
         val initialAccountId = activeAccountStore.currentAccountId()
         val legacyAccountPending = storedAccountId == null &&
             initialAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+        val legacyUnassignedWithoutTokenIdentity = storedAccountId == null && !legacyAccountPending
         val identityWasBoundAtStart = legacyAccountPending ||
             (storedAccountId != null && storedAccountId == initialAccountId)
 
-        if (!identityWasBoundAtStart) {
+        if (!identityWasBoundAtStart || legacyUnassignedWithoutTokenIdentity) {
             activeAccountStore.clearActiveAccount()
             return false
         }
@@ -89,7 +90,7 @@ class NativeAuthRepository @Inject constructor(
             if (!response.authenticated || serverAccountId.isEmpty()) {
                 activeAccountStore.clearActiveAccount()
                 false
-            } else if (!legacyAccountPending && storedAccountId != serverAccountId) {
+            } else if (storedAccountId != null && storedAccountId != serverAccountId) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
