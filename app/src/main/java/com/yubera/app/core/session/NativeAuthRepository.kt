@@ -63,52 +63,63 @@ class NativeAuthRepository @Inject constructor(
             return false
         }
 
+        val storedAccountId = tokenStore.getAccountId()
+        val initialAccountId = activeAccountStore.currentAccountId()
+        val legacyAccountPending = storedAccountId == null &&
+            initialAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+        val identityWasBoundAtStart = legacyAccountPending ||
+            (storedAccountId != null && storedAccountId == initialAccountId)
+
+        if (!identityWasBoundAtStart) {
+            activeAccountStore.clearActiveAccount()
+            return false
+        }
+
         return try {
             val response = api.getSession("Bearer $token")
-            val accountId = response.user?.id?.trim().orEmpty()
 
-            // A logout or account switch may have happened while the request was in flight.
-            // Never let a stale response restore the old credentials.
-            if (tokenStore.getAccessToken() != token) return false
+            // A logout, token replacement, or account switch may happen while this
+            // request is in flight. Never let its result restore a previous session.
+            if (tokenStore.getAccessToken() != token ||
+                tokenStore.getAccountId() != storedAccountId ||
+                activeAccountStore.currentAccountId() != initialAccountId
+            ) return false
 
-            if (!response.authenticated || accountId.isEmpty()) {
+            val serverAccountId = response.user?.id?.trim().orEmpty()
+            if (!response.authenticated || serverAccountId.isEmpty()) {
+                activeAccountStore.clearActiveAccount()
+                false
+            } else if (!legacyAccountPending && storedAccountId != serverAccountId) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                val storedAccountId = tokenStore.getAccountId()
-                val currentAccountId = activeAccountStore.currentAccountId()
-                val legacyAccountPending = storedAccountId == null &&
-                    currentAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
-                val storedIdentityMatches = legacyAccountPending ||
-                    (storedAccountId != null && storedAccountId == currentAccountId)
-                if (!storedIdentityMatches) {
-                    activeAccountStore.clearActiveAccount()
-                    return false
-                }
-                if (storedAccountId != null && storedAccountId != accountId) {
-                    activeAccountStore.clearActiveAccount()
-                    return false
-                }
-
-                val claimLegacy = legacyAccountPending
-                activeAccountStore.activateAccount(accountId, token, claimLegacyRows = claimLegacy)
+                activeAccountStore.activateAccount(
+                    serverAccountId,
+                    token,
+                    claimLegacyRows = legacyAccountPending
+                )
                 true
             }
         } catch (error: HttpException) {
-            if (tokenStore.getAccessToken() != token) {
+            if (tokenStore.getAccessToken() != token ||
+                tokenStore.getAccountId() != storedAccountId ||
+                activeAccountStore.currentAccountId() != initialAccountId
+            ) {
                 false
             } else if (error.code() == 401) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                tokenStore.getAccessToken() == token &&
-                    tokenStore.getAccountId()?.let { it == activeAccountStore.currentAccountId() } == true
+                // Non-auth server errors may be temporary. The already stored,
+                // account-bound session remains available for offline access.
+                !legacyAccountPending
             }
         } catch (_: Exception) {
-            // Keep the last validated local account usable while offline, but never
-            // keep it active after its credentials or account binding changed.
+            // Network unavailable: preserve only a previously account-bound session.
             tokenStore.getAccessToken() == token &&
-                tokenStore.getAccountId()?.let { it == activeAccountStore.currentAccountId() } == true
+                tokenStore.getAccountId() == storedAccountId &&
+                activeAccountStore.currentAccountId() == initialAccountId &&
+                !legacyAccountPending
         }
     }
 
