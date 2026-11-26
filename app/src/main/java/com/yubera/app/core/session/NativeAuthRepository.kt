@@ -154,8 +154,13 @@ class NativeAuthRepository @Inject constructor(
         try {
             if (token != null) api.logout("Bearer $token")
         } finally {
-            activeAccountStore.clearActiveAccount()
-            tokenStore.clearPendingAuth()
+            try {
+                activeAccountStore.clearActiveAccount()
+            } finally {
+                // Clear the pending OAuth verifier even if the remote logout or
+                // local session cleanup failed.
+                tokenStore.clearPendingAuth()
+            }
         }
     }
 
