@@ -45,6 +45,9 @@ class NativeAuthRepository @Inject constructor(
         require(code.matches(EXCHANGE_CODE_PATTERN)) { "Некорректный код авторизации." }
         val pending = tokenStore.getPendingAuth() ?: throw IllegalStateException("Сессия авторизации не найдена.")
         require(state == pending.state) { "Проверка состояния авторизации не пройдена." }
+        require(pending.flow == FLOW_LOGIN || pending.flow == FLOW_REGISTER) {
+            "Неизвестный тип авторизации."
+        }
         val response = api.exchangeCode(MobileAuthExchangeRequest(code, pending.verifier))
         require(response.authenticated && response.tokenType.equals("Bearer", ignoreCase = true)) {
             "Сервер не подтвердил авторизацию."
