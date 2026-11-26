@@ -62,13 +62,12 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
 
             val remote = initial.items.associateBy { key(it.itemType, it.animeId) }
-            val localItems = database.withTransaction {
-                buildLocalItems(
-                    database.animeLibraryDao().getAll(accountId),
-                    database.animeProgressDao().getAll(accountId),
-                    database.animeSubscriptionDao().getAll(accountId),
-                    sourceId
-                )
+            val localItems = database.animeLibraryDao().getAll(accountId).let { library ->
+                database.animeProgressDao().getAll(accountId).let { progress ->
+                    database.animeSubscriptionDao().getAll(accountId).let { subscriptions ->
+                        buildLocalItems(library, progress, subscriptions, sourceId)
+                    }
+                }
             }
             val outbound = localItems.filter { local ->
                 val server = remote[key(local.itemType, local.animeId)]
