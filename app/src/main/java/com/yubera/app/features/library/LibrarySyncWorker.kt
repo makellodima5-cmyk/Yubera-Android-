@@ -104,10 +104,10 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
 
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
-            // Compare and apply the server's canonical values against the latest
-            // account rows. Every individual merge is transactional.
+            // Apply each canonical server value only when it wins against the
+            // latest account-specific local version. Each comparison/write is atomic.
             canonicalItems.values.forEach { item ->
-                val changed = database.withTransaction {
+                database.withTransaction {
                     val libraryDao = database.animeLibraryDao()
                     val progressDao = database.animeProgressDao()
                     val subscriptionDao = database.animeSubscriptionDao()
@@ -127,12 +127,9 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                         ) > 0
                     ) {
                         applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
-                        true
-                    } else {
-                        false
                     }
                 }
-                if (changed && !sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
+                if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
                     return@withContext Result.success()
                 }
             }
