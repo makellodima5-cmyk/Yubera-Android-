@@ -131,14 +131,14 @@ class RoomPersonalLibraryRepository @Inject constructor(
                     isSubscribed = false,
                     accountId = accountId
                 ))
-        } else {
-            animeSubscriptionDao.upsert(current.copy(
-                notificationsEnabled = false,
-                isSubscribed = false,
-                updatedAtEpochMillis = timestamp
-            ))
-        }
-        syncTrigger.enqueue()
+            } else {
+                animeSubscriptionDao.upsert(current.copy(
+                    notificationsEnabled = false,
+                    isSubscribed = false,
+                    updatedAtEpochMillis = timestamp
+                ))
+            }
+            syncTrigger.enqueue()
         }
 
     private fun requireAccountId(): String =
