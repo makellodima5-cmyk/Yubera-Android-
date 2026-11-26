@@ -44,17 +44,23 @@ class AndroidKeystoreTokenStore @Inject constructor(
     @Synchronized
     override fun saveAuthenticatedSession(token: String, accountId: String) {
         require(token.isNotBlank() && accountId.isNotBlank())
+        // Write both credentials as one synchronous preference commit. If it fails,
+        // do not publish a partially authenticated token/account pair.
         val encryptedToken = encrypt(token)
         val encryptedAccountId = encrypt(accountId)
-        preferences.edit()
-            .putString(KEY_ACCESS_TOKEN, encryptedToken)
-            .putString(KEY_ACCOUNT_ID, encryptedAccountId)
-            .apply()
+        check(
+            preferences.edit()
+                .putString(KEY_ACCESS_TOKEN, encryptedToken)
+                .putString(KEY_ACCOUNT_ID, encryptedAccountId)
+                .commit()
+        ) { "Не удалось сохранить сессию." }
     }
 
     @Synchronized
     override fun clearAuthenticatedSession() {
-        preferences.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_ACCOUNT_ID).apply()
+        check(
+            preferences.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_ACCOUNT_ID).commit()
+        ) { "Не удалось завершить локальную сессию." }
     }
 
     @Synchronized
