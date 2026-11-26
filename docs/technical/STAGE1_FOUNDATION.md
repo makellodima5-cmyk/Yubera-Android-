@@ -26,9 +26,9 @@ Scope: Yubera Android only. This branch contains Stage 1 foundation work. UI des
 ## Current validation
 
 - [x] CI failure on the default branch investigated: Android resource merging failed because a file-based resource name started with uppercase `Y` (`YUBERA_logo_transparent.webp`). The lowercase-named asset is present in the working branch.
-- [ ] Wait for CI on the latest branch head and inspect its result.
-- [ ] Resolve any compile/lint/unit-test failures discovered by CI.
-- [ ] Re-run CI and confirm the latest head passes.
+- [x] Initial CI reached compilation and exposed two deprecated coroutine builder calls in the new concurrency test.
+- [x] Replaced those calls with structured coroutineScope/async imports.
+- [ ] Run CI on the latest branch head and confirm build, lint, and unit tests pass.
 
 ## Out of scope
 
