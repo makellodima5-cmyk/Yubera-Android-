@@ -62,31 +62,22 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
 
             val remote = initial.items.associateBy { key(it.itemType, it.animeId) }
-            // Build an immutable input snapshot, merge server-owned versions in memory,
-            // and write only the merged result after all requests have completed.
-            val outbound = database.withTransaction {
-                val libraryDao = database.animeLibraryDao()
-                val progressDao = database.animeProgressDao()
-                val subscriptionDao = database.animeSubscriptionDao()
-
-                val localLibrary = libraryDao.getAll(accountId).associateBy { it.animeId }
-                val localProgress = progressDao.getAll(accountId).associateBy { it.animeId }
-                val localSubscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
-
+            val localItems = database.withTransaction {
                 buildLocalItems(
-                    localLibrary.values,
-                    localProgress.values,
-                    localSubscriptions.values,
+                    database.animeLibraryDao().getAll(accountId),
+                    database.animeProgressDao().getAll(accountId),
+                    database.animeSubscriptionDao().getAll(accountId),
                     sourceId
-                ).filter { local ->
-                    val server = remote[key(local.itemType, local.animeId)]
-                    server == null || LibrarySyncPolicy.compareVersions(
-                        local.updatedAtEpochMillis, local.sourceId,
-                        server.updatedAtEpochMillis, server.sourceId
-                    ) > 0
-                }.sortedBy { item ->
-                    if (item.deleted || ((item.itemType == TYPE_FAVORITE || item.itemType == TYPE_WATCHLIST) && item.payload.saved == false)) 0 else 1
-                }
+                )
+            }
+            val outbound = localItems.filter { local ->
+                val server = remote[key(local.itemType, local.animeId)]
+                server == null || LibrarySyncPolicy.compareVersions(
+                    local.updatedAtEpochMillis, local.sourceId,
+                    server.updatedAtEpochMillis, server.sourceId
+                ) > 0
+            }.sortedBy { item ->
+                if (item.deleted || ((item.itemType == TYPE_FAVORITE || item.itemType == TYPE_WATCHLIST) && item.payload.saved == false)) 0 else 1
             }
 
             // Retain the full server snapshot and every acknowledgement across batches.
