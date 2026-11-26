@@ -100,6 +100,43 @@ class RemoteCatalogRepositoryTest {
         assertEquals(9L, dao.metadata?.revision)
     }
 
+
+    @Test
+    fun rejectsIncompleteLaterPageWithoutReplacingCache() = runTest {
+        val dao = FakeCatalogDao()
+        dao.replaceSnapshot(listOf(entity("cached")), CatalogMetadataEntity(revision = 3, updatedAt = "old"))
+        val first = page(1, 8, items("new", 48))
+        val incomplete = page(2, 8, items("new", 0, 48))
+
+        val result = runCatching { repository(FakeCatalogApi(listOf(first, incomplete)), dao).refresh() }
+
+        assertTrue(result.isFailure)
+        assertEquals(listOf("cached"), dao.rows.value.map { it.animeId })
+        assertEquals(3L, dao.metadata?.revision)
+    }
+
+    @Test
+    fun rejectsDuplicateIdsAcrossCatalogPages() = runTest {
+        val dao = FakeCatalogDao()
+        val first = page(1, 8, items("same", 48))
+        val second = page(2, 8, listOf(items("same", 1, 47).single()))
+
+        val result = runCatching { repository(FakeCatalogApi(listOf(first, second)), dao).refresh() }
+
+        assertTrue(result.isFailure)
+        assertTrue(dao.rows.value.isEmpty())
+    }
+
+    @Test
+    fun rejectsNegativeRevision() = runTest {
+        val dao = FakeCatalogDao()
+        val invalid = page(1, -1, emptyList()).copy(total = 0, totalPages = 1)
+
+        val result = runCatching { repository(FakeCatalogApi(listOf(invalid)), dao).refresh() }
+
+        assertTrue(result.isFailure)
+    }
+
     private fun repository(api: CatalogApi, dao: FakeCatalogDao) =
         RemoteCatalogRepository(api, dao, Json { ignoreUnknownKeys = true })
 
