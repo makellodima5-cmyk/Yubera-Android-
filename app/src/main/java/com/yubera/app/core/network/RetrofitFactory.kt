@@ -26,6 +26,9 @@ class RetrofitFactory @Inject constructor(
         require(parsedBaseUrl.username.isEmpty() && parsedBaseUrl.password.isEmpty()) {
             "API base URL must not contain credentials"
         }
+        require(parsedBaseUrl.encodedQuery == null && parsedBaseUrl.encodedFragment == null) {
+            "API base URL must not contain query parameters or fragments"
+        }
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
