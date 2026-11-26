@@ -47,7 +47,8 @@ class RoomPersonalLibraryRepository @Inject constructor(
             if (accountId == null) flowOf(emptyList()) else animeSubscriptionDao.observeAll(accountId)
         }
 
-    override suspend fun setFavorite(animeId: String, isFavorite: Boolean, updatedAtEpochMillis: Long) {
+    override suspend fun setFavorite(animeId: String, isFavorite: Boolean, updatedAtEpochMillis: Long) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeLibraryDao.getByAnimeId(accountId, animeId)
         val favoriteTimestamp = maxOf(updatedAtEpochMillis, (current?.favoriteUpdatedAtEpochMillis ?: 0L) + 1L)
@@ -61,9 +62,10 @@ class RoomPersonalLibraryRepository @Inject constructor(
             accountId = accountId
         ))
         syncTrigger.enqueue()
-    }
+        }
 
-    override suspend fun setWatchLater(animeId: String, isInWatchLater: Boolean, updatedAtEpochMillis: Long) {
+    override suspend fun setWatchLater(animeId: String, isInWatchLater: Boolean, updatedAtEpochMillis: Long) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeLibraryDao.getByAnimeId(accountId, animeId)
         val timestamp = maxOf(updatedAtEpochMillis, (current?.watchLaterUpdatedAtEpochMillis ?: 0L) + 1L)
@@ -77,9 +79,10 @@ class RoomPersonalLibraryRepository @Inject constructor(
             accountId = accountId
         ))
         syncTrigger.enqueue()
-    }
+        }
 
-    override suspend fun saveProgress(progress: AnimeProgressEntity) {
+    override suspend fun saveProgress(progress: AnimeProgressEntity) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeProgressDao.getByAnimeId(accountId, progress.animeId)
         animeProgressDao.upsert(progress.copy(
@@ -87,9 +90,10 @@ class RoomPersonalLibraryRepository @Inject constructor(
             updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
         ))
         syncTrigger.enqueue()
-    }
+        }
 
-    override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) {
+    override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
         val timestamp = maxOf(updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
@@ -102,18 +106,20 @@ class RoomPersonalLibraryRepository @Inject constructor(
             accountId = accountId
         ))
         syncTrigger.enqueue()
-    }
+        }
 
-    override suspend fun setSubscriptionNotificationsEnabled(animeId: String, enabled: Boolean, updatedAtEpochMillis: Long) {
+    override suspend fun setSubscriptionNotificationsEnabled(animeId: String, enabled: Boolean, updatedAtEpochMillis: Long) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeSubscriptionDao.getByAnimeId(accountId, animeId) ?: return
         if (!current.isSubscribed) return
         val timestamp = maxOf(updatedAtEpochMillis, current.updatedAtEpochMillis + 1L)
         animeSubscriptionDao.upsert(current.copy(notificationsEnabled = enabled, updatedAtEpochMillis = timestamp))
         syncTrigger.enqueue()
-    }
+        }
 
-    override suspend fun removeSubscription(animeId: String) {
+    override suspend fun removeSubscription(animeId: String) =
+        mutationMutex.withLock {
         val accountId = requireAccountId()
         val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
         val timestamp = maxOf(System.currentTimeMillis(), (current?.updatedAtEpochMillis ?: 0L) + 1L)
@@ -133,7 +139,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
             ))
         }
         syncTrigger.enqueue()
-    }
+        }
 
     private fun requireAccountId(): String =
         activeAccountStore.currentAccountId()?.takeIf(String::isNotBlank)
