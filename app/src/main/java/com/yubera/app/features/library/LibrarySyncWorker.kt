@@ -87,6 +87,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             // contain rows affected by the corresponding request.
             val canonicalItems = linkedMapOf<String, TelegramLibrarySyncItem>()
             initial.items.forEach { canonicalItems[key(it.itemType, it.animeId)] = it }
+            val outboundKeys = outbound.mapTo(mutableSetOf()) { key(it.itemType, it.animeId) }
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
                 if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
                     return@withContext Result.success()
