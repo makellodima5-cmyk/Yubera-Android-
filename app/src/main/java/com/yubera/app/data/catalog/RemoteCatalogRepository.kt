@@ -50,6 +50,7 @@ class RemoteCatalogRepository @Inject constructor(
                     break
                 }
                 require(next.page == pageNumber) { "API каталога вернул неверный номер страницы." }
+                require(next.pageSize == first.pageSize) { "Размер страницы изменился во время загрузки каталога." }
                 allItems += next.items
             }
 
@@ -83,15 +84,20 @@ class RemoteCatalogRepository @Inject constructor(
         require(page.schemaVersion == SUPPORTED_SCHEMA_VERSION) { "Версия API каталога не поддерживается." }
         require(page.page == 1) { "API каталога вернул неверную первую страницу." }
         require(page.total >= 0) { "API каталога вернул некорректное количество записей." }
-        require(page.totalPages in 1..MAX_PAGES) { "API каталога вернул некорректное количество страниц." }
-        require(page.items.size <= PAGE_SIZE) { "API каталога превысил размер страницы." }
-        require(page.items.size >= minOf(page.total, PAGE_SIZE)) { "API каталога вернул неполную первую страницу." }
+        require(page.pageSize == PAGE_SIZE) { "API каталога вернул неожиданный размер страницы." }
+        require(page.totalPages == expectedPageCount(page.total, page.pageSize)) {
+            "API каталога вернул некорректное количество страниц."
+        }
+        require(page.items.size <= page.pageSize) { "API каталога превысил размер страницы." }
+        require(page.items.size >= minOf(page.total, page.pageSize)) { "API каталога вернул неполную первую страницу." }
     }
+
+    private fun expectedPageCount(total: Int, pageSize: Int): Int =
+        if (total == 0) 1 else ((total.toLong() + pageSize - 1L) / pageSize).toInt()
 
     companion object {
         const val PAGE_SIZE = 48
         const val SUPPORTED_SCHEMA_VERSION = 1
-        const val MAX_PAGES = 10_000
         const val MAX_REVISION_ATTEMPTS = 2
     }
 }
