@@ -34,4 +34,28 @@ class RetrofitFactoryTest {
             factory.create("https://api.example.test/api")
         }
     }
+    @Test
+    fun rejectsMalformedBaseUrls() {
+        assertThrows(IllegalArgumentException::class.java) {
+            factory.create("https://")
+        }
+    }
+
+    @Test
+    fun rejectsBaseUrlsContainingCredentials() {
+        assertThrows(IllegalArgumentException::class.java) {
+            factory.create("https://user:password@api.example.test/")
+        }
+    }
+
+    @Test
+    fun rejectsBaseUrlsWithQueryOrFragment() {
+        assertThrows(IllegalArgumentException::class.java) {
+            factory.create("https://api.example.test/?token=secret")
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            factory.create("https://api.example.test/#fragment")
+        }
+    }
+
 }
