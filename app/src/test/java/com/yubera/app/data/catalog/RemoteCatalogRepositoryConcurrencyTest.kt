@@ -9,10 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RemoteCatalogRepositoryConcurrencyTest {
@@ -22,13 +20,10 @@ class RemoteCatalogRepositoryConcurrencyTest {
         val api = CountingCatalogApi()
         val repository = RemoteCatalogRepository(api, dao, Json { ignoreUnknownKeys = true })
 
-        coroutineScope {
-            val first = async { repository.refresh() }
-            val second = async { repository.refresh() }
-            advanceUntilIdle()
-            first.await()
-            second.await()
-        }
+        val first = async { repository.refresh() }
+        first.join()
+        val second = async { repository.refresh() }
+        second.join()
 
         assertEquals(1, api.firstPageCalls)
         assertEquals(48, dao.rows.value.size)
@@ -38,8 +33,10 @@ class RemoteCatalogRepositoryConcurrencyTest {
     private class CountingCatalogApi : CatalogApi {
         var firstPageCalls = 0
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto {
-            if (page == 1) firstPageCalls++
-            kotlinx.coroutines.delay(40)
+            if (page == 1) {
+                firstPageCalls++
+                kotlinx.coroutines.delay(40)
+            }
             return CatalogPageDto(
                 revision = 12L,
                 page = page,
