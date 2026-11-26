@@ -166,6 +166,22 @@ class NativeAuthRepositoryTest {
     }
 
     @Test
+    fun currentProfileRejectsResponseWhenActiveAccountChangesInFlight() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val api = FakeApi().apply {
+            beforeSessionResponse = { activeAccountStore.switchTo("user-2") }
+        }
+
+        val profile = NativeAuthRepository(api, store, activeAccountStore).getCurrentProfile()
+
+        assertNull(profile)
+    }
+
+    @Test
     fun currentProfileRejectsAResponseForAnotherAccount() = runTest {
         val store = FakeTokenStore().apply {
             token = "A".repeat(43)
@@ -233,6 +249,7 @@ class NativeAuthRepositoryTest {
         var claimedLegacyRows = false
 
         override fun currentAccountId(): String? = mutableAccountId.value
+        fun switchTo(accountId: String?) { mutableAccountId.value = accountId }
 
         override suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean) {
             if (claimLegacyRows) claimedLegacyRows = true
@@ -258,6 +275,7 @@ class NativeAuthRepositoryTest {
             authenticated = true,
             user = TelegramSessionUser(id = "user-1")
         )
+        var beforeSessionResponse: (() -> Unit)? = null
 
         override suspend fun exchangeCode(request: MobileAuthExchangeRequest): MobileAuthExchangeResponse {
             exchangeCalled = true
@@ -272,7 +290,10 @@ class NativeAuthRepositoryTest {
             )
         }
 
-        override suspend fun getSession(authorization: String) = sessionResponse
+        override suspend fun getSession(authorization: String): TelegramSessionResponse {
+            beforeSessionResponse?.invoke()
+            return sessionResponse
+        }
         override suspend fun logout(authorization: String) = TelegramSessionResponse(authenticated = false)
     }
 }
