@@ -36,17 +36,17 @@ class RoomPersonalLibraryRepository @Inject constructor(
         }
 
     override val watchLater: Flow<List<AnimeLibraryEntity>> =
-        activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        activeAccountId.flatMapLatest { accountId ->
             if (accountId == null) flowOf(emptyList()) else animeLibraryDao.observeWatchLater(accountId)
         }
 
     override val progress: Flow<List<AnimeProgressEntity>> =
-        activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        activeAccountId.flatMapLatest { accountId ->
             if (accountId == null) flowOf(emptyList()) else animeProgressDao.observeAll(accountId)
         }
 
     override val subscriptions: Flow<List<AnimeSubscriptionEntity>> =
-        activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        activeAccountId.flatMapLatest { accountId ->
             if (accountId == null) flowOf(emptyList()) else animeSubscriptionDao.observeAll(accountId)
         }
 
