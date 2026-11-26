@@ -1,7 +1,6 @@
 package com.yubera.app.features.library
 
 import android.content.Context
-import android.provider.Settings
 import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -199,20 +198,6 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 row.updatedAtEpochMillis, !row.isSubscribed, sourceId
             ))
         }
-    }
-
-    private fun localTimestamp(
-        type: String,
-        animeId: String,
-        library: Map<String, AnimeLibraryEntity>,
-        progress: Map<String, AnimeProgressEntity>,
-        subscriptions: Map<String, AnimeSubscriptionEntity>
-    ): Long = when (type) {
-        TYPE_FAVORITE -> library[animeId]?.favoriteUpdatedAtEpochMillis ?: 0L
-        TYPE_WATCHLIST -> library[animeId]?.watchLaterUpdatedAtEpochMillis ?: 0L
-        TYPE_PROGRESS -> progress[animeId]?.updatedAtEpochMillis ?: 0L
-        TYPE_SUBSCRIPTION -> subscriptions[animeId]?.updatedAtEpochMillis ?: 0L
-        else -> 0L
     }
 
     private suspend fun applyRemote(
