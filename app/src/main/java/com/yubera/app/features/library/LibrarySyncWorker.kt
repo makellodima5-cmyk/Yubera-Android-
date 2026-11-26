@@ -267,11 +267,6 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
     }
 
     private fun deviceSourceId(): String {
-        val androidId = Settings.Secure.getString(
-            applicationContext.contentResolver,
-            Settings.Secure.ANDROID_ID
-        ).orEmpty()
-
         // The sync tie-breaker only needs to be stable within this installation.
         // Do not persist raw device identifiers or rely on them being available.
         val deviceIdentity = applicationContext.getSharedPreferences("yubera_sync", Context.MODE_PRIVATE)
