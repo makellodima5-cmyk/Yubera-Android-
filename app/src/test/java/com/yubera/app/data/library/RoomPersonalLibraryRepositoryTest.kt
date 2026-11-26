@@ -9,6 +9,8 @@ import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.features.library.LibrarySyncTrigger
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
