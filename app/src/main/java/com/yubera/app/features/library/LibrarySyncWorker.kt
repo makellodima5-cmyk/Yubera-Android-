@@ -280,15 +280,14 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             Settings.Secure.ANDROID_ID
         ).orEmpty()
 
-        // Use a stable per-install fallback if Android does not expose ANDROID_ID.
-        val deviceIdentity = androidId.ifBlank {
-            applicationContext.getSharedPreferences("yubera_sync", Context.MODE_PRIVATE)
-                .let { preferences ->
-                    preferences.getString("source_install_id", null) ?: UUID.randomUUID().toString().also { id ->
-                        preferences.edit().putString("source_install_id", id).apply()
-                    }
+        // The sync tie-breaker only needs to be stable within this installation.
+        // Do not persist raw device identifiers or rely on them being available.
+        val deviceIdentity = applicationContext.getSharedPreferences("yubera_sync", Context.MODE_PRIVATE)
+            .let { preferences ->
+                preferences.getString("source_install_id", null) ?: UUID.randomUUID().toString().also { id ->
+                    preferences.edit().putString("source_install_id", id).apply()
                 }
-        }
+            }
         val digest = MessageDigest.getInstance("SHA-256").digest(deviceIdentity.toByteArray())
         val suffix = digest.take(10).joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
         return "android-$suffix"
