@@ -130,6 +130,23 @@ class RoomPersonalLibraryRepositoryTest {
     }
 
     @Test
+    fun concurrentFavoriteWritesKeepTheLatestMutationTimestamp() = runTest {
+        val libraryDao = FakeAnimeLibraryDao()
+        val repository = createRepository(libraryDao, FakeAnimeProgressDao(), FakeAnimeSubscriptionDao())
+
+        kotlinx.coroutines.coroutineScope {
+            val first = launch { repository.setFavorite("anime-race", true, 100L) }
+            val second = launch { repository.setFavorite("anime-race", false, 100L) }
+            first.join()
+            second.join()
+        }
+
+        val saved = libraryDao.getByAnimeId("account-a", "anime-race")
+        assertEquals(101L, saved?.favoriteUpdatedAtEpochMillis)
+        assertFalse(saved?.isFavorite ?: true)
+    }
+
+    @Test
     fun personalLibraryIsPartitionedAndRestoredWhenSwitchingAccounts() = runTest {
         val accountStore = FakeActiveAccountStore("account-a")
         val libraryDao = FakeAnimeLibraryDao()
