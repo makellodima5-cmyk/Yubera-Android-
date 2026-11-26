@@ -100,45 +100,37 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
 
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
             // Merge the server's acknowledged records into the current local state.
-            // The transaction keeps each read/compare/write sequence consistent.
-            database.withTransaction {
-                val libraryDao = database.animeLibraryDao()
-                val progressDao = database.animeProgressDao()
-                val subscriptionDao = database.animeSubscriptionDao()
-                canonicalItems.values.forEach { item ->
-                    when (item.itemType) {
-                        TYPE_FAVORITE, TYPE_WATCHLIST -> {
-                            val current = libraryDao.getByAnimeId(accountId, item.animeId)
-                            val localTimestamp = if (item.itemType == TYPE_FAVORITE) {
-                                current?.favoriteUpdatedAtEpochMillis ?: 0L
-                            } else {
-                                current?.watchLaterUpdatedAtEpochMillis ?: 0L
-                            }
-                            if (LibrarySyncPolicy.compareVersions(
-                                    item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
-                                ) > 0
-                            ) {
-                                applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
-                            }
-                        }
-                        TYPE_PROGRESS -> {
-                            val current = progressDao.getByAnimeId(accountId, item.animeId)
-                            if (LibrarySyncPolicy.compareVersions(
-                                    item.updatedAtEpochMillis, item.sourceId, current?.updatedAtEpochMillis ?: 0L, sourceId
-                                ) > 0
-                            ) {
-                                applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
-                            }
-                        }
-                        TYPE_SUBSCRIPTION -> {
-                            val current = subscriptionDao.getByAnimeId(accountId, item.animeId)
-                            if (LibrarySyncPolicy.compareVersions(
-                                    item.updatedAtEpochMillis, item.sourceId, current?.updatedAtEpochMillis ?: 0L, sourceId
-                                ) > 0
-                            ) {
-                                applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
-                            }
-                        }
+            // Merge each server acknowledgement only when it is newer than the
+            // corresponding local value. Favorites and watch-later have separate versions.
+            val localState = database.withTransaction {
+                val library = database.animeLibraryDao().getAll(accountId).associateBy { it.animeId }
+                val progress = database.animeProgressDao().getAll(accountId).associateBy { it.animeId }
+                val subscriptions = database.animeSubscriptionDao().getAll(accountId).associateBy { it.animeId }
+                Triple(library, progress, subscriptions)
+            }
+            canonicalItems.values.forEach { item ->
+                val currentVersion = when (item.itemType) {
+                    TYPE_FAVORITE -> localState.first[item.animeId]?.favoriteUpdatedAtEpochMillis ?: 0L
+                    TYPE_WATCHLIST -> localState.first[item.animeId]?.watchLaterUpdatedAtEpochMillis ?: 0L
+                    TYPE_PROGRESS -> localState.second[item.animeId]?.updatedAtEpochMillis ?: 0L
+                    TYPE_SUBSCRIPTION -> localState.third[item.animeId]?.updatedAtEpochMillis ?: 0L
+                    else -> 0L
+                }
+                if (LibrarySyncPolicy.compareVersions(
+                        item.updatedAtEpochMillis,
+                        item.sourceId,
+                        currentVersion,
+                        sourceId
+                    ) > 0
+                ) {
+                    database.withTransaction {
+                        applyRemote(
+                            accountId,
+                            item,
+                            database.animeLibraryDao(),
+                            database.animeProgressDao(),
+                            database.animeSubscriptionDao()
+                        )
                     }
                 }
             }
