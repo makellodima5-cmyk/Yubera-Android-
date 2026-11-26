@@ -239,7 +239,41 @@ class NativeAuthRepositoryTest {
         assertTrue(restored)
     }
 
-    private class FakeTokenStore : SecureTokenStore {
+
+    @Test
+    fun logoutClearsLocalCredentialsEvenWhenRemoteLogoutFails() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+            pending = PendingNativeAuth("state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+
+        runCatching {
+            NativeAuthRepository(FailingApi(), store, activeAccountStore).logout()
+        }
+
+        assertNull(store.token)
+        assertNull(store.storedAccountId)
+        assertNull(store.pending)
+        assertNull(activeAccountStore.currentAccountId())
+    }
+
+    @Test
+    fun clearingPendingAuthFailureDoesNotUndoSuccessfulCallback() = runTest {
+        val store = FailingPendingClearTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FakeActiveAccountStore(store)
+        NativeAuthRepository(FakeApi(), store, activeAccountStore)
+            .completeCallback("C".repeat(43), "expected-state")
+
+        assertEquals("A".repeat(43), store.token)
+        assertEquals("user-1", store.storedAccountId)
+        assertEquals("user-1", activeAccountStore.currentAccountId())
+    }
+
+    private open class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
         var pending: PendingNativeAuth? = null
@@ -258,6 +292,11 @@ class NativeAuthRepositoryTest {
         override fun savePendingAuth(auth: PendingNativeAuth) { pending = auth }
         override fun getPendingAuth(): PendingNativeAuth? = pending
         override fun clearPendingAuth() { pending = null }
+    }
+
+
+    private class FailingPendingClearTokenStore : FakeTokenStore() {
+        override fun clearPendingAuth() { error("local clear failed") }
     }
 
     private class FakeActiveAccountStore(
