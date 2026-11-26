@@ -132,7 +132,8 @@ class NativeAuthRepository @Inject constructor(
         val token = tokenStore.getAccessToken() ?: return null
         val accountId = tokenStore.getAccountId() ?: return null
         val response = api.getSession("Bearer $token")
-        if (tokenStore.getAccessToken() != token) return null
+        if (tokenStore.getAccessToken() != token || tokenStore.getAccountId() != accountId) return null
+        if (activeAccountStore.currentAccountId() != accountId) return null
         if (!response.authenticated) return null
         val user = response.user ?: return null
         return user.takeIf { it.id == accountId }
