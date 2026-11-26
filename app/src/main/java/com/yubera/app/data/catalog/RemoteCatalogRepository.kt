@@ -6,7 +6,6 @@ import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
