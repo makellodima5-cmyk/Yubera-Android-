@@ -30,7 +30,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
     private val mutationMutex = Mutex()
     private val activeAccountId = activeAccountStore.activeAccountId
         .distinctUntilChanged()
-        .onEach { mutationMutex.withLock { /* Wait for any write targeting the previous account to finish. */ } }
+        .onEach { mutationMutex.withLock { /* Complete prior account writes before switching the observed library. */ } }
 
     override val favorites: Flow<List<AnimeLibraryEntity>> =
         activeAccountId.flatMapLatest { accountId ->
