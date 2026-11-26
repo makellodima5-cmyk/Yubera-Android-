@@ -14,6 +14,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoomPersonalLibraryRepository @Inject constructor(
@@ -23,6 +25,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
     private val syncTrigger: LibrarySyncTrigger,
     private val activeAccountStore: ActiveAccountStore
 ) : PersonalLibraryRepository {
+    private val mutationMutex = Mutex()
 
     override val favorites: Flow<List<AnimeLibraryEntity>> =
         activeAccountStore.activeAccountId.flatMapLatest { accountId ->
