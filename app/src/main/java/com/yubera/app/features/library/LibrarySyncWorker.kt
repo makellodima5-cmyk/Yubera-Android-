@@ -23,6 +23,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import java.security.MessageDigest
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
@@ -274,8 +275,21 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
     }
 
     private fun deviceSourceId(): String {
-        val androidId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID).orEmpty()
-        val digest = MessageDigest.getInstance("SHA-256").digest(androidId.toByteArray())
+        val androidId = Settings.Secure.getString(
+            applicationContext.contentResolver,
+            Settings.Secure.ANDROID_ID
+        ).orEmpty()
+
+        // Use a stable per-install fallback if Android does not expose ANDROID_ID.
+        val deviceIdentity = androidId.ifBlank {
+            applicationContext.getSharedPreferences("yubera_sync", Context.MODE_PRIVATE)
+                .let { preferences ->
+                    preferences.getString("source_install_id", null) ?: UUID.randomUUID().toString().also { id ->
+                        preferences.edit().putString("source_install_id", id).apply()
+                    }
+                }
+        }
+        val digest = MessageDigest.getInstance("SHA-256").digest(deviceIdentity.toByteArray())
         val suffix = digest.take(10).joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
         return "android-$suffix"
     }
