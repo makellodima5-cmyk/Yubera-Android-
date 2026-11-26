@@ -209,6 +209,26 @@ class NativeAuthRepositoryTest {
     }
 
     @Test
+    fun serverCanIdentifyExistingLegacyRowsWhenActiveAccountIsUnassigned() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID)
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+        assertTrue(restored)
+        assertEquals("user-1", store.storedAccountId)
+        assertTrue(activeAccountStore.claimedLegacyRows)
+    }
+
+    @Test
+    fun refusesTokenWithoutStoredAccountOrLegacyUnassignedIdentity() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, null)
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+        assertFalse(restored)
+        assertNull(activeAccountStore.currentAccountId())
+        assertNull(store.storedAccountId)
+    }
+
+    @Test
     fun networkFailureKeepsPreviouslyBoundLocalSessionAvailableOffline() = runTest {
         val store = FakeTokenStore().apply {
             token = "A".repeat(43)
