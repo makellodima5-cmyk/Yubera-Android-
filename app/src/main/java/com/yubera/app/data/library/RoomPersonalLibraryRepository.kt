@@ -31,7 +31,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
         .distinctUntilChanged()
 
     override val favorites: Flow<List<AnimeLibraryEntity>> =
-        activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        activeAccountId.flatMapLatest { accountId ->
             if (accountId == null) flowOf(emptyList()) else animeLibraryDao.observeFavorites(accountId)
         }
 
