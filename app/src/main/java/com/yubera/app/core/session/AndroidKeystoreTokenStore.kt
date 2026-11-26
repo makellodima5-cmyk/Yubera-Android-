@@ -34,7 +34,7 @@ class AndroidKeystoreTokenStore @Inject constructor(
     @Synchronized
     override fun getAccessToken(): String? = preferences.getString(KEY_ACCESS_TOKEN, null)?.let { encrypted ->
         try { decrypt(encrypted) } catch (_: Exception) {
-            check(preferences.edit().remove(KEY_ACCESS_TOKEN).commit()) { "Не удалось завершить локальную сессию." }
+            preferences.edit().remove(KEY_ACCESS_TOKEN).commit()
             null
         }
     }
