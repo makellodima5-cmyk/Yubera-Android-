@@ -62,6 +62,8 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
 
             val remote = initial.items.associateBy { key(it.itemType, it.animeId) }
+            // Build an immutable input snapshot, merge server-owned versions in memory,
+            // and write only the merged result after all requests have completed.
             val outbound = database.withTransaction {
                 val libraryDao = database.animeLibraryDao()
                 val progressDao = database.animeProgressDao()
@@ -71,20 +73,10 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val localProgress = progressDao.getAll(accountId).associateBy { it.animeId }
                 val localSubscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
 
-                initial.items.forEach { item ->
-                    val localTimestamp = localTimestamp(item.itemType, item.animeId, localLibrary, localProgress, localSubscriptions)
-                    if (LibrarySyncPolicy.compareVersions(
-                            item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
-                        ) > 0
-                    ) {
-                        applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
-                    }
-                }
-
                 buildLocalItems(
-                    libraryDao.getAll(accountId),
-                    progressDao.getAll(accountId),
-                    subscriptionDao.getAll(accountId),
+                    localLibrary.values,
+                    localProgress.values,
+                    localSubscriptions.values,
                     sourceId
                 ).filter { local ->
                     val server = remote[key(local.itemType, local.animeId)]
@@ -97,8 +89,8 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 }
             }
 
-            // Retain acknowledgements from every chunk. Each response may include a
-            // subset, so keeping only the last response could discard earlier updates.
+            // Retain canonical records from every response chunk. A later response may
+            // only include acknowledgements for its own request batch.
             val canonicalItems = linkedMapOf<String, TelegramLibrarySyncItem>()
             initial.items.forEach { canonicalItems[key(it.itemType, it.animeId)] = it }
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
