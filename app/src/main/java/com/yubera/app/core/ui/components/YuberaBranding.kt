@@ -59,7 +59,7 @@ fun SectionBannerHeader(
     ) {
         if (showBanner) {
             Image(
-                painter = painterResource(R.drawable.yubera_banner),
+                painter = painterResource(R.drawable.yubera_about_project_banner),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
