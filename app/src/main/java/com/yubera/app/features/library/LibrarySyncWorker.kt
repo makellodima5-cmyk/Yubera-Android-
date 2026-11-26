@@ -89,8 +89,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 }
             }
 
-            // Retain canonical records from every response chunk. A later response may
-            // only include acknowledgements for its own request batch.
+            // Retain the full server snapshot and every acknowledgement across batches.
             val canonicalItems = linkedMapOf<String, TelegramLibrarySyncItem>()
             initial.items.forEach { canonicalItems[key(it.itemType, it.animeId)] = it }
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
@@ -109,6 +108,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
 
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
+            // Apply server acknowledgements and remote winners in one local transaction.
             database.withTransaction {
                 val libraryDao = database.animeLibraryDao()
                 val progressDao = database.animeProgressDao()
@@ -118,10 +118,13 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val subscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
                 canonicalItems.values.forEach { item ->
                     val localTimestamp = localTimestamp(item.itemType, item.animeId, library, progress, subscriptions)
-                    if (LibrarySyncPolicy.compareVersions(
-                            item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
-                        ) > 0
-                    ) {
+                    val comparison = LibrarySyncPolicy.compareVersions(
+                        item.updatedAtEpochMillis,
+                        item.sourceId,
+                        localTimestamp,
+                        sourceId
+                    )
+                    if (comparison > 0) {
                         applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
                     }
                 }
