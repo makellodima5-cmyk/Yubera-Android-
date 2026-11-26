@@ -183,6 +183,26 @@ class NativeAuthRepositoryTest {
         assertNull(profile)
     }
 
+
+    @Test
+    fun networkFailureDoesNotRestoreSessionWhenAccountBindingIsMissing() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, "legacy-unassigned")
+        val restored = NativeAuthRepository(FailingApi(), store, activeAccountStore).hasRestorableSession()
+        assertFalse(restored)
+    }
+
+    @Test
+    fun networkFailureKeepsPreviouslyBoundLocalSessionAvailableOffline() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val restored = NativeAuthRepository(FailingApi(), store, activeAccountStore).hasRestorableSession()
+        assertTrue(restored)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
@@ -224,6 +244,12 @@ class NativeAuthRepositoryTest {
             tokenStore.clearAuthenticatedSession()
             mutableAccountId.value = null
         }
+    }
+
+    private class FailingApi : TelegramSessionApi {
+        override suspend fun exchangeCode(request: MobileAuthExchangeRequest): MobileAuthExchangeResponse = error("offline")
+        override suspend fun getSession(authorization: String): TelegramSessionResponse = error("offline")
+        override suspend fun logout(authorization: String): TelegramSessionResponse = error("offline")
     }
 
     private class FakeApi : TelegramSessionApi {
