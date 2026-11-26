@@ -159,7 +159,7 @@ class NativeAuthRepositoryTest {
             sessionResponse = TelegramSessionResponse(authenticated = true, user = user)
         }
 
-        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store)).getCurrentProfile()
+        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store, "user-1")).getCurrentProfile()
 
         assertEquals(user, profile)
         assertEquals("2026-10-24 09:15:00", profile?.createdAt)
