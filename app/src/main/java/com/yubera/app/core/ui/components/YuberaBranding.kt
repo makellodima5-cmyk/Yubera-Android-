@@ -37,7 +37,7 @@ fun YuberaLogo(
     width: Dp = 132.dp
 ) {
     Image(
-        painter = painterResource(R.drawable.yubera_logo),
+        painter = painterResource(R.drawable.yubera_logo_transparent),
         contentDescription = "YUBERA",
         modifier = modifier.width(width).height(width / 3f),
         contentScale = ContentScale.Fit
