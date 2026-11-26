@@ -49,88 +49,88 @@ class RoomPersonalLibraryRepository @Inject constructor(
 
     override suspend fun setFavorite(animeId: String, isFavorite: Boolean, updatedAtEpochMillis: Long) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeLibraryDao.getByAnimeId(accountId, animeId)
-        val favoriteTimestamp = maxOf(updatedAtEpochMillis, (current?.favoriteUpdatedAtEpochMillis ?: 0L) + 1L)
-        animeLibraryDao.upsert(AnimeLibraryEntity(
-            animeId = animeId,
-            isFavorite = isFavorite,
-            isInWatchLater = current?.isInWatchLater ?: false,
-            updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, favoriteTimestamp),
-            favoriteUpdatedAtEpochMillis = favoriteTimestamp,
-            watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L,
-            accountId = accountId
-        ))
-        syncTrigger.enqueue()
+            val accountId = requireAccountId()
+            val current = animeLibraryDao.getByAnimeId(accountId, animeId)
+            val favoriteTimestamp = maxOf(updatedAtEpochMillis, (current?.favoriteUpdatedAtEpochMillis ?: 0L) + 1L)
+            animeLibraryDao.upsert(AnimeLibraryEntity(
+                animeId = animeId,
+                isFavorite = isFavorite,
+                isInWatchLater = current?.isInWatchLater ?: false,
+                updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, favoriteTimestamp),
+                favoriteUpdatedAtEpochMillis = favoriteTimestamp,
+                watchLaterUpdatedAtEpochMillis = current?.watchLaterUpdatedAtEpochMillis ?: 0L,
+                accountId = accountId
+            ))
+            syncTrigger.enqueue()
         }
 
     override suspend fun setWatchLater(animeId: String, isInWatchLater: Boolean, updatedAtEpochMillis: Long) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeLibraryDao.getByAnimeId(accountId, animeId)
-        val timestamp = maxOf(updatedAtEpochMillis, (current?.watchLaterUpdatedAtEpochMillis ?: 0L) + 1L)
-        animeLibraryDao.upsert(AnimeLibraryEntity(
-            animeId = animeId,
-            isFavorite = current?.isFavorite ?: false,
-            isInWatchLater = isInWatchLater,
-            updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, timestamp),
-            favoriteUpdatedAtEpochMillis = current?.favoriteUpdatedAtEpochMillis ?: 0L,
-            watchLaterUpdatedAtEpochMillis = timestamp,
-            accountId = accountId
-        ))
-        syncTrigger.enqueue()
+            val accountId = requireAccountId()
+            val current = animeLibraryDao.getByAnimeId(accountId, animeId)
+            val timestamp = maxOf(updatedAtEpochMillis, (current?.watchLaterUpdatedAtEpochMillis ?: 0L) + 1L)
+            animeLibraryDao.upsert(AnimeLibraryEntity(
+                animeId = animeId,
+                isFavorite = current?.isFavorite ?: false,
+                isInWatchLater = isInWatchLater,
+                updatedAtEpochMillis = maxOf(current?.updatedAtEpochMillis ?: 0L, timestamp),
+                favoriteUpdatedAtEpochMillis = current?.favoriteUpdatedAtEpochMillis ?: 0L,
+                watchLaterUpdatedAtEpochMillis = timestamp,
+                accountId = accountId
+            ))
+            syncTrigger.enqueue()
         }
 
     override suspend fun saveProgress(progress: AnimeProgressEntity) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeProgressDao.getByAnimeId(accountId, progress.animeId)
-        animeProgressDao.upsert(progress.copy(
-            accountId = accountId,
-            updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
-        ))
-        syncTrigger.enqueue()
+            val accountId = requireAccountId()
+            val current = animeProgressDao.getByAnimeId(accountId, progress.animeId)
+            animeProgressDao.upsert(progress.copy(
+                accountId = accountId,
+                updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
+            ))
+            syncTrigger.enqueue()
         }
 
     override suspend fun subscribeToAnime(animeId: String, notificationsEnabled: Boolean, updatedAtEpochMillis: Long) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
-        val timestamp = maxOf(updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
-        animeSubscriptionDao.upsert(AnimeSubscriptionEntity(
-            animeId = animeId,
-            notificationsEnabled = notificationsEnabled,
-            updatedAtEpochMillis = timestamp,
-            lastKnownEpisodesAired = current?.lastKnownEpisodesAired,
-            isSubscribed = true,
-            accountId = accountId
-        ))
-        syncTrigger.enqueue()
+            val accountId = requireAccountId()
+            val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
+            val timestamp = maxOf(updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
+            animeSubscriptionDao.upsert(AnimeSubscriptionEntity(
+                animeId = animeId,
+                notificationsEnabled = notificationsEnabled,
+                updatedAtEpochMillis = timestamp,
+                lastKnownEpisodesAired = current?.lastKnownEpisodesAired,
+                isSubscribed = true,
+                accountId = accountId
+            ))
+            syncTrigger.enqueue()
         }
 
     override suspend fun setSubscriptionNotificationsEnabled(animeId: String, enabled: Boolean, updatedAtEpochMillis: Long) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeSubscriptionDao.getByAnimeId(accountId, animeId) ?: return
-        if (!current.isSubscribed) return
-        val timestamp = maxOf(updatedAtEpochMillis, current.updatedAtEpochMillis + 1L)
-        animeSubscriptionDao.upsert(current.copy(notificationsEnabled = enabled, updatedAtEpochMillis = timestamp))
-        syncTrigger.enqueue()
+            val accountId = requireAccountId()
+            val current = animeSubscriptionDao.getByAnimeId(accountId, animeId) ?: return
+            if (!current.isSubscribed) return
+            val timestamp = maxOf(updatedAtEpochMillis, current.updatedAtEpochMillis + 1L)
+            animeSubscriptionDao.upsert(current.copy(notificationsEnabled = enabled, updatedAtEpochMillis = timestamp))
+            syncTrigger.enqueue()
         }
 
     override suspend fun removeSubscription(animeId: String) =
         mutationMutex.withLock {
-        val accountId = requireAccountId()
-        val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
-        val timestamp = maxOf(System.currentTimeMillis(), (current?.updatedAtEpochMillis ?: 0L) + 1L)
-        if (current == null) {
-            animeSubscriptionDao.upsert(AnimeSubscriptionEntity(
-                animeId = animeId,
-                notificationsEnabled = false,
-                updatedAtEpochMillis = timestamp,
-                isSubscribed = false,
-                accountId = accountId
-            ))
+            val accountId = requireAccountId()
+            val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
+            val timestamp = maxOf(System.currentTimeMillis(), (current?.updatedAtEpochMillis ?: 0L) + 1L)
+            if (current == null) {
+                animeSubscriptionDao.upsert(AnimeSubscriptionEntity(
+                    animeId = animeId,
+                    notificationsEnabled = false,
+                    updatedAtEpochMillis = timestamp,
+                    isSubscribed = false,
+                    accountId = accountId
+                ))
         } else {
             animeSubscriptionDao.upsert(current.copy(
                 notificationsEnabled = false,
