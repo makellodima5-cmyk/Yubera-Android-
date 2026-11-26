@@ -82,6 +82,7 @@ class NativeAuthRepository @Inject constructor(
                 val storedIdentityMatches = legacyAccountPending ||
                     (storedAccountId != null && storedAccountId == currentAccountId)
                 if (!storedIdentityMatches) {
+                    activeAccountStore.clearActiveAccount()
                     return false
                 }
                 if (storedAccountId != null && storedAccountId != accountId) {
@@ -100,11 +101,14 @@ class NativeAuthRepository @Inject constructor(
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                true
+                tokenStore.getAccessToken() == token &&
+                    tokenStore.getAccountId()?.let { it == activeAccountStore.currentAccountId() } == true
             }
         } catch (_: Exception) {
-            // Preserve offline access only while the same stored token remains active.
-            tokenStore.getAccessToken() == token
+            // Keep the last validated local account usable while offline, but never
+            // keep it active after its credentials or account binding changed.
+            tokenStore.getAccessToken() == token &&
+                tokenStore.getAccountId()?.let { it == activeAccountStore.currentAccountId() } == true
         }
     }
 
