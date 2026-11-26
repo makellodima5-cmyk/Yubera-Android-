@@ -99,7 +99,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
 
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
-            // Apply server acknowledgements and remote winners in one local transaction.
+            // Merge server acknowledgements with the current local state atomically.
             database.withTransaction {
                 val libraryDao = database.animeLibraryDao()
                 val progressDao = database.animeProgressDao()
@@ -109,13 +109,10 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val subscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
                 canonicalItems.values.forEach { item ->
                     val localTimestamp = localTimestamp(item.itemType, item.animeId, library, progress, subscriptions)
-                    val comparison = LibrarySyncPolicy.compareVersions(
-                        item.updatedAtEpochMillis,
-                        item.sourceId,
-                        localTimestamp,
-                        sourceId
-                    )
-                    if (comparison > 0) {
+                    if (LibrarySyncPolicy.compareVersions(
+                            item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
+                        ) > 0
+                    ) {
                         applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
                     }
                 }
