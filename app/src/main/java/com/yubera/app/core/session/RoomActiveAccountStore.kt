@@ -38,6 +38,7 @@ class RoomActiveAccountStore @Inject constructor(
                     }
                 }
                 tokenStore.saveAuthenticatedSession(accessToken, accountId)
+                // Keep old account-scoped rows hidden until the account and token are committed.
                 mutableAccountId.value = accountId
             } catch (error: Exception) {
                 mutableAccountId.value = previousAccountId
