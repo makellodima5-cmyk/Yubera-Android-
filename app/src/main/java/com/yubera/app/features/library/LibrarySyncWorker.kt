@@ -83,8 +83,6 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 }
             }
 
-            // Retain acknowledged records from each chunk; each response may only
-            // contain rows affected by the corresponding request.
             val canonicalItems = linkedMapOf<String, TelegramLibrarySyncItem>()
             initial.items.forEach { canonicalItems[key(it.itemType, it.animeId)] = it }
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
@@ -102,9 +100,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 response.items.forEach { item -> canonicalItems[key(item.itemType, item.animeId)] = item }
             }
 
-            if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
-            // Apply each canonical server value only when it wins against the
-            // latest account-specific local version. Each comparison/write is atomic.
+            // Apply server winners against the current local versions.
             canonicalItems.values.forEach { item ->
                 database.withTransaction {
                     val libraryDao = database.animeLibraryDao()
