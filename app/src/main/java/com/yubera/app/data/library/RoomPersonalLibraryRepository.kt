@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -28,9 +27,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
     private val activeAccountStore: ActiveAccountStore
 ) : PersonalLibraryRepository {
     private val mutationMutex = Mutex()
-    private val activeAccountId = activeAccountStore.activeAccountId
-        .distinctUntilChanged()
-        .onEach { mutationMutex.withLock { /* Complete prior account writes before switching the observed library. */ } }
+    private val activeAccountId = activeAccountStore.activeAccountId.distinctUntilChanged()
 
     override val favorites: Flow<List<AnimeLibraryEntity>> =
         activeAccountId.flatMapLatest { accountId ->
