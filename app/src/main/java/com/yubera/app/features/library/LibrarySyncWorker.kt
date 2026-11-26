@@ -100,12 +100,12 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 response.items.forEach { item -> canonicalItems[key(item.itemType, item.animeId)] = item }
             }
 
-            // Apply server winners against the current local versions.
-            canonicalItems.values.forEach { item ->
-                database.withTransaction {
-                    val libraryDao = database.animeLibraryDao()
-                    val progressDao = database.animeProgressDao()
-                    val subscriptionDao = database.animeSubscriptionDao()
+            // Merge each server acknowledgement without overwriting a newer local edit.
+            database.withTransaction {
+                val libraryDao = database.animeLibraryDao()
+                val progressDao = database.animeProgressDao()
+                val subscriptionDao = database.animeSubscriptionDao()
+                canonicalItems.values.forEach { item ->
                     val currentVersion = when (item.itemType) {
                         TYPE_FAVORITE -> libraryDao.getByAnimeId(accountId, item.animeId)
                             ?.favoriteUpdatedAtEpochMillis ?: 0L
@@ -124,9 +124,9 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                         applyRemote(accountId, item, libraryDao, progressDao, subscriptionDao)
                     }
                 }
-                if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
-                    return@withContext Result.success()
-                }
+            }
+            if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
+                return@withContext Result.success()
             }
             Result.success()
         } catch (error: HttpException) {
