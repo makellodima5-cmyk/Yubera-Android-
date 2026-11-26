@@ -72,12 +72,16 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
             val outbound = localItems.filter { local ->
                 val server = remote[key(local.itemType, local.animeId)]
-                server == null || LibrarySyncPolicy.compareVersions(
+                if (server == null) true else LibrarySyncPolicy.compareVersions(
                     local.updatedAtEpochMillis, local.sourceId,
                     server.updatedAtEpochMillis, server.sourceId
                 ) > 0
             }.sortedBy { item ->
-                if (item.deleted || ((item.itemType == TYPE_FAVORITE || item.itemType == TYPE_WATCHLIST) && item.payload.saved == false)) 0 else 1
+                when {
+                    item.deleted -> 0
+                    (item.itemType == TYPE_FAVORITE || item.itemType == TYPE_WATCHLIST) && item.payload.saved == false -> 0
+                    else -> 1
+                }
             }
 
             // Retain acknowledged records from each chunk; each response may only
