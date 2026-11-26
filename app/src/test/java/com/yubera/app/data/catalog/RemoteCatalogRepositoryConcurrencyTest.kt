@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -24,6 +25,7 @@ class RemoteCatalogRepositoryConcurrencyTest {
         coroutineScope {
             val first = async { repository.refresh() }
             val second = async { repository.refresh() }
+            advanceUntilIdle()
             first.await()
             second.await()
         }
