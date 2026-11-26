@@ -31,7 +31,7 @@ Scope: Yubera Android only. This branch contains Stage 1 foundation work. UI des
 - [x] Fixed the first CI failure caused by unstructured async calls in the new concurrency test.
 - [x] Fixed the next CI assertion: both refresh coroutines are now advanced deterministically in the test scheduler.
 - [x] Build and lint tasks completed in CI; all unit tests except the added concurrency test passed.
-- [x] Simplified the concurrency regression test to use deterministic sequential refresh calls, asserting one page-1 request for the same unchanged revision.
+- [x] Reworked the concurrency regression test to verify the actual cache-revision contract: concurrent refreshes may both request the first page to read its revision, but only one downloads the remaining catalog pages.
 - [ ] Run CI on the latest branch head and confirm build, lint, and unit tests pass.
 
 ## Out of scope
