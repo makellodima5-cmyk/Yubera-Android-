@@ -96,7 +96,10 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 }
             }
 
-            var canonicalItems = initial.items
+            // Retain acknowledgements from every chunk. Each response may include a
+            // subset, so keeping only the last response could discard earlier updates.
+            val canonicalItems = linkedMapOf<String, TelegramLibrarySyncItem>()
+            initial.items.forEach { canonicalItems[key(it.itemType, it.animeId)] = it }
             outbound.chunked(MAX_BATCH_SIZE).forEach { batch ->
                 if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
                     return@withContext Result.success()
@@ -109,7 +112,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) {
                     return@withContext Result.success()
                 }
-                canonicalItems = response.items
+                response.items.forEach { item -> canonicalItems[key(item.itemType, item.animeId)] = item }
             }
 
             if (!sessionMatches(tokenStore, activeAccountStore, token, accountId)) return@withContext Result.success()
@@ -120,7 +123,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val library = libraryDao.getAll(accountId).associateBy { it.animeId }
                 val progress = progressDao.getAll(accountId).associateBy { it.animeId }
                 val subscriptions = subscriptionDao.getAll(accountId).associateBy { it.animeId }
-                canonicalItems.forEach { item ->
+                canonicalItems.values.forEach { item ->
                     val localTimestamp = localTimestamp(item.itemType, item.animeId, library, progress, subscriptions)
                     if (LibrarySyncPolicy.compareVersions(
                             item.updatedAtEpochMillis, item.sourceId, localTimestamp, sourceId
@@ -171,46 +174,26 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
         sourceId: String
     ): List<TelegramLibrarySyncItem> = buildList {
         library.forEach { row ->
-            add(TelegramLibrarySyncItem(
-                itemType = TYPE_FAVORITE,
-                animeId = row.animeId,
-                payload = TelegramLibrarySyncPayload(saved = row.isFavorite),
-                updatedAtEpochMillis = row.favoriteUpdatedAtEpochMillis,
-                deleted = false,
-                sourceId = sourceId
-            ))
-            add(TelegramLibrarySyncItem(
-                itemType = TYPE_WATCHLIST,
-                animeId = row.animeId,
-                payload = TelegramLibrarySyncPayload(saved = row.isInWatchLater),
-                updatedAtEpochMillis = row.watchLaterUpdatedAtEpochMillis,
-                deleted = false,
-                sourceId = sourceId
-            ))
+            add(TelegramLibrarySyncItem(TYPE_FAVORITE, row.animeId, TelegramLibrarySyncPayload(saved = row.isFavorite), row.favoriteUpdatedAtEpochMillis, false, sourceId))
+            add(TelegramLibrarySyncItem(TYPE_WATCHLIST, row.animeId, TelegramLibrarySyncPayload(saved = row.isInWatchLater), row.watchLaterUpdatedAtEpochMillis, false, sourceId))
         }
         progress.forEach { row ->
             add(TelegramLibrarySyncItem(
-                itemType = TYPE_PROGRESS,
-                animeId = row.animeId,
-                payload = TelegramLibrarySyncPayload(
+                TYPE_PROGRESS, row.animeId,
+                TelegramLibrarySyncPayload(
                     seasonNumber = row.seasonNumber,
                     episodeNumber = row.episodeNumber,
                     positionMillis = row.positionMillis,
                     durationMillis = row.durationMillis
                 ),
-                updatedAtEpochMillis = row.updatedAtEpochMillis,
-                deleted = false,
-                sourceId = sourceId
+                row.updatedAtEpochMillis, false, sourceId
             ))
         }
         subscriptions.forEach { row ->
             add(TelegramLibrarySyncItem(
-                itemType = TYPE_SUBSCRIPTION,
-                animeId = row.animeId,
-                payload = TelegramLibrarySyncPayload(notificationsEnabled = row.notificationsEnabled),
-                updatedAtEpochMillis = row.updatedAtEpochMillis,
-                deleted = !row.isSubscribed,
-                sourceId = sourceId
+                TYPE_SUBSCRIPTION, row.animeId,
+                TelegramLibrarySyncPayload(notificationsEnabled = row.notificationsEnabled),
+                row.updatedAtEpochMillis, !row.isSubscribed, sourceId
             ))
         }
     }
