@@ -108,15 +108,16 @@ class RoomPersonalLibraryRepository @Inject constructor(
             syncTrigger.enqueue()
         }
 
-    override suspend fun setSubscriptionNotificationsEnabled(animeId: String, enabled: Boolean, updatedAtEpochMillis: Long) =
+    override suspend fun setSubscriptionNotificationsEnabled(animeId: String, enabled: Boolean, updatedAtEpochMillis: Long) {
         mutationMutex.withLock {
             val accountId = requireAccountId()
-            val current = animeSubscriptionDao.getByAnimeId(accountId, animeId) ?: return
-            if (!current.isSubscribed) return
+            val current = animeSubscriptionDao.getByAnimeId(accountId, animeId)
+            if (current == null || !current.isSubscribed) return@withLock
             val timestamp = maxOf(updatedAtEpochMillis, current.updatedAtEpochMillis + 1L)
             animeSubscriptionDao.upsert(current.copy(notificationsEnabled = enabled, updatedAtEpochMillis = timestamp))
             syncTrigger.enqueue()
         }
+    }
 
     override suspend fun removeSubscription(animeId: String) =
         mutationMutex.withLock {
