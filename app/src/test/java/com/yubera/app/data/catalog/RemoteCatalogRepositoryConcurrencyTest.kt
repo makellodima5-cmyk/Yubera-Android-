@@ -3,6 +3,8 @@ package com.yubera.app.data.catalog
 import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -19,9 +21,9 @@ class RemoteCatalogRepositoryConcurrencyTest {
         val api = CountingCatalogApi()
         val repository = RemoteCatalogRepository(api, dao, Json { ignoreUnknownKeys = true })
 
-        kotlinx.coroutines.coroutineScope {
-            val first = kotlinx.coroutines.async { repository.refresh() }
-            val second = kotlinx.coroutines.async { repository.refresh() }
+        coroutineScope {
+            val first = async { repository.refresh() }
+            val second = async { repository.refresh() }
             first.await()
             second.await()
         }
