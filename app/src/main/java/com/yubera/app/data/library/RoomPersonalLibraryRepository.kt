@@ -12,7 +12,6 @@ import com.yubera.app.features.library.LibrarySyncTrigger
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Mutex
@@ -27,7 +26,7 @@ class RoomPersonalLibraryRepository @Inject constructor(
     private val activeAccountStore: ActiveAccountStore
 ) : PersonalLibraryRepository {
     private val mutationMutex = Mutex()
-    private val activeAccountId = activeAccountStore.activeAccountId.distinctUntilChanged()
+    private val activeAccountId = activeAccountStore.activeAccountId
 
     override val favorites: Flow<List<AnimeLibraryEntity>> =
         activeAccountId.flatMapLatest { accountId ->
