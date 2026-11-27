@@ -14,6 +14,16 @@ import org.junit.Test
 
 class RemoteCatalogRepositoryTest {
     @Test
+    fun recentCheckTimestampSkipsNetworkProbe() = runTest {
+        val dao = FakeCatalogDao()
+        dao.replaceSnapshot(listOf(entity("cached")), CatalogMetadataEntity(revision = 11, updatedAt = "known", checkedAtEpochMillis = System.currentTimeMillis()))
+        val api = FakeCatalogApi(emptyList())
+        repository(api, dao).refreshIfStale(minIntervalMillis = 6 * 60 * 60 * 1000L)
+        assertEquals(emptyList<Int>(), api.requestedPages)
+        assertEquals(listOf("cached"), dao.rows.value.map { it.animeId })
+    }
+
+    @Test
     fun revisionProbeSkipsDownloadingRemainingPagesWhenUnchanged() = runTest {
         val dao = FakeCatalogDao()
         dao.replaceSnapshot(
@@ -184,17 +194,13 @@ class RemoteCatalogRepositoryTest {
     private class FakeCatalogApi(private val responses: List<CatalogPageDto>) : CatalogApi {
         val requestedPages = mutableListOf<Int>()
         private var index = 0
-        override suspend fun getVersionManifest(): AppUpdateManifestDto = error("Not used in catalogue tests")
-
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto {
             requestedPages += page
             return responses[index++]
         }
     }
 
-    private class FailingCatalogApi : CatalogApi {
-        override suspend fun getVersionManifest(): AppVersionManifestDto = error("Not used in catalogue tests")
-        override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto = error("offline")
+    private class FailingCatalogApi : CatalogApi {        override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto = error("offline")
     }
 
     private class FakeCatalogDao : CatalogDao {
