@@ -75,8 +75,8 @@ fun StartupScreen(state:StartupUiState,onRetry:()->Unit,onReady:()->Unit) {
                 StartupUiState.Initializing,is StartupUiState.Ready -> {
                     if(reduceMotion) CircularProgressIndicator(Modifier.size(42.dp),color=YuberaPrimary,trackColor=YuberaMuted.copy(.3f),strokeWidth=2.8.dp)
                     else Canvas(Modifier.size(42.dp)) {
-                        drawCircle(YuberaMuted.copy(.34f),style=Stroke(width=2.8.dp.toPx()))
-                        drawArc(YuberaPrimary,startAngle=spinner,sweepAngle=102f,useCenter=false,style=Stroke(width=2.8.dp.toPx(),cap=StrokeCap.Round))
+                        drawCircle(YuberaMuted.copy(.34f),style=Stroke(width=2.8f))
+                        drawArc(YuberaPrimary,startAngle=spinner,sweepAngle=102f,useCenter=false,style=Stroke(width=2.8f,cap=StrokeCap.Round))
                     }
                 }
                 is StartupUiState.Failed -> {
