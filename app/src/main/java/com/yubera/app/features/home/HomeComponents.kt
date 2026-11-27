@@ -59,7 +59,7 @@ fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick
             }
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
                 Text(anime.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                Text(progress.episodeNumber?.let { "Серия $it" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
+                Text(progress.episodeNumber?.let { "Сезон ${progress.seasonNumber ?: 1} · Серия $it" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
                 Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(YuberaMuted.copy(.22f))) {
                     Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(CircleShape).background(YuberaPrimary))
                 }
@@ -72,8 +72,8 @@ fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick
 @Composable
 fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
     Box(Modifier.width(310.dp).height(204.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick=onClick)) {
-        AnimeImage(anime,Modifier.fillMaxWidth().height(204.dp),preferBanner=true)
-        Box(Modifier.fillMaxWidth().height(204.dp).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
+        AnimeImage(anime,Modifier.fillMaxWidth().height(218.dp),preferBanner=true)
+        Box(Modifier.fillMaxWidth().height(218.dp).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
         Column(Modifier.align(Alignment.BottomStart).padding(14.dp).fillMaxWidth(.84f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
             Pill("Рекомендуем")
             Text(anime.title,color=Color.White,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
