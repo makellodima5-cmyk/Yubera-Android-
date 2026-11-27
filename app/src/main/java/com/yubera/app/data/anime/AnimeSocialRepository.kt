@@ -26,18 +26,6 @@ class AnimeSocialRepository @Inject constructor(
     suspend fun loadComments(animeId: String, cursor: String? = null): AnimeCommentsPageResponse =
         api.getComments(animeId = animeId, cursor = cursor, authorization = authorizationHeader())
 
-    suspend fun loadReplies(animeId: String, rootId: String, cursor: String? = null): AnimeCommentReplyPageResponse =
-        api.getComments(animeId = animeId, threadId = rootId, cursor = cursor, authorization = authorizationHeader())
-            .let { response ->
-                // The thread endpoint has a different response shape from root paging.
-                AnimeCommentReplyPageResponse(
-                    replies = emptyList(),
-                    nextCursor = null,
-                    hasMore = false,
-                    error = response.error
-                )
-            }
-
     suspend fun loadReplyPage(animeId: String, rootId: String, cursor: String? = null): AnimeCommentReplyPageResponse =
         api.getReplyPage(animeId = animeId, threadId = rootId, cursor = cursor, authorization = authorizationHeader())
 
