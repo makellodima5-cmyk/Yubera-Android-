@@ -47,6 +47,12 @@ class CatalogSortOrderTest {
         )
     }
 
+    @Test
+    fun searchMatchesVisuallySimilarLatinAndCyrillicLetters() {
+        val russianTitle = listOf(anime("r", "Рассвет", 2024, 8.0, "Завершён", emptyList()))
+        assertEquals(listOf("r"), russianTitle.filterForCatalog(query = "P", genre = null, year = null, status = null).map { it.id })
+    }
+
     private fun anime(
         id: String,
         title: String,
