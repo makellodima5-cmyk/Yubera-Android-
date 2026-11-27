@@ -121,14 +121,14 @@ class HomeViewModel @Inject constructor(
         val announcements = catalog.filter { anime ->
             val status = anime.status.lowercase(Locale.ROOT)
             status.contains("анонс") || status.contains("upcoming") || status.contains("not yet aired") ||
-                ((anime.airedOn?.toReleaseDate()?.isAfter(today) == true) && anime.year >= today.year)
+                (anime.airedOn?.toReleaseDate()?.isAfter(today) == true)
         }.take(12)
         val ongoing = catalog.filter { anime ->
             val status = anime.status.lowercase(Locale.ROOT)
             status.contains("ongoing") || status.contains("онгоинг") || status.contains("выходит") ||
                 (anime.nextEpisodeAt?.isNotBlank() == true && (anime.episodesAired ?: 0) < anime.episodes)
         }.take(20)
-        val randomPool = catalog.filter { it.kodikAvailable != false }
+        val randomPool = catalog.filter { it.kodikAvailable == true }
         HomeUiState(
             continueWatching = continueList,
             recommended = selectedRecommendations,
