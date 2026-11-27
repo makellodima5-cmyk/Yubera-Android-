@@ -3,6 +3,7 @@ package com.yubera.app.di
 import com.yubera.app.core.network.RetrofitFactory
 import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.data.auth.TelegramSessionApi
+import com.yubera.app.data.anime.AnimeSocialApi
 import com.yubera.app.data.catalog.CatalogApi
 import com.yubera.app.data.library.TelegramLibrarySyncApi
 import com.yubera.app.data.news.ShikimoriEpisodeUpdatesApi
@@ -53,6 +54,9 @@ object NetworkModule {
 
     @Provides
     fun provideKodikApi(retrofit: Retrofit): KodikApi = retrofit.create(KodikApi::class.java)
+
+    @Provides
+    fun provideAnimeSocialApi(retrofit: Retrofit): AnimeSocialApi = retrofit.create(AnimeSocialApi::class.java)
 
     @Provides
     fun provideTelegramSessionApi(retrofit: Retrofit): TelegramSessionApi = retrofit.create(TelegramSessionApi::class.java)
