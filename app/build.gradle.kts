@@ -12,8 +12,8 @@ android {
         applicationId = "com.yubera.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.work.runtime)
 
+    implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
