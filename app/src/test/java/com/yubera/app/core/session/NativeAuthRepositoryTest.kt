@@ -331,6 +331,27 @@ class NativeAuthRepositoryTest {
         assertEquals("user-1", store.storedAccountId)
     }
 
+
+    @Test
+    fun logoutWinningBeforeSessionActivationCannotBeUndoneByDelayedRestore() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "account-a"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "account-a")
+        activeAccountStore.beforeActivation = {
+            store.clearAuthenticatedSession()
+            activeAccountStore.forceAccount(null)
+        }
+
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertNull(store.token)
+        assertNull(store.storedAccountId)
+        assertNull(activeAccountStore.currentAccountId())
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
@@ -360,11 +381,14 @@ class NativeAuthRepositoryTest {
         private val mutableAccountId = MutableStateFlow(initialAccountId)
         override val activeAccountId: StateFlow<String?> = mutableAccountId
         var claimedLegacyRows = false
-        fun forceAccount(accountId: String) { mutableAccountId.value = accountId }
+        var beforeActivation: (() -> Unit)? = null
+        fun forceAccount(accountId: String?) { mutableAccountId.value = accountId }
 
         override fun currentAccountId(): String? = mutableAccountId.value
 
         override suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean) {
+            beforeActivation?.invoke()
+            beforeActivation = null
             if (claimLegacyRows) claimedLegacyRows = true
             tokenStore.saveAuthenticatedSession(accessToken, accountId)
             mutableAccountId.value = accountId
