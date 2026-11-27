@@ -99,29 +99,21 @@ private fun heightFraction(fraction:Float):androidx.compose.ui.unit.Dp {
 @Composable
 private fun SplashWaves(phase:Float) {
     Canvas(Modifier.fillMaxSize()) {
-        val w=size.width; val h=size.height; val y=h*.78f
+        val w=size.width; val h=size.height
         val paths=listOf(
-            Path().apply{moveTo(-w*.08f,y+h*.04f);cubicTo(w*.22f,y-h*.12f,w*.43f,y+h*.12f,w*.66f,y+h*.02f);cubicTo(w*.82f,y-h*.05f,w*1.04f,y+h*.02f,w*1.12f,y+h*.05f)},
-            Path().apply{moveTo(-w*.06f,y+h*.15f);cubicTo(w*.18f,y+h*.07f,w*.36f,y+h*.19f,w*.54f,y+h*.14f);cubicTo(w*.75f,y+h*.09f,w*.91f,y+h*.17f,w*1.08f,y+h*.13f)}
+            Path().apply { moveTo(0f,h*.72f); cubicTo(w*.22f,h*.66f,w*.43f,h*.83f,w*.60f,h*.81f); cubicTo(w*.77f,h*.79f,w*.90f,h*.73f,w,h*.71f) },
+            Path().apply { moveTo(0f,h*.84f); cubicTo(w*.22f,h*.86f,w*.42f,h*.90f,w*.62f,h*.91f); cubicTo(w*.82f,h*.94f,w*.93f,h*.96f,w,h*.96f) }
         )
         paths.forEachIndexed { index,path ->
-            drawPath(path,Color(0xFF8E351D).copy(.48f),style=Stroke(1.4.dp.toPx(),cap=StrokeCap.Round))
-            val center=((phase+index*.31f)%1f)*w
-            val halfWidth=w*.20f
+            val center=((phase+index*.34f)%1f)*w
+            val halfWidth=w*.24f
             val shine=Brush.horizontalGradient(
-                colors=listOf(
-                    Color.Transparent,
-                    Color(0xFFFF5A1F).copy(.18f),
-                    Color(0xFFFFA04E).copy(.75f),
-                    Color(0xFFFFC06A).copy(.96f),
-                    Color(0xFFFFA04E).copy(.75f),
-                    Color(0xFFFF5A1F).copy(.18f),
-                    Color.Transparent
-                ),
+                colors=listOf(Color.Transparent,Color(0xFFFF5A1F).copy(.12f),Color(0xFFFFA04E).copy(.62f),Color(0xFFFFC06A).copy(.90f),Color(0xFFFFA04E).copy(.62f),Color(0xFFFF5A1F).copy(.12f),Color.Transparent),
                 startX=center-halfWidth,
                 endX=center+halfWidth
             )
-            drawPath(path,shine,style=Stroke(width=2.2.dp.toPx(),cap=StrokeCap.Round))
+            drawPath(path,shine,style=Stroke(width=5.dp.toPx(),cap=StrokeCap.Round))
+            drawPath(path,shine,style=Stroke(width=2.dp.toPx(),cap=StrokeCap.Round))
         }
     }
 }
