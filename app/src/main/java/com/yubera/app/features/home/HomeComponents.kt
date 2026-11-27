@@ -70,7 +70,7 @@ fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onC
             }
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
                 Text(anime.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                Text(progress.episodeNumber?.let { "Сезон ${progress.seasonNumber ?: 1} · Серия $it" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall,maxLines=1)
+                Text(progress.episodeNumber?.let { episode -> progress.seasonNumber?.let { season -> "Сезон $season · Серия $episode" } ?: "Серия $episode" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall,maxLines=1)
                 if(progress.positionMillis>0L) Text(formatPlaybackTime(progress.positionMillis),color=YuberaMuted,style=MaterialTheme.typography.labelSmall)
                 Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(YuberaMuted.copy(.22f))) {
                     Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(CircleShape).background(YuberaPrimary))
