@@ -23,6 +23,7 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
                 connection.readTimeout = 30_000
                 connection.instanceFollowRedirects = false
                 connection.setRequestProperty("Accept", "application/vnd.android.package-archive")
+                connection.setRequestProperty("Accept-Encoding", "identity")
                 connection.connect()
                 if (connection.responseCode in REDIRECT_CODES) {
                     val location = connection.getHeaderField("Location") ?: return Result.failure()
@@ -57,7 +58,7 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
                     }
                 }
                 val actual = digest.digest().joinToString("") { "%02x".format(it) }
-                if (actual != checksum || expectedSize > 0 && total != expectedSize) {
+                if (actual != checksum || expectedSize > 0 && total != expectedSize || !isZipArchive(file)) {
                     file.delete()
                     return Result.failure()
                 }
@@ -68,6 +69,15 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
         }
         return Result.failure()
     }
+
+    private fun isZipArchive(file: File): Boolean = runCatching {
+        file.inputStream().use { input ->
+            val signature = ByteArray(4)
+            input.read(signature) == 4 && signature[0] == 0x50.toByte() &&
+                signature[1] == 0x4b.toByte() && signature[2] == 0x03.toByte() &&
+                signature[3] == 0x04.toByte()
+        }
+    }.getOrDefault(false)
 
     companion object {
         const val KEY_URL = "apk_url"
