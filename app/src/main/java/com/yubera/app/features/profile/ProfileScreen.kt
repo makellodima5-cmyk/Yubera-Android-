@@ -241,7 +241,7 @@ fun ProfileScreen(
                     }
                     Button(onClick=viewModel::checkForUpdates,enabled=!appUpdate.isChecking){Text(if(appUpdate.isChecking)"Проверяем…" else "Проверить обновления")}
                     if(appUpdate.availableUpdate!=null&&appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick=viewModel::downloadUpdate,enabled=appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.RUNNING){Text(if(appUpdate.isMandatory)"Скачать обязательное обновление" else "Скачать обновление")}
-                    if(appUpdate.downloadWorkInfo?.state==androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick={val install=viewModel.createInstallIntent();if(install!=null)runCatching{context.startActivity(install)}}){Text("Установить / разрешить установку")}
+                    if(appUpdate.availableUpdate!=null&&appUpdate.downloadWorkInfo?.state==androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick={val install=viewModel.createInstallIntent();if(install!=null)runCatching{context.startActivity(install)}}){Text("Установить / разрешить установку")}
                 }
             }
             Card(
