@@ -92,7 +92,9 @@ fun HomeScreen(
                             horizontalArrangement=Arrangement.spacedBy(10.dp)
                         ) {
                             items(state.recommended,key=AnimeCatalogItem::id) { anime ->
-                                val targetScale=if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f\n                                val scale by animateFloatAsState(targetScale,tween(220),label="recommendationScale")\n                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(scale))
+                                val targetScale=if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f
+                                val scale by animateFloatAsState(targetScale,tween(220),label="recommendationScale")
+                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(scale))
                             }
                         }
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically) {
