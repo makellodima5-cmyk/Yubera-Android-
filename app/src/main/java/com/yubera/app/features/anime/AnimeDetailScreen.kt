@@ -263,7 +263,7 @@ private fun RatingSection(globalRating: Double?, localRating: Int?, onRate: (Int
             Text("Ваш рейтинг на устройстве", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 (1..10).forEach { value -> IconButton(onClick = { onRate(value) }, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Default.Star, contentDescription = "Оценка $value из 10", tint = if (value <= (localRating ?: 0) YuberaPrimary else YuberaMuted.copy(alpha = 0.45f)))
+                    Icon(Icons.Default.Star, contentDescription = "Оценка $value из 10", tint = if (value <= (localRating ?: 0)) YuberaPrimary else YuberaMuted.copy(alpha = 0.45f)))
                 } }
             }
             localRating?.let { Text("Вы поставили $it/10", color = YuberaPrimary, style = MaterialTheme.typography.labelMedium) }
