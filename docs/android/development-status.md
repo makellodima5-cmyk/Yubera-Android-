@@ -1,8 +1,8 @@
 # YUBERA Android development status
 
-**Last updated:** 2026-11-04  
+**Last updated:** 2026-11-27  
 **Repository:** `makellodima5-cmyk/Yubera-Android-`  
-**Branch:** `main`  
+**Branch:** `stage2-product-integration`  
 **Current source commit:** `2e35c77bc612f8a3d8c1720c08ee838696ee8068`  
 **Latest verified CI:** Android CI #63, passed on `d77abfbcfb97aa3bb4dd8a6e91c4a61d1e4fc4d1`.  
 **Debug APK artifact:** `yubera-debug-apk`, ID `13334869341`, 27,882,530 bytes; expires 2026-11-18. SHA-256 of the uploaded artifact ZIP: `01ffd960bd940bfc987b285b52143361492ead380547f867d2eebfd07d5c4973`.
@@ -96,3 +96,16 @@ A separate review is recorded in `docs/android/news-sources-review.md`. It ident
 - 2026-11-04: Compared CI #54 and CI #59 debug APK certificates and confirmed they differ. Cross-run APK installation is not a valid data-preserving upgrade test until stable test signing is configured.
 - 2026-11-04: Remaining profile gaps: no biography column, no separate curated-avatar set was supplied, and legal documents remain drafts.
 - 2026-11-04: Reviewed additional anime-news sources and reuse restrictions. ANN is the first candidate to approach for native-app permission; Crunchyroll is not integrated without explicit written approval. See `docs/android/news-sources-review.md`.
+
+
+## Stage 2 integration hardening (2026-11-27)
+
+- The Android-only working branch `stage2-product-integration` was created from `main`; the `main` branch and Website/backend repository remain untouched.
+- Account-scoped personal-library mutations now run under a repository mutex and a Room transaction. The active account is rechecked inside the transaction before the mutation, and sync is triggered only after commit.
+- Added Room DAO provider bindings to Hilt so the personal-library repository's database dependencies are injectable.
+- Updated personal-library unit tests to use an in-memory Room database and cover independent favorite/watch-later timestamps, subscription tombstones, account partitioning and concurrent writes.
+- Native session restore now checks the token, persisted account ID and active account before and after the request. Only a previously bound account may be restored offline; unbound legacy rows are only claimed for the explicit legacy marker after server identity validation.
+- Current-profile reads are bound to the same active-account snapshot, preventing delayed profile data from another account appearing after a switch.
+- Added regression tests for stale session responses and offline restore requiring a previously bound identity.
+
+Validation for these new changes is pending CI on this branch. This section does not mark Stage 2 complete. The documented items elsewhere in this file remain prior project status, not evidence of fresh validation on this branch.
