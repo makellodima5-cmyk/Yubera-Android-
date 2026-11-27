@@ -53,7 +53,9 @@ class NativeAuthRepository @Inject constructor(
         val accountId = response.user.id.trim()
         require(accountId.isNotEmpty()) { "Сервер не вернул идентификатор аккаунта." }
         activeAccountStore.activateAccount(accountId, response.accessToken, claimLegacyRows = false)
-        tokenStore.clearPendingAuth()
+        // The session is already safely stored; stale OAuth state cleanup must
+        // not turn a successful sign-in into a user-visible failure.
+        runCatching { tokenStore.clearPendingAuth() }
     }
 
     suspend fun hasRestorableSession(): Boolean {
@@ -139,8 +141,11 @@ class NativeAuthRepository @Inject constructor(
         try {
             if (token != null) api.logout("Bearer $token")
         } finally {
-            activeAccountStore.clearActiveAccount()
-            tokenStore.clearPendingAuth()
+            try {
+                activeAccountStore.clearActiveAccount()
+            } finally {
+                tokenStore.clearPendingAuth()
+            }
         }
     }
 
