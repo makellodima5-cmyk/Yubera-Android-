@@ -124,12 +124,14 @@ class NativeAuthRepository @Inject constructor(
      */
     suspend fun getCurrentProfile(): TelegramSessionUser? {
         val token = tokenStore.getAccessToken() ?: return null
-        val accountId = tokenStore.getAccountId() ?: return null
+        val accountId = tokenStore.getAccountId()?.takeIf(String::isNotBlank) ?: return null
+        val activeAccountId = activeAccountStore.currentAccountId()
+        if (activeAccountId != accountId) return null
+
         val response = api.getSession("Bearer $token")
-        if (tokenStore.getAccessToken() != token) return null
+        if (!sessionSnapshotIsCurrent(token, accountId, activeAccountId)) return null
         if (!response.authenticated) return null
-        val user = response.user ?: return null
-        return user.takeIf { it.id == accountId }
+        return response.user?.takeIf { it.id == accountId }
     }
 
     suspend fun logout() {
