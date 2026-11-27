@@ -278,6 +278,59 @@ class NativeAuthRepositoryTest {
     }
 
 
+
+    @Test
+    fun callbackRejectsEmptyStateBeforeCallingExchange() = runTest {
+        val store = FakeTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "login")
+        }
+        val api = FakeApi()
+
+        runCatching {
+            NativeAuthRepository(api, store, FakeActiveAccountStore(store))
+                .completeCallback("C".repeat(43), "")
+        }
+
+        assertFalse(api.exchangeCalled)
+    }
+
+    @Test
+    fun callbackRejectsUnsupportedPendingFlowBeforeCallingExchange() = runTest {
+        val store = FakeTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "unexpected")
+        }
+        val api = FakeApi()
+
+        runCatching {
+            NativeAuthRepository(api, store, FakeActiveAccountStore(store))
+                .completeCallback("C".repeat(43), "expected-state")
+        }
+
+        assertFalse(api.exchangeCalled)
+    }
+
+    @Test
+    fun currentProfileRejectsDelayedResponseAfterActiveAccountSwitch() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val api = FakeApi().apply {
+            sessionResponse = TelegramSessionResponse(
+                authenticated = true,
+                user = TelegramSessionUser(id = "user-1", firstName = "Старый аккаунт")
+            )
+            onSessionRequest = { activeAccountStore.forceAccount("user-2") }
+        }
+
+        val profile = NativeAuthRepository(api, store, activeAccountStore).getCurrentProfile()
+
+        assertNull(profile)
+        assertEquals("user-2", activeAccountStore.currentAccountId())
+        assertEquals("user-1", store.storedAccountId)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
