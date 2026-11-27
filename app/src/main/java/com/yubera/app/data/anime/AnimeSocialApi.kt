@@ -30,6 +30,14 @@ interface AnimeSocialApi {
         @Header("Authorization") authorization: String? = null
     ): AnimeCommentsPageResponse
 
+    @GET("api/anime-comments")
+    suspend fun getReplyPage(
+        @Query("animeId") animeId: String,
+        @Query("threadId") threadId: String,
+        @Query("cursor") cursor: String? = null,
+        @Header("Authorization") authorization: String? = null
+    ): AnimeCommentReplyPageResponse
+
     @POST("api/anime-comments")
     suspend fun mutateComment(
         @Body request: AnimeCommentMutationRequest,
