@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeProgressEntity
+import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
+import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.data.settings.UserSettingsRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -17,6 +20,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -31,49 +36,53 @@ data class HomeUiState(
     val ongoing: List<AnimeCatalogItem> = emptyList(),
     val catalogue: List<AnimeCatalogItem> = emptyList(),
     val isRefreshing: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val unreadNotificationCount: Int = 0
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     libraryRepository: PersonalLibraryRepository,
-    settingsRepository: UserSettingsRepository
+    settingsRepository: UserSettingsRepository,
+    private val notificationDao: AnimeEpisodeNotificationDao,
+    private val activeAccountStore: ActiveAccountStore
 ) : ViewModel() {
     private val refreshState = MutableStateFlow(false)
     private val errorState = MutableStateFlow<String?>(null)
     private var recommendationWriteInFlight = false
 
+    private val unreadNotifications = activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        if (accountId.isNullOrBlank()) flowOf(0) else notificationDao.observeUnreadDeliveredCount(accountId)
+    }
+
     val uiState = combine(
         catalogRepository.observeCatalog(),
         libraryRepository.progress,
         settingsRepository.settings,
-        refreshState,
-        errorState
+        combine(refreshState, errorState) { refreshing, error -> refreshing to error },
+        unreadNotifications
     ) { catalog: List<AnimeCatalogItem>,
         progress: List<AnimeProgressEntity>,
         settings: com.yubera.app.data.settings.UserSettings,
-        refreshing: Boolean,
-        error: String? ->
+        refreshAndError: Pair<Boolean, String?>,
+        unreadCount: Int ->
+        val (refreshing, error) = refreshAndError
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        val completedEpisodeIds = progress.filter { row ->
-            val anime = byId[row.animeId] ?: return@filter false
-            val episode = row.episodeNumber ?: return@filter false
-            val aired = anime.episodesAired ?: anime.episodes
-            aired > 0 && episode >= aired && row.durationMillis > 0L &&
-                row.positionMillis >= (row.durationMillis * 0.90).toLong()
-        }.mapTo(mutableSetOf()) { it.animeId }
-        val watchedGenres = progress.filter { row ->
-            val anime = byId[row.animeId] ?: return@filter false
-            val episode = row.episodeNumber ?: return@filter false
-            val aired = anime.episodesAired ?: anime.episodes
-            aired > 0 && episode <= aired && row.durationMillis > 0L &&
-                row.positionMillis >= (row.durationMillis * 0.90).toLong()
-        }.flatMap { byId[it.animeId]?.genres.orEmpty() }
+        // Completion markers survive when the one-row-per-title progress record moves
+        // to another episode. Kodik does not expose reliable telemetry in this WebView;
+        // the player records a conservative sequential-advance completion fallback.
+        val completedProgress = progress.filter { row ->
+            row.completedEpisodeNumber != null || EpisodeCompletionPolicy.isEpisodeCompleted(row)
+        }
+        val titlesWithCompletedEpisode = completedProgress
+            .mapTo(mutableSetOf()) { it.animeId }
+        val watchedGenres = completedProgress
+            .flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
-        val eligible = catalog.filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
+        val eligible = catalog.filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
         val recommendationPool = if (watchedGenres.isEmpty()) {
             eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(20)
         } else {
@@ -88,10 +97,12 @@ class HomeViewModel @Inject constructor(
         val rotatedPool = recommendationPool.drop(rotation) + recommendationPool.take(rotation)
         val computedRecommendations = rotatedPool.take(5)
 
-        val storedRecommendationIds = settings.homeRecommendationIds.filter { id ->
-            byId[id] != null && id !in completedEpisodeIds && byId[id]?.kodikAvailable != false
+        val cachedRecommendationIds = settings.homeRecommendationIds
+        val storedRecommendationIds = cachedRecommendationIds.filter { id ->
+            byId[id] != null && id !in titlesWithCompletedEpisode && byId[id]?.kodikAvailable != false
         }
-        val hasFreshRecommendationSnapshot = storedRecommendationIds.isNotEmpty() &&
+        val snapshotInvalidatedByCompletedTitle = storedRecommendationIds.size != cachedRecommendationIds.size
+        val hasFreshRecommendationSnapshot = !snapshotInvalidatedByCompletedTitle && storedRecommendationIds.isNotEmpty() &&
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
             now >= settings.homeRecommendationsUpdatedAtEpochMillis &&
             now - settings.homeRecommendationsUpdatedAtEpochMillis < RECOMMENDATION_REFRESH_MILLIS
@@ -106,7 +117,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
+        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
@@ -139,11 +150,17 @@ class HomeViewModel @Inject constructor(
             ongoing = ongoing,
             catalogue = catalog,
             isRefreshing = refreshing,
-            errorMessage = error
+            errorMessage = error,
+            unreadNotificationCount = unreadCount
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     init { refresh() }
+
+    fun markNotificationsRead() {
+        val accountId = activeAccountStore.currentAccountId() ?: return
+        viewModelScope.launch { notificationDao.markAllDeliveredAsRead(accountId, System.currentTimeMillis()) }
+    }
 
     fun refresh() {
         viewModelScope.launch {

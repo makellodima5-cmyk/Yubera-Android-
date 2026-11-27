@@ -1,5 +1,7 @@
 package com.yubera.app.core.catalog
 
+data class AnimeScreenshot(val originalUrl: String, val previewUrl: String)
+
 data class AnimeCatalogItem(
     val id: String,
     val title: String,
@@ -13,6 +15,7 @@ data class AnimeCatalogItem(
     val description: String,
     val posterUrl: String?,
     val bannerUrl: String?,
+    val screenshots: List<AnimeScreenshot> = emptyList(),
     val kind: String?,
     val ageRating: String?,
     val nextEpisodeAt: String?,

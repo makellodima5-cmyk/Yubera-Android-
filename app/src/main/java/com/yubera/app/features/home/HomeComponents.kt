@@ -49,7 +49,13 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? =
         AnimeImage(anime,Modifier.fillMaxSize())
         Box(Modifier.fillMaxWidth().height(90.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
         Row(Modifier.fillMaxWidth().padding(8.dp).align(Alignment.TopStart),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-            anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
+            }
             Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
                 anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
                 badge?.let { Pill(it) }
@@ -90,7 +96,13 @@ fun RecommendedCard(anime: AnimeCatalogItem, onClick: () -> Unit, modifier: Modi
             Text(anime.title,color=Color.White,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
             Text(anime.genres.take(3).joinToString(" · "),color=Color(0xFFD7D1DA),style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)
         }
-        Box(Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp).background(YuberaPrimary,CircleShape),contentAlignment=Alignment.Center){Text("▶",color=Color.White)}
+        androidx.compose.material3.IconButton(
+            onClick = onClick,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp)
+                .background(YuberaPrimary, CircleShape)
+        ) {
+            Text("▶", color = Color.White)
+        }
     }
 }
 
@@ -114,7 +126,7 @@ fun HomeSectionHeader(title: String, actionLabel: String = "Смотреть в�
 
 @Composable
 private fun AnimeImage(anime: AnimeCatalogItem, modifier: Modifier, preferBanner: Boolean = false) {
-    val image=if(preferBanner) anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
+    val image=if(preferBanner) anime.screenshots.firstOrNull()?.originalUrl?.takeIf(String::isNotBlank) ?: anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
     Box(modifier.background(YuberaSurface),contentAlignment=Alignment.Center) {
         Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)
         if(!image.isNullOrBlank()) AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)

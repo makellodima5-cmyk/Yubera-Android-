@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -70,8 +71,16 @@ fun HomeScreen(
             Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(horizontal=18.dp,vertical=8.dp)
         ) {
             YuberaLogo(modifier=Modifier.align(Alignment.Center),width=124.dp)
-            IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)
+            Box(Modifier.align(Alignment.CenterEnd)) {
+                IconButton(onClick=onNotificationsClick) {
+                    Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)
+                }
+                if (state.unreadNotificationCount > 0) {
+                    Box(
+                        Modifier.align(Alignment.TopEnd).padding(top=9.dp,end=10.dp).size(7.dp)
+                            .background(Color(0xFFFF4545),CircleShape)
+                    )
+                }
             }
         }
         LazyColumn(

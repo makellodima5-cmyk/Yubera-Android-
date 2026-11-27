@@ -7,6 +7,7 @@ import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.features.library.LibrarySyncTrigger
 import javax.inject.Inject
@@ -86,7 +87,8 @@ class RoomPersonalLibraryRepository @Inject constructor(
         mutationMutex.withLock {
             val accountId = requireAccountId()
             val current = animeProgressDao.getByAnimeId(accountId, progress.animeId)
-            animeProgressDao.upsert(progress.copy(
+            val completionAwareProgress = EpisodeCompletionPolicy.merge(progress, current)
+            animeProgressDao.upsert(completionAwareProgress.copy(
                 accountId = accountId,
                 updatedAtEpochMillis = maxOf(progress.updatedAtEpochMillis, (current?.updatedAtEpochMillis ?: 0L) + 1L)
             ))

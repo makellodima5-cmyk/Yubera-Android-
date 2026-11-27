@@ -11,5 +11,7 @@ data class AnimeProgressEntity(
     val positionMillis: Long,
     val durationMillis: Long,
     val updatedAtEpochMillis: Long,
-    @ColumnInfo(defaultValue = "'legacy-unassigned'") val accountId: String = "legacy-unassigned"
+    @ColumnInfo(defaultValue = "'legacy-unassigned'") val accountId: String = "legacy-unassigned",
+    val completedEpisodeNumber: Int? = null,
+    val completedAtEpochMillis: Long? = null
 )

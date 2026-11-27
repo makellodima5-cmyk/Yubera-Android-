@@ -3,7 +3,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.yubera.app.core.database.dao.*
 import com.yubera.app.core.database.entity.*
-@Database(entities = [AnimeLibraryEntity::class, AnimeProgressEntity::class, AnimeSubscriptionEntity::class, AnimeEpisodeNotificationEntity::class, CatalogAnimeEntity::class, CatalogMetadataEntity::class, NewsArticleEntity::class, NewsBookmarkEntity::class], version = 8, exportSchema = true)
+@Database(entities = [AnimeLibraryEntity::class, AnimeProgressEntity::class, AnimeSubscriptionEntity::class, AnimeEpisodeNotificationEntity::class, CatalogAnimeEntity::class, CatalogMetadataEntity::class, NewsArticleEntity::class, NewsBookmarkEntity::class], version = 10, exportSchema = true)
 abstract class YuberaDatabase : RoomDatabase() {
  abstract fun animeEpisodeNotificationDao(): AnimeEpisodeNotificationDao
  abstract fun animeLibraryDao(): AnimeLibraryDao
