@@ -29,7 +29,6 @@ data class HomeUiState(
     val newReleases: List<AnimeCatalogItem> = emptyList(),
     val announcements: List<AnimeCatalogItem> = emptyList(),
     val ongoing: List<AnimeCatalogItem> = emptyList(),
-    val randomPick: AnimeCatalogItem? = null,
     val catalogue: List<AnimeCatalogItem> = emptyList(),
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
@@ -128,7 +127,6 @@ class HomeViewModel @Inject constructor(
             status.contains("ongoing") || status.contains("онгоинг") || status.contains("выходит") ||
                 (anime.nextEpisodeAt?.isNotBlank() == true && (anime.episodesAired ?: 0) < anime.episodes)
         }.take(20)
-        val randomPool = catalog.filter { it.kodikAvailable == true }
         HomeUiState(
             continueWatching = continueList,
             recommended = selectedRecommendations,
@@ -136,7 +134,6 @@ class HomeViewModel @Inject constructor(
             newReleases = newReleases,
             announcements = announcements,
             ongoing = ongoing,
-            randomPick = randomPool.randomOrNull(),
             catalogue = catalog,
             isRefreshing = refreshing,
             errorMessage = error
