@@ -45,6 +45,8 @@ class NativeAuthRepository @Inject constructor(
         require(code.matches(EXCHANGE_CODE_PATTERN)) { "Некорректный код авторизации." }
         val pending = tokenStore.getPendingAuth() ?: throw IllegalStateException("Сессия авторизации не найдена.")
         require(state == pending.state) { "Проверка состояния авторизации не пройдена." }
+        require(pending.flow == FLOW_LOGIN || pending.flow == FLOW_REGISTER) { "Неизвестный тип авторизации." }
+
         val response = api.exchangeCode(MobileAuthExchangeRequest(code, pending.verifier))
         require(response.authenticated && response.tokenType.equals("Bearer", ignoreCase = true)) {
             "Сервер не подтвердил авторизацию."
@@ -52,8 +54,10 @@ class NativeAuthRepository @Inject constructor(
         require(response.accessToken.matches(EXCHANGE_CODE_PATTERN)) { "Сервер вернул некорректную сессию." }
         val accountId = response.user.id.trim()
         require(accountId.isNotEmpty()) { "Сервер не вернул идентификатор аккаунта." }
+
         activeAccountStore.activateAccount(accountId, response.accessToken, claimLegacyRows = false)
-        tokenStore.clearPendingAuth()
+        // A failed cleanup must not report a failed login after a session has been saved.
+        runCatching { tokenStore.clearPendingAuth() }
     }
 
     suspend fun hasRestorableSession(): Boolean {
@@ -63,64 +67,67 @@ class NativeAuthRepository @Inject constructor(
             return false
         }
 
+        val storedAccountId = tokenStore.getAccountId()
+        val initialAccountId = activeAccountStore.currentAccountId()
+        val legacyAccountPending = storedAccountId == null &&
+            initialAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+        val previouslyBoundSession = storedAccountId != null &&
+            storedAccountId.isNotBlank() &&
+            storedAccountId == initialAccountId
+
+        if (!legacyAccountPending && !previouslyBoundSession) {
+            activeAccountStore.clearActiveAccount()
+            return false
+        }
+
         return try {
             val response = api.getSession("Bearer $token")
-            val accountId = response.user?.id?.trim().orEmpty()
 
-            // A logout or account switch may have happened while the request was in flight.
-            // Never let a stale response restore the old credentials.
-            if (tokenStore.getAccessToken() != token) return false
+            // Do not let a slow response restore credentials after logout or account switch.
+            if (!sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId)) return false
 
-            if (!response.authenticated || accountId.isEmpty()) {
+            val serverAccountId = response.user?.id?.trim().orEmpty()
+            if (!response.authenticated || serverAccountId.isEmpty()) {
+                activeAccountStore.clearActiveAccount()
+                false
+            } else if (storedAccountId != null && storedAccountId != serverAccountId) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                val storedAccountId = tokenStore.getAccountId()
-                val currentAccountId = activeAccountStore.currentAccountId()
-                val legacyAccountPending = storedAccountId == null &&
-                    currentAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
-                val storedIdentityMatches = legacyAccountPending ||
-                    (storedAccountId != null && storedAccountId == currentAccountId)
-                if (!storedIdentityMatches) {
-                    return false
-                }
-                if (storedAccountId != null && storedAccountId != accountId) {
-                    activeAccountStore.clearActiveAccount()
-                    return false
-                }
-
-                val claimLegacy = legacyAccountPending
-                activeAccountStore.activateAccount(accountId, token, claimLegacyRows = claimLegacy)
+                activeAccountStore.activateAccount(
+                    serverAccountId,
+                    token,
+                    claimLegacyRows = legacyAccountPending
+                )
                 true
             }
         } catch (error: HttpException) {
-            if (tokenStore.getAccessToken() != token) {
+            if (!sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId)) {
                 false
             } else if (error.code() == 401) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                true
+                // A session already bound to an account remains available offline.
+                previouslyBoundSession
             }
         } catch (_: Exception) {
-            // Preserve offline access only while the same stored token remains active.
-            tokenStore.getAccessToken() == token
+            sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId) && previouslyBoundSession
         }
     }
 
-    /**
-     * Fetches the public profile fields for the currently authenticated YUBERA account.
-     * Both the bearer token and returned account ID are checked so a delayed response
-     * cannot display profile information from an account that has since been switched.
-     */
     suspend fun getCurrentProfile(): TelegramSessionUser? {
         val token = tokenStore.getAccessToken() ?: return null
-        val accountId = tokenStore.getAccountId() ?: return null
+        val accountId = tokenStore.getAccountId()?.takeIf(String::isNotBlank) ?: return null
+        if (activeAccountStore.currentAccountId() != accountId) return null
+
         val response = api.getSession("Bearer $token")
-        if (tokenStore.getAccessToken() != token) return null
+        if (tokenStore.getAccessToken() != token ||
+            tokenStore.getAccountId() != accountId ||
+            activeAccountStore.currentAccountId() != accountId
+        ) return null
         if (!response.authenticated) return null
-        val user = response.user ?: return null
-        return user.takeIf { it.id == accountId }
+        return response.user?.takeIf { it.id == accountId }
     }
 
     suspend fun logout() {
@@ -128,12 +135,24 @@ class NativeAuthRepository @Inject constructor(
         try {
             if (token != null) api.logout("Bearer $token")
         } finally {
-            activeAccountStore.clearActiveAccount()
-            tokenStore.clearPendingAuth()
+            try {
+                activeAccountStore.clearActiveAccount()
+            } finally {
+                tokenStore.clearPendingAuth()
+            }
         }
     }
 
     fun clearPendingAuth() = tokenStore.clearPendingAuth()
+
+    private fun sessionSnapshotIsCurrent(
+        token: String,
+        accountId: String?,
+        activeAccountId: String?
+    ): Boolean =
+        tokenStore.getAccessToken() == token &&
+            tokenStore.getAccountId() == accountId &&
+            activeAccountStore.currentAccountId() == activeAccountId
 
     private fun randomToken(): String {
         val bytes = ByteArray(32)

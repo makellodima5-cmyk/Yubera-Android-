@@ -74,7 +74,7 @@ fun AuthNavHost() {
 private fun WelcomeScreen(onSignIn: () -> Unit, onRegister: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(
-            painter = painterResource(R.drawable.yubera_auth_background),
+            painter = painterResource(R.drawable.yubera_login_background),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -121,7 +121,7 @@ private fun AuthSignInScreen(viewModel: AuthViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     var error by remember { mutableStateOf<String?>(null) }
     Box(modifier = Modifier.fillMaxSize().background(YuberaBackground)) {
-        Image(painter = painterResource(R.drawable.yubera_auth_background), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Image(painter = painterResource(R.drawable.yubera_login_background), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, YuberaBackground.copy(alpha = 0.72f), YuberaBackground))))
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 32.dp),

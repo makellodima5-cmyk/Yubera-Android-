@@ -9,6 +9,8 @@ import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.features.library.LibrarySyncTrigger
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -127,6 +129,23 @@ class RoomPersonalLibraryRepositoryTest {
         repository.removeSubscription("anime-7")
 
         assertFalse(subscriptionDao.getByAnimeId("account-a", "anime-7")?.isSubscribed ?: true)
+    }
+
+    @Test
+    fun concurrentFavoriteWritesKeepTheLatestMutationTimestamp() = runTest {
+        val libraryDao = FakeAnimeLibraryDao()
+        val repository = createRepository(libraryDao, FakeAnimeProgressDao(), FakeAnimeSubscriptionDao())
+
+        kotlinx.coroutines.coroutineScope {
+            val first = launch { repository.setFavorite("anime-race", true, 100L) }
+            val second = launch { repository.setFavorite("anime-race", false, 100L) }
+            first.join()
+            second.join()
+        }
+
+        val saved = libraryDao.getByAnimeId("account-a", "anime-race")
+        assertEquals(101L, saved?.favoriteUpdatedAtEpochMillis)
+        assertFalse(saved?.isFavorite ?: true)
     }
 
     @Test

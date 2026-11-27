@@ -25,42 +25,53 @@ class AndroidKeystoreTokenStore @Inject constructor(
 
     @Synchronized
     override fun saveAccessToken(token: String) {
-        preferences.edit().putString(KEY_ACCESS_TOKEN, encrypt(token)).apply()
+        require(token.isNotBlank())
+        check(preferences.edit().putString(KEY_ACCESS_TOKEN, encrypt(token)).commit()) {
+            "Не удалось сохранить сессию."
+        }
     }
 
     @Synchronized
     override fun getAccessToken(): String? = preferences.getString(KEY_ACCESS_TOKEN, null)?.let { encrypted ->
         try { decrypt(encrypted) } catch (_: Exception) {
-            preferences.edit().remove(KEY_ACCESS_TOKEN).apply()
+            preferences.edit().remove(KEY_ACCESS_TOKEN).commit()
             null
         }
     }
 
     @Synchronized
     override fun clearAccessToken() {
-        preferences.edit().remove(KEY_ACCESS_TOKEN).apply()
+        check(preferences.edit().remove(KEY_ACCESS_TOKEN).commit()) {
+            "Не удалось завершить локальную сессию."
+        }
     }
 
     @Synchronized
     override fun saveAuthenticatedSession(token: String, accountId: String) {
         require(token.isNotBlank() && accountId.isNotBlank())
+        // Write both credentials as one synchronous preference commit. If it fails,
+        // do not publish a partially authenticated token/account pair.
         val encryptedToken = encrypt(token)
         val encryptedAccountId = encrypt(accountId)
-        preferences.edit()
-            .putString(KEY_ACCESS_TOKEN, encryptedToken)
-            .putString(KEY_ACCOUNT_ID, encryptedAccountId)
-            .apply()
+        check(
+            preferences.edit()
+                .putString(KEY_ACCESS_TOKEN, encryptedToken)
+                .putString(KEY_ACCOUNT_ID, encryptedAccountId)
+                .commit()
+        ) { "Не удалось сохранить сессию." }
     }
 
     @Synchronized
     override fun clearAuthenticatedSession() {
-        preferences.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_ACCOUNT_ID).apply()
+        check(
+            preferences.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_ACCOUNT_ID).commit()
+        ) { "Не удалось завершить локальную сессию." }
     }
 
     @Synchronized
     override fun getAccountId(): String? = preferences.getString(KEY_ACCOUNT_ID, null)?.let { encrypted ->
         try { decrypt(encrypted).takeIf(String::isNotBlank) } catch (_: Exception) {
-            preferences.edit().remove(KEY_ACCOUNT_ID).apply()
+            preferences.edit().remove(KEY_ACCOUNT_ID).commit()
             null
         }
     }
@@ -68,7 +79,9 @@ class AndroidKeystoreTokenStore @Inject constructor(
     @Synchronized
     override fun savePendingAuth(auth: PendingNativeAuth) {
         val json = JSONObject().put("state", auth.state).put("verifier", auth.verifier).put("flow", auth.flow).toString()
-        preferences.edit().putString(KEY_PENDING_AUTH, encrypt(json)).apply()
+        check(preferences.edit().putString(KEY_PENDING_AUTH, encrypt(json)).commit()) {
+            "Не удалось сохранить состояние авторизации."
+        }
     }
 
     @Synchronized
@@ -78,14 +91,16 @@ class AndroidKeystoreTokenStore @Inject constructor(
             val json = JSONObject(decrypt(encrypted))
             PendingNativeAuth(json.getString("state"), json.getString("verifier"), json.getString("flow"))
         } catch (_: Exception) {
-            preferences.edit().remove(KEY_PENDING_AUTH).apply()
+            preferences.edit().remove(KEY_PENDING_AUTH).commit()
             null
         }
     }
 
     @Synchronized
     override fun clearPendingAuth() {
-        preferences.edit().remove(KEY_PENDING_AUTH).apply()
+        check(preferences.edit().remove(KEY_PENDING_AUTH).commit()) {
+            "Не удалось очистить состояние авторизации."
+        }
     }
 
     private fun encrypt(value: String): String {

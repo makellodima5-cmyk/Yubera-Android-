@@ -38,6 +38,7 @@ class RoomActiveAccountStore @Inject constructor(
                     }
                 }
                 tokenStore.saveAuthenticatedSession(accessToken, accountId)
+                // Keep old account-scoped rows hidden until the account and token are committed.
                 mutableAccountId.value = accountId
             } catch (error: Exception) {
                 mutableAccountId.value = previousAccountId
@@ -48,8 +49,14 @@ class RoomActiveAccountStore @Inject constructor(
 
     override suspend fun clearActiveAccount() {
         mutex.withLock {
+            val previousAccountId = mutableAccountId.value
             mutableAccountId.value = null
-            tokenStore.clearAuthenticatedSession()
+            try {
+                tokenStore.clearAuthenticatedSession()
+            } catch (error: Exception) {
+                mutableAccountId.value = previousAccountId
+                throw error
+            }
         }
     }
 }

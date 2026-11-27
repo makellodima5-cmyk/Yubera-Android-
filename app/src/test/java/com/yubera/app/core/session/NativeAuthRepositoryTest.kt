@@ -159,10 +159,26 @@ class NativeAuthRepositoryTest {
             sessionResponse = TelegramSessionResponse(authenticated = true, user = user)
         }
 
-        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store)).getCurrentProfile()
+        val profile = NativeAuthRepository(api, store, FakeActiveAccountStore(store, "user-1")).getCurrentProfile()
 
         assertEquals(user, profile)
         assertEquals("2026-10-24 09:15:00", profile?.createdAt)
+    }
+
+    @Test
+    fun currentProfileRejectsResponseWhenActiveAccountChangesInFlight() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val api = FakeApi().apply {
+            beforeSessionResponse = { activeAccountStore.switchTo("user-2") }
+        }
+
+        val profile = NativeAuthRepository(api, store, activeAccountStore).getCurrentProfile()
+
+        assertNull(profile)
     }
 
     @Test
@@ -183,7 +199,81 @@ class NativeAuthRepositoryTest {
         assertNull(profile)
     }
 
-    private class FakeTokenStore : SecureTokenStore {
+
+    @Test
+    fun networkFailureDoesNotRestoreSessionWhenAccountBindingIsMissing() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, "legacy-unassigned")
+        val restored = NativeAuthRepository(FailingApi(), store, activeAccountStore).hasRestorableSession()
+        assertFalse(restored)
+    }
+
+    @Test
+    fun serverCanIdentifyExistingLegacyRowsWhenActiveAccountIsUnassigned() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID)
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+        assertTrue(restored)
+        assertEquals("user-1", store.storedAccountId)
+        assertTrue(activeAccountStore.claimedLegacyRows)
+    }
+
+    @Test
+    fun refusesTokenWithoutStoredAccountOrLegacyUnassignedIdentity() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, null)
+        val restored = NativeAuthRepository(FakeApi(), store, activeAccountStore).hasRestorableSession()
+        assertFalse(restored)
+        assertNull(activeAccountStore.currentAccountId())
+        assertNull(store.storedAccountId)
+    }
+
+    @Test
+    fun networkFailureKeepsPreviouslyBoundLocalSessionAvailableOffline() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val restored = NativeAuthRepository(FailingApi(), store, activeAccountStore).hasRestorableSession()
+        assertTrue(restored)
+    }
+
+
+    @Test
+    fun logoutClearsLocalCredentialsEvenWhenRemoteLogoutFails() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+            pending = PendingNativeAuth("state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+
+        runCatching {
+            NativeAuthRepository(FailingApi(), store, activeAccountStore).logout()
+        }
+
+        assertNull(store.token)
+        assertNull(store.storedAccountId)
+        assertNull(store.pending)
+        assertNull(activeAccountStore.currentAccountId())
+    }
+
+    @Test
+    fun clearingPendingAuthFailureDoesNotUndoSuccessfulCallback() = runTest {
+        val store = FailingPendingClearTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FakeActiveAccountStore(store)
+        NativeAuthRepository(FakeApi(), store, activeAccountStore)
+            .completeCallback("C".repeat(43), "expected-state")
+
+        assertEquals("A".repeat(43), store.token)
+        assertEquals("user-1", store.storedAccountId)
+        assertEquals("user-1", activeAccountStore.currentAccountId())
+    }
+
+    private open class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
         var pending: PendingNativeAuth? = null
@@ -204,6 +294,11 @@ class NativeAuthRepositoryTest {
         override fun clearPendingAuth() { pending = null }
     }
 
+
+    private class FailingPendingClearTokenStore : FakeTokenStore() {
+        override fun clearPendingAuth() { error("local clear failed") }
+    }
+
     private class FakeActiveAccountStore(
         private val tokenStore: FakeTokenStore,
         initialAccountId: String? = null
@@ -213,6 +308,7 @@ class NativeAuthRepositoryTest {
         var claimedLegacyRows = false
 
         override fun currentAccountId(): String? = mutableAccountId.value
+        fun switchTo(accountId: String?) { mutableAccountId.value = accountId }
 
         override suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean) {
             if (claimLegacyRows) claimedLegacyRows = true
@@ -226,12 +322,19 @@ class NativeAuthRepositoryTest {
         }
     }
 
+    private class FailingApi : TelegramSessionApi {
+        override suspend fun exchangeCode(request: MobileAuthExchangeRequest): MobileAuthExchangeResponse = error("offline")
+        override suspend fun getSession(authorization: String): TelegramSessionResponse = error("offline")
+        override suspend fun logout(authorization: String): TelegramSessionResponse = error("offline")
+    }
+
     private class FakeApi : TelegramSessionApi {
         var exchangeCalled = false
         var sessionResponse = TelegramSessionResponse(
             authenticated = true,
             user = TelegramSessionUser(id = "user-1")
         )
+        var beforeSessionResponse: (() -> Unit)? = null
 
         override suspend fun exchangeCode(request: MobileAuthExchangeRequest): MobileAuthExchangeResponse {
             exchangeCalled = true
@@ -246,7 +349,10 @@ class NativeAuthRepositoryTest {
             )
         }
 
-        override suspend fun getSession(authorization: String) = sessionResponse
+        override suspend fun getSession(authorization: String): TelegramSessionResponse {
+            beforeSessionResponse?.invoke()
+            return sessionResponse
+        }
         override suspend fun logout(authorization: String) = TelegramSessionResponse(authenticated = false)
     }
 }
