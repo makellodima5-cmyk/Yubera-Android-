@@ -16,7 +16,6 @@ import com.yubera.app.MainActivity
 import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
 import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.CatalogDao
-import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.entity.AnimeEpisodeNotificationEntity
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.session.SecureTokenStore
