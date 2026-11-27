@@ -8,4 +8,5 @@ interface UserSettingsRepository {
     suspend fun setNotificationsEnabled(enabled: Boolean)
     suspend fun setNewEpisodeNotificationsEnabled(enabled: Boolean)
     suspend fun setAnimeInfoNotificationsEnabled(enabled: Boolean)
+    suspend fun setPushNotificationsEnabled(enabled: Boolean)
 }

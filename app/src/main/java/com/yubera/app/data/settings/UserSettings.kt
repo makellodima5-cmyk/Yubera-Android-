@@ -6,5 +6,6 @@ data class UserSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationsEnabled: Boolean = false,
     val newEpisodeNotificationsEnabled: Boolean = false,
-    val animeInfoNotificationsEnabled: Boolean = false
+    val animeInfoNotificationsEnabled: Boolean = false,
+    val pushNotificationsEnabled: Boolean = false
 )

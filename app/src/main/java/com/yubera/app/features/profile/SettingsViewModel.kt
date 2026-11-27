@@ -60,6 +60,7 @@ class SettingsViewModel @Inject constructor(
     fun setNotifications(enabled: Boolean) { viewModelScope.launch { repository.setNotificationsEnabled(enabled) } }
     fun setNewEpisodes(enabled: Boolean) { viewModelScope.launch { repository.setNewEpisodeNotificationsEnabled(enabled) } }
     fun setAnimeInfo(enabled: Boolean) { viewModelScope.launch { repository.setAnimeInfoNotificationsEnabled(enabled) } }
+    fun setPushNotifications(enabled: Boolean) { viewModelScope.launch { repository.setPushNotificationsEnabled(enabled) } }
     fun logout(onComplete: () -> Unit) {
         viewModelScope.launch {
             try {

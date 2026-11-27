@@ -20,6 +20,12 @@ interface CatalogDao {
     @Query("SELECT * FROM catalog_anime ORDER BY position ASC")
     suspend fun getAll(): List<CatalogAnimeEntity>
 
+    @Query("SELECT * FROM catalog_anime WHERE animeId = :animeId LIMIT 1")
+    suspend fun getById(animeId: String): CatalogAnimeEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(entity: CatalogAnimeEntity)
+
     @Query("SELECT * FROM catalog_metadata WHERE id = 0 LIMIT 1")
     suspend fun getMetadata(): CatalogMetadataEntity?
 

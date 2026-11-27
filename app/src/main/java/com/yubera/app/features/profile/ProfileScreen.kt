@@ -196,6 +196,12 @@ fun ProfileScreen(
                         }
                     )
                     SettingSwitch(
+                        title = "Push-уведомления (не подключены)",
+                        checked = false,
+                        enabled = false,
+                        onCheckedChange = { }
+                    )
+                    SettingSwitch(
                         title = "Новые серии",
                         checked = settings.newEpisodeNotificationsEnabled,
                         enabled = settings.notificationsEnabled,
@@ -208,7 +214,7 @@ fun ProfileScreen(
                         onCheckedChange = { enabled -> viewModel.setAnimeInfo(enabled) }
                     )
                     Text(
-                        "Приложение проверяет только ваши подписки в фоновом режиме примерно раз в 6 часов. Android может переносить запуск для экономии батареи.",
+                        "Push через Firebase пока не подключён. Сейчас приложение проверяет ваши подписки в фоновом режиме примерно раз в 6 часов; Android может переносить запуск для экономии батареи.",
                         color = YuberaMuted,
                         style = MaterialTheme.typography.bodySmall
                     )

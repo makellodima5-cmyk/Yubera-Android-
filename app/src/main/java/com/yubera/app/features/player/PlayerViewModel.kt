@@ -50,18 +50,21 @@ class PlayerViewModel @Inject constructor(
             selectedEpisodeUrl = episode?.link
         )
         episode?.let { selected ->
-            viewModelScope.launch { recordOpenedEpisode(selected.number, selected.link) }
+            viewModelScope.launch { recordOpenedEpisode(selected.number) }
         }
     }
 
     fun selectEpisode(number: Int) {
-        val source = mutableState.value.sources.firstOrNull { it.id == mutableState.value.selectedSourceId } ?: return
-        val episode = source.episodes.firstOrNull { it.number == number } ?: return
+        val source = mutableState.value.sources.firstOrNull { candidate ->
+            candidate.episodes.any { it.number == number }
+        } ?: return
+        val episode = source.episodes.first { it.number == number }
         mutableState.value = mutableState.value.copy(
+            selectedSourceId = source.id,
             selectedEpisodeNumber = episode.number,
             selectedEpisodeUrl = episode.link
         )
-        viewModelScope.launch { recordOpenedEpisode(episode.number, episode.link) }
+        viewModelScope.launch { recordOpenedEpisode(episode.number) }
     }
 
     fun retry() = load()
@@ -74,8 +77,14 @@ class PlayerViewModel @Inject constructor(
             try {
                 val anime = catalogRepository.observeAnime(animeId).first()
                 val sources = kodikRepository.getSources(animeId)
-                val firstSource = sources.firstOrNull()
-                val firstEpisode = firstSource?.episodes?.firstOrNull()
+                val progress = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
+                val preferredEpisode = progress?.episodeNumber
+                val firstSource = sources.firstOrNull { source ->
+                    preferredEpisode != null && source.episodes.any { it.number == preferredEpisode }
+                } ?: sources.firstOrNull()
+                val firstEpisode = firstSource?.episodes?.firstOrNull { it.number == preferredEpisode }
+                    ?: firstSource?.episodes?.firstOrNull()
+
                 mutableState.value = PlayerUiState(
                     animeTitle = anime?.title ?: "Просмотр",
                     sources = sources,
@@ -85,9 +94,7 @@ class PlayerViewModel @Inject constructor(
                     isLoading = false,
                     errorMessage = if (sources.isEmpty()) "Для этого тайтла сейчас нет доступных источников Kodik." else null
                 )
-                firstEpisode?.let { selected ->
-                    viewModelScope.launch { recordOpenedEpisode(selected.number, selected.link) }
-                }
+                firstEpisode?.let { recordOpenedEpisode(it.number) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -101,10 +108,20 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    private suspend fun recordOpenedEpisode(number: Int, link: String) {
-        if (!KodikLinkPolicy.isTrustedHttpsUrl(link)) return
+    private suspend fun recordOpenedEpisode(number: Int) {
+        val current = mutableState.value
+        val selected = current.sources
+            .firstOrNull { it.id == current.selectedSourceId }
+            ?.episodes
+            ?.firstOrNull { it.number == number }
+            ?: return
+        if (current.selectedEpisodeNumber != number ||
+            !KodikLinkPolicy.isTrustedHttpsUrl(selected.link)
+        ) return
+
         val existing = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
         if (existing?.episodeNumber == number) return
+
         libraryRepository.saveProgress(
             AnimeProgressEntity(
                 animeId = animeId,

@@ -20,7 +20,8 @@ class DataStoreUserSettingsRepository @Inject constructor(
                 ?: ThemeMode.SYSTEM,
             notificationsEnabled = preferences[Keys.notificationsEnabled] ?: false,
             newEpisodeNotificationsEnabled = preferences[Keys.newEpisodeNotificationsEnabled] ?: false,
-            animeInfoNotificationsEnabled = preferences[Keys.animeInfoNotificationsEnabled] ?: false
+            animeInfoNotificationsEnabled = preferences[Keys.animeInfoNotificationsEnabled] ?: false,
+            pushNotificationsEnabled = preferences[Keys.pushNotificationsEnabled] ?: false
         )
     }
 
@@ -40,10 +41,15 @@ class DataStoreUserSettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.animeInfoNotificationsEnabled] = enabled }
     }
 
+    override suspend fun setPushNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.pushNotificationsEnabled] = enabled }
+    }
+
     private object Keys {
         val themeMode = stringPreferencesKey("theme_mode")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val newEpisodeNotificationsEnabled = booleanPreferencesKey("new_episode_notifications_enabled")
         val animeInfoNotificationsEnabled = booleanPreferencesKey("anime_info_notifications_enabled")
+        val pushNotificationsEnabled = booleanPreferencesKey("push_notifications_enabled")
     }
 }

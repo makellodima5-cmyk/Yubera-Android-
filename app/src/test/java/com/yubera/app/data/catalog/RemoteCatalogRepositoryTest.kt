@@ -185,6 +185,8 @@ class RemoteCatalogRepositoryTest {
         override fun observeAll(): Flow<List<CatalogAnimeEntity>> = rows
         override fun observeById(animeId: String): Flow<CatalogAnimeEntity?> = rows.map { items -> items.firstOrNull { it.animeId == animeId } }
         override suspend fun getAll(): List<CatalogAnimeEntity> = rows.value
+        override suspend fun getById(animeId: String): CatalogAnimeEntity? = rows.value.firstOrNull { it.animeId == animeId }
+        override suspend fun upsert(entity: CatalogAnimeEntity) { rows.value = rows.value.filterNot { it.animeId == entity.animeId } + entity }
         override suspend fun getMetadata(): CatalogMetadataEntity? = metadata
         override suspend fun clearCatalog() { rows.value = emptyList() }
         override suspend fun insertAll(items: List<CatalogAnimeEntity>) { rows.value = rows.value + items }

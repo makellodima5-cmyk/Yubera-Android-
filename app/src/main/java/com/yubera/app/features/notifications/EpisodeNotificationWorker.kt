@@ -58,21 +58,20 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
         return try {
             val settingsRepository = entry.userSettingsRepository()
             val settings = settingsRepository.settings.first()
+            val infoNotificationsEnabled = settings.notificationsEnabled && settings.animeInfoNotificationsEnabled
+            val episodeNotificationsEnabled = settings.notificationsEnabled && settings.newEpisodeNotificationsEnabled
             val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             createChannel(manager)
-            if (!EpisodeNotificationPolicy.shouldDeliverNotification(
-                    notificationsEnabled = settings.notificationsEnabled,
-                    newEpisodeNotificationsEnabled = settings.newEpisodeNotificationsEnabled,
-                    subscriptionNotificationsEnabled = true,
-                    systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
-                )
+            if ((!infoNotificationsEnabled && !episodeNotificationsEnabled) ||
+                !hasPermission() || !notificationsAvailable(manager)
             ) return Result.success()
 
             val subscriptionDao = entry.animeSubscriptionDao()
-            val subscriptions = subscriptionDao.getNotificationSubscriptions(accountId)
+            val subscriptions = subscriptionDao.getAll(accountId).filter { it.isSubscribed }
             if (subscriptions.isEmpty()) return Result.success()
 
-            val titles = entry.catalogDao().getAll().associate { it.animeId to it.title }
+            val catalogDao = entry.catalogDao()
+            val titles = catalogDao.getAll().associate { it.animeId to it.title }.toMutableMap()
             val notificationDao = entry.animeEpisodeNotificationDao()
             val api = entry.shikimoriEpisodeUpdatesApi()
             val batches = subscriptions.chunked(MAX_IDS_PER_QUERY)
@@ -94,6 +93,19 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                         val count = update.episodesAired?.coerceAtLeast(0) ?: return@forEach
                         val previous = subscription.lastKnownEpisodesAired
 
+                        if (infoNotificationsEnabled && subscription.notificationsEnabled) {
+                            val currentTitle = titles[subscription.animeId]
+                            val latestTitle = update.displayName
+                            if (!currentTitle.isNullOrBlank() && latestTitle.isNotBlank() && currentTitle != latestTitle) {
+                                if (showInfoNotification(stableInfoId(accountId, subscription.animeId), latestTitle, subscription.animeId)) {
+                                    catalogDao.getById(subscription.animeId)?.let { current ->
+                                        catalogDao.upsert(current.copy(title = latestTitle))
+                                    }
+                                    titles[subscription.animeId] = latestTitle
+                                }
+                            }
+                        }
+
                         EpisodeNotificationPolicy.releasedEpisodes(previous, count).forEach { episode ->
                             ensureCurrentAccount(tokenStore, activeAccountStore, token, accountId)
                             notificationDao.insertIfNew(AnimeEpisodeNotificationEntity(
@@ -105,24 +117,20 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                             val saved = notificationDao.getByEpisode(accountId, subscription.animeId, episode)
                             if (saved?.deliveredAtEpochMillis == null) {
                                 val currentSubscription = subscriptionDao.getByAnimeId(accountId, subscription.animeId)
-                                if (currentSubscription?.notificationsEnabled == true && currentSubscription.isSubscribed) {
-                                    val currentSettings = settingsRepository.settings.first()
-                                    val canDeliver = EpisodeNotificationPolicy.shouldDeliverNotification(
+                                val currentSettings = settingsRepository.settings.first()
+                                val canDeliver = currentSubscription?.isSubscribed == true &&
+                                    EpisodeNotificationPolicy.shouldDeliverNotification(
                                         notificationsEnabled = currentSettings.notificationsEnabled,
                                         newEpisodeNotificationsEnabled = currentSettings.newEpisodeNotificationsEnabled,
                                         subscriptionNotificationsEnabled = currentSubscription.notificationsEnabled,
                                         systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
                                     )
-                                    if (!canDeliver) {
-                                        if (!currentSettings.notificationsEnabled || !currentSettings.newEpisodeNotificationsEnabled) {
-                                            throw GlobalNotificationsDisabledException()
-                                        }
-                                        throw IllegalStateException("Notifications became unavailable during delivery")
-                                    }
+                                if (canDeliver && episodeNotificationsEnabled) {
                                     ensureCurrentAccount(tokenStore, activeAccountStore, token, accountId)
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
-                                    if (!showNotification(stableId(accountId, subscription.animeId, episode), title, episode)) {
+                                    val notificationId = stableId(accountId, subscription.animeId, episode)
+                                    if (!showNotification(notificationId, title, subscription.animeId, episode)) {
                                         throw IllegalStateException("Notification permission became unavailable during delivery")
                                     }
                                     notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
@@ -188,14 +196,19 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             manager.getNotificationChannel(CHANNEL_ID)?.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    private fun showNotification(id: Int, title: String, episode: Int): Boolean {
+    private fun showNotification(id: Int, title: String, animeId: String, episode: Int): Boolean {
         // Permission can be revoked between the worker's initial check and delivery.
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) return false
 
-        val intent = android.content.Intent(applicationContext, MainActivity::class.java)
+        val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
+            action = MainActivity.ACTION_OPEN_EPISODE
+            putExtra(MainActivity.EXTRA_ANIME_ID, animeId)
+            putExtra(MainActivity.EXTRA_EPISODE_NUMBER, episode)
+            flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
         val pending = PendingIntent.getActivity(
             applicationContext,
             id,
@@ -219,11 +232,44 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
         }
     }
 
+    private fun showInfoNotification(id: Int, title: String, animeId: String): Boolean {
+        if (Build.VERSION.SDK_INT >= 33 && !hasPermission()) return false
+        val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
+            action = MainActivity.ACTION_OPEN_EPISODE
+            putExtra(MainActivity.EXTRA_ANIME_ID, animeId)
+            flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pending = PendingIntent.getActivity(
+            applicationContext,
+            id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText("Обновилась информация об отслеживаемом тайтле")
+            .setContentIntent(pending)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        return try {
+            NotificationManagerCompat.from(applicationContext).notify(id, notification)
+            true
+        } catch (_: SecurityException) {
+            false
+        }
+    }
+
+    private fun stableInfoId(accountId: String, animeId: String): Int =
+        (31 * accountId.hashCode() + animeId.hashCode()) xor INFO_NOTIFICATION_SALT
+
     private fun stableId(accountId: String, animeId: String, episode: Int): Int = 31 * (31 * accountId.hashCode() + animeId.hashCode()) + episode
 
     companion object {
         const val CHANNEL_ID = "yubera_new_episodes"
         const val MAX_IDS_PER_QUERY = 50
         const val REQUEST_SPACING_MILLIS = 700L
+        const val INFO_NOTIFICATION_SALT = 0x51A7
     }
 }
