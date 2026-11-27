@@ -99,7 +99,6 @@ fun AppNavHost(
             composable(AppDestination.Home.route) {
                 HomeScreen(
                     onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
-                    onNotificationsClick = { navController.navigate("notifications") },
                     onCollectionsClick = { navController.navigate(AppDestination.My.route) }
                 )
             }
