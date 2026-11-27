@@ -24,8 +24,8 @@ class AppUpdateRepository @Inject constructor(
         return try {
             val manifest = catalogApi.getVersionManifest()
             require(manifest.schemaVersion == SUPPORTED_SCHEMA_VERSION)
-            require(manifest.versionCode > 0)
-            require(manifest.versionName.isNotBlank())
+            require(manifest.versionCode > currentCode)
+            require(manifest.versionName.isNotBlank() && manifest.versionName.length <= 40)
             require(manifest.minimumSupportedVersionCode > 0 && manifest.minimumSupportedVersionCode <= manifest.versionCode)
             require(manifest.apkSha256.matches(Regex("(?i)[0-9a-f]{64}")))
             require(manifest.fileSizeBytes == null || manifest.fileSizeBytes in 1..MAX_APK_BYTES)
@@ -56,7 +56,7 @@ class AppUpdateRepository @Inject constructor(
         val uri = runCatching { URI(value) }.getOrNull() ?: return false
         if (!uri.scheme.equals("https", ignoreCase = true) || uri.rawUserInfo != null || uri.port !in listOf(-1, 443)) return false
         val host = uri.host?.lowercase(Locale.ROOT)?.removeSuffix(".") ?: return false
-        return host == UPDATE_HOST || host == "github.com" && uri.path.orEmpty().contains("/releases/download/")
+        return host == UPDATE_HOST
     }
 
     companion object {
