@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class CatalogMetadataEntity(
     @PrimaryKey val id: Int = 0,
     val revision: Long,
-    val updatedAt: String
+    val updatedAt: String,
+    val checkedAtEpochMillis: Long = 0L
 )
