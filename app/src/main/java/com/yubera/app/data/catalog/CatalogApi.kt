@@ -27,9 +27,9 @@ data class CatalogPageDto(
 )
 
 @Serializable
-@Serializable
 data class AnimeScreenshotDto(val originalUrl: String = "", val previewUrl: String = "")
 
+@Serializable
 data class AnimeCatalogDto(
     val id: String,
     val title: String,
