@@ -26,12 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Crown
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
@@ -330,7 +326,7 @@ private fun YuberaPlusContent(
     val plus = state.plus
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(Icons.Default.Crown, contentDescription = null, tint = Color(0xFFFFC044), modifier = Modifier.size(34.dp))
+            Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC044), modifier = Modifier.size(34.dp))
             Column(Modifier.weight(1f)) {
                 SupportSectionTitle("YUBERA Plus")
                 Text("Подписка для ещё большего комфорта.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)

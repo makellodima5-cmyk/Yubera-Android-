@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,7 +69,22 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
    else LazyVerticalGrid(GridCells.Fixed(2),state=grid,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
     items(state.items.drop(page*50).take(50),key=AnimeCatalogItem::id){anime->PosterCard(anime){onAnimeClick(anime)}}
    }
-   Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) { AnimatedVisibility(visible=panel,enter=fadeIn()+scaleIn(initialScale=.94f),exit=fadeOut()+scaleOut(targetScale=.94f)){ FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false}) } }
+   Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+      AnimatedVisibility(
+       visible = panel,
+       modifier = Modifier,
+       enter = fadeIn() + scaleIn(initialScale = .94f),
+       exit = fadeOut() + scaleOut(targetScale = .94f)
+      ) {
+       FilterPanel(
+        state,
+        viewModel::updateDraft,
+        viewModel::resetDraft,
+        { viewModel.applyFilters(); panel = false; page = 0 },
+        { panel = false }
+       )
+      }
+    }
   }
   if(state.items.isNotEmpty()) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
    TextButton(onClick={page=(page-1).coerceAtLeast(0)},enabled=page>0){Text("‹")}
@@ -79,7 +95,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
 }
 
 @Composable private fun PosterCard(anime:AnimeCatalogItem,onClick:()->Unit){
- Column(Modifier.fillMaxWidth().clickable(onClick).padding(bottom=4.dp)){
+ Column(Modifier.fillMaxWidth().clickable { onClick() }.padding(bottom=4.dp)){
  Box(Modifier.fillMaxWidth().aspectRatio(.68f).clip(RoundedCornerShape(14.dp)).background(YuberaSurface)){
  if(!anime.posterUrl.isNullOrBlank())AsyncImage(anime.posterUrl,"Постер: "+anime.title,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
  else Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(anime.title.take(1),color=YuberaPrimary)}
