@@ -1,6 +1,8 @@
 package com.yubera.app.features.catalog
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -25,6 +27,8 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,20 +56,38 @@ fun CatalogScreen(
     val state by viewModel.uiState.collectAsState()
     var panel by rememberSaveable { mutableStateOf(false) }
     var page by rememberSaveable { mutableIntStateOf(0) }
+    var pendingScrollToTop by rememberSaveable { mutableStateOf(false) }
+    var skipInitialQueryFilterReset by rememberSaveable { mutableStateOf(true) }
     val grid = rememberLazyGridState()
     val count = maxOf(1, (state.items.size + 49) / 50)
 
     LaunchedEffect(state.query, state.filters) {
-        page = 0
-        grid.scrollToItem(0)
+        if (skipInitialQueryFilterReset) {
+            skipInitialQueryFilterReset = false
+        } else {
+            page = 0
+            pendingScrollToTop = true
+        }
     }
-    LaunchedEffect(page) { panel = false; grid.scrollToItem(0) }
+    LaunchedEffect(page, pendingScrollToTop) {
+        panel = false
+        if (pendingScrollToTop) {
+            grid.scrollToItem(0)
+            pendingScrollToTop = false
+        }
+    }
+    LaunchedEffect(count) {
+        if (page >= count) {
+            page = (count - 1).coerceAtLeast(0)
+            pendingScrollToTop = true
+        }
+    }
     LaunchedEffect(resetKey) {
         if (resetKey > 0) {
             page = 0
             panel = false
             viewModel.resetCatalog()
-            grid.scrollToItem(0)
+            pendingScrollToTop = true
         }
     }
 
@@ -139,14 +161,14 @@ fun CatalogScreen(
                 Column {
                     AnimatedVisibility(
                         visible = panel,
-                        enter = fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f),
-                        exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f)
+                        enter = if (rememberCatalogMotionAllowed()) fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f) else EnterTransition.None,
+                        exit = if (rememberCatalogMotionAllowed()) fadeOut() + shrinkOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f) else ExitTransition.None
                     ) {
                         FilterPanel(
                             state,
                             viewModel::updateDraft,
                             viewModel::resetFilters,
-                            { viewModel.applyFilters(); panel = false; page = 0 },
+                            { viewModel.applyFilters(); panel = false; page = 0; pendingScrollToTop = true },
                             { panel = false }
                         )
                     }
@@ -156,7 +178,7 @@ fun CatalogScreen(
         if (state.items.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { page = (page - 1).coerceAtLeast(0) }, enabled = page > 0) { Text("‹") }
-                PaginationNumbers(page, count) { page = it }
+                PaginationNumbers(page, count) { selected -> page = selected; panel = false; pendingScrollToTop = true }
                 TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1) }, enabled = page < count - 1) { Text("›") }
             }
         }
