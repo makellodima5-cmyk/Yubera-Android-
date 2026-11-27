@@ -141,10 +141,7 @@ class RemoteCatalogRepository @Inject constructor(
             ) {
                 return@withLock
             }
-            val latest = runCatching { api.getCatalogPage(page = 1, pageSize = PAGE_SIZE) }.getOrElse {
-                markCheckDeferred()
-                throw it
-            }
+            val latest = api.getCatalogPage(page = 1, pageSize = PAGE_SIZE)
             validateFirstPage(latest)
             if (metadata?.revision == latest.revision) {
                 catalogDao.saveMetadata(metadata.copy(checkedAtEpochMillis = now))
