@@ -107,8 +107,13 @@ class PlayerViewModel @Inject constructor(
 
     private suspend fun recordOpenedEpisode(number: Int) {
         val current = mutableState.value
+        val selected = current.sources
+            .firstOrNull { it.id == current.selectedSourceId }
+            ?.episodes
+            ?.firstOrNull { it.number == number }
+            ?: return
         if (current.selectedEpisodeNumber != number ||
-            !KodikLinkPolicy.isTrustedHttpsUrl(current.selectedEpisodeUrl.orEmpty())
+            !KodikLinkPolicy.isTrustedHttpsUrl(selected.link)
         ) return
 
         val existing = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
