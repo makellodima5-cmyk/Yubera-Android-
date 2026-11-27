@@ -1,5 +1,8 @@
 package com.yubera.app.features.support
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -43,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +63,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
@@ -78,6 +84,27 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
     var activeTab by remember { mutableStateOf(SupportTab.Support) }
     var customDialogOpen by remember { mutableStateOf(false) }
     var customDraft by remember { mutableStateOf("") }
+    var pendingStarsResumeCheck by remember { mutableStateOf(false) }
+    var pendingPlusResumeCheck by remember { mutableStateOf(false) }
+    val hostActivity = remember(context) { context.findActivity() }
+
+    DisposableEffect(hostActivity, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (pendingStarsResumeCheck) {
+                    pendingStarsResumeCheck = false
+                    if (state.paymentStatus == "pending") viewModel.checkStarsPayment()
+                }
+                if (pendingPlusResumeCheck) {
+                    pendingPlusResumeCheck = false
+                    if (state.plus != null && !state.plus.isPlus) viewModel.checkPlusActivation()
+                    else viewModel.loadPlusStatus()
+                }
+            }
+        }
+        hostActivity?.lifecycle?.addObserver(observer)
+        onDispose { hostActivity?.lifecycle?.removeObserver(observer) }
+    }
 
     fun openTelegramInvoice(url: String) {
         runCatching {
@@ -143,7 +170,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                         customDialogOpen = true
                     },
                     onCreateInvoice = viewModel::createStarsInvoice,
-                    onOpenInvoice = { state.invoiceUrl?.let(::openTelegramInvoice) },
+                    onOpenInvoice = { state.invoiceUrl?.let { pendingStarsResumeCheck = true; openTelegramInvoice(it) } },
                     onCheckStatus = viewModel::checkStarsPayment
                 )
             } else {
@@ -152,7 +179,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                     onSelectMonths = viewModel::selectPlusMonths,
                     onAutoRenewConsent = viewModel::setAutoRenewConsent,
                     onCreateInvoice = viewModel::createPlusInvoice,
-                    onOpenInvoice = { state.plusInvoiceUrl?.let(::openTelegramInvoice) },
+                    onOpenInvoice = { state.plusInvoiceUrl?.let { pendingPlusResumeCheck = true; openTelegramInvoice(it) } },
                     onCheckActivation = viewModel::checkPlusActivation,
                     onChangeRenewal = viewModel::changeAutoRenew
                 )
@@ -257,7 +284,27 @@ private fun SupportDonationContent(
         }
         if (paymentMessage != null) SupportNotice(paymentMessage, success = paymentStatus == "paid")
         if (error != null) SupportNotice(error, isError = true)
-        Text("Статус подтверждается сервером после уведомления Telegram. Само открытие счёта не считается оплатой.", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+        Surface(color = YuberaSurface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("На что идёт поддержка", color = YuberaOnBackground, fontWeight = FontWeight.SemiBold)
+                listOf(
+                    "Развитие Android-приложения и плеера",
+                    "Работа каталога, подборок и обновлений",
+                    "Серверная инфраструктура и стабильность сервиса"
+                ).forEach { purpose ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = YuberaPrimary, modifier = Modifier.size(16.dp))
+                        Text(purpose, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        Surface(color = YuberaSurface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("Оплата через Telegram Stars", color = YuberaOnBackground, fontWeight = FontWeight.SemiBold)
+                Text("Счёт открывается в Telegram. После оплаты YUBERA ждёт подтверждение от сервера; открытие или закрытие счёта само по себе не считается успешным платежом.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
 
@@ -376,3 +423,10 @@ private fun formatSupportDate(epochMillis: Long): String =
         DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
             .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
     }.getOrDefault("—")
+
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
