@@ -135,7 +135,19 @@ class RemoteCatalogRepository @Inject constructor(
         checkedAtMutex.withLock {
             val metadata = catalogDao.getMetadata()
             val now = System.currentTimeMillis()
-            if (metadata != null && now - metadata.checkedAtEpochMillis in 0 until minIntervalMillis) {
+            if (metadata != null && metadata.checkedAtEpochMillis > 0L &&
+                now >= metadata.checkedAtEpochMillis &&
+                now - metadata.checkedAtEpochMillis < minIntervalMillis
+            ) {
+                return@withLock
+            }
+            val latest = runCatching { api.getCatalogPage(page = 1, pageSize = PAGE_SIZE) }.getOrElse {
+                markCheckDeferred()
+                throw it
+            }
+            validateFirstPage(latest)
+            if (metadata?.revision == latest.revision) {
+                catalogDao.saveMetadata(metadata.copy(checkedAtEpochMillis = now))
                 return@withLock
             }
             refresh()
