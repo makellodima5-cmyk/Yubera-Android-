@@ -15,7 +15,7 @@ interface CatalogApi {
 
     @Headers("Cache-Control: no-cache")
     @GET("api/mobile/version")
-    suspend fun getVersionManifest(): AppVersionManifestDto
+    suspend fun getVersionManifest(): AppVersionManifestDto = AppVersionManifestDto.UNAVAILABLE
 }
 
 @Serializable
@@ -29,7 +29,17 @@ data class AppVersionManifestDto(
     val apkSha256: String,
     val fileSizeBytes: Long? = null,
     val publishedAt: String = ""
-)
+) {
+    companion object {
+        val UNAVAILABLE = AppVersionManifestDto(
+            versionCode = 0,
+            versionName = "",
+            minimumSupportedVersionCode = 1,
+            apkUrl = "",
+            apkSha256 = ""
+        )
+    }
+}
 
 @Serializable
 data class CatalogPageDto(
