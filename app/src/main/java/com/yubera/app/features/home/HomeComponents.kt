@@ -45,23 +45,39 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? = null) {
-    Box(Modifier.width(150.dp).height(224.dp).clip(RoundedCornerShape(16.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
-        AnimeImage(anime,Modifier.fillMaxSize())
-        Box(Modifier.fillMaxWidth().height(90.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
-        Row(Modifier.fillMaxWidth().padding(8.dp).align(Alignment.TopStart),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+    Column(Modifier.width(150.dp).clickable(onClick = onClick)) {
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(.68f).clip(RoundedCornerShape(12.dp)).background(YuberaSurface)
+        ) {
+            AnimeImage(anime, Modifier.fillMaxSize())
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                Modifier.fillMaxWidth().padding(6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
                 anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
-            }
-            Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-                anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
-                badge?.let { Pill(it) }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
+                    badge?.let { Pill(it) }
+                }
             }
         }
-        Text(anime.title,color=Color.White,fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis,modifier=Modifier.align(Alignment.BottomStart).padding(10.dp))
+        Text(
+            anime.title,
+            color = YuberaOnBackground,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 5.dp)
+        )
+        val metadata = listOfNotNull(
+            anime.kind,
+            anime.year.takeIf { it > 0 }?.toString(),
+            anime.episodes.takeIf { it > 0 }?.let { "${it} сер." }
+        ).joinToString(" · ")
+        if (metadata.isNotBlank()) {
+            Text(metadata, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
     }
 }
 
