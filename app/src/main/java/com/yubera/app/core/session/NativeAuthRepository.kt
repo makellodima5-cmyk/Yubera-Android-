@@ -43,18 +43,28 @@ class NativeAuthRepository @Inject constructor(
 
     suspend fun completeCallback(code: String, state: String) {
         require(code.matches(EXCHANGE_CODE_PATTERN)) { "Некорректный код авторизации." }
-        val pending = tokenStore.getPendingAuth() ?: throw IllegalStateException("Сессия авторизации не найдена.")
-        require(state == pending.state) { "Проверка состояния авторизации не пройдена." }
+        val pending = tokenStore.getPendingAuth()
+            ?: throw IllegalStateException("Сессия авторизации не найдена.")
+        require(state.isNotBlank() && state == pending.state) {
+            "Проверка состояния авторизации не пройдена."
+        }
+        require(pending.flow == FLOW_LOGIN || pending.flow == FLOW_REGISTER) {
+            "Неизвестный тип авторизации."
+        }
+
         val response = api.exchangeCode(MobileAuthExchangeRequest(code, pending.verifier))
         require(response.authenticated && response.tokenType.equals("Bearer", ignoreCase = true)) {
             "Сервер не подтвердил авторизацию."
         }
-        require(response.accessToken.matches(EXCHANGE_CODE_PATTERN)) { "Сервер вернул некорректную сессию." }
+        require(response.accessToken.matches(EXCHANGE_CODE_PATTERN)) {
+            "Сервер вернул некорректную сессию."
+        }
         val accountId = response.user.id.trim()
         require(accountId.isNotEmpty()) { "Сервер не вернул идентификатор аккаунта." }
+
         activeAccountStore.activateAccount(accountId, response.accessToken, claimLegacyRows = false)
-        // The session is already safely stored; stale OAuth state cleanup must
-        // not turn a successful sign-in into a user-visible failure.
+        // The session is already persisted; failed stale-state cleanup cannot
+        // turn a completed sign-in into a visible authentication failure.
         runCatching { tokenStore.clearPendingAuth() }
     }
 
