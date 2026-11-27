@@ -40,12 +40,14 @@ fun AppNavHost(
     onAnimeRouteHandled: () -> Unit = {}
 ) {
     val navController = rememberNavController()
-    LaunchedEffect(pendingEpisodeRoute) {
-        val route = pendingEpisodeRoute ?: return@LaunchedEffect
-        navController.navigate("player/${Uri.encode(route.animeId)}?episode=${route.episodeNumber}") {
-            launchSingleTop = true
+    LaunchedEffect(pendingAnimeRoute) {
+        val route = pendingAnimeRoute ?: return@LaunchedEffect
+        if (route.episodeNumber != null) {
+            navController.navigate("player/${Uri.encode(route.animeId)}?episode=${route.episodeNumber}") { launchSingleTop = true }
+        } else {
+            navController.navigate("anime/${Uri.encode(route.animeId)}") { launchSingleTop = true }
         }
-        onEpisodeRouteHandled()
+        onAnimeRouteHandled()
     }
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
