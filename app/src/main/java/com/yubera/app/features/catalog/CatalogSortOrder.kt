@@ -72,7 +72,9 @@ private fun searchVariants(value: String): Set<String> {
     val keyboardLat=raw.map{cyrillicToLatin[it] ?: it}.joinToString("")
     val visualLat=raw.map{visuallySimilar[it] ?: it}.joinToString("")
     val visualCyr=visualLat.map{latinToCyrillic[it] ?: it}.joinToString("")
-    return setOf(raw,keyboardCyr,keyboardLat,visualLat,visualCyr)
+    val latinVisualToCyrillic=mapOf('a' to 'а','b' to 'в','e' to 'е','k' to 'к','m' to 'м','h' to 'н','o' to 'о','p' to 'р','c' to 'с','t' to 'т','y' to 'у','x' to 'х')
+    val reverseVisualCyr=raw.map{latinVisualToCyrillic[it] ?: it}.joinToString("")
+    return setOf(raw,keyboardCyr,keyboardLat,visualLat,visualCyr,reverseVisualCyr)
 }
 private fun fuzzyPrefixMatch(title:String, query:String):Boolean {
     if(query.length<3 || query.length>title.length) return false
