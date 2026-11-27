@@ -6,8 +6,9 @@ import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.data.settings.UserSettingsRepository
+import java.time.LocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Calendar
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,35 +34,33 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
-    libraryRepository: PersonalLibraryRepository
+    libraryRepository: PersonalLibraryRepository,
+    settingsRepository: UserSettingsRepository
 ) : ViewModel() {
     private val refreshState = MutableStateFlow(false)
     private val errorState = MutableStateFlow<String?>(null)
-    private var recommendationIds: Set<String> = emptySet()
-    private var recommendationsUpdatedAt = 0L
+    private var recommendationWriteInFlight = false
 
     val uiState = combine(
         catalogRepository.observeCatalog(),
         libraryRepository.progress,
-        libraryRepository.favorites,
+        settingsRepository.settings,
         refreshState,
         errorState
-    ) { values ->
-        @Suppress("UNCHECKED_CAST")
-        val catalog = values[0] as List<AnimeCatalogItem>
-        @Suppress("UNCHECKED_CAST")
-        val progress = values[1] as List<AnimeProgressEntity>
-        @Suppress("UNCHECKED_CAST")
-        val favorites = values[2] as List<com.yubera.app.core.database.entity.AnimeLibraryEntity>
-        val refreshing = values[2] as Boolean
-        val error = values[3] as String?
+    ) { catalog: List<AnimeCatalogItem>,
+        progress: List<AnimeProgressEntity>,
+        settings: com.yubera.app.data.settings.UserSettings,
+        refreshing: Boolean,
+        error: String? ->
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        val completedIds = progress.filter { row ->
-            row.durationMillis > 0L && row.positionMillis >= row.durationMillis * 0.90
-        }.mapTo(mutableSetOf()) { it.animeId }
-        val watchedGenres = progress.filter { it.episodeNumber != null }
+        val completedIds = progress.mapNotNull { row ->
+            val anime = byId[row.animeId] ?: return@mapNotNull null
+            val isLastEpisode = anime.episodes > 0 && row.episodeNumber != null && row.episodeNumber >= anime.episodes
+            anime.id.takeIf { isLastEpisode && row.durationMillis > 0L && row.positionMillis >= row.durationMillis * 0.90 }
+        }.toSet()
+        val watchedGenres = progress.filter { it.episodeNumber != null && it.durationMillis > 0L && it.positionMillis >= it.durationMillis * 0.90 }
             .flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase() }.eachCount()
         val eligible = catalog.filter { it.id !in completedIds }
@@ -75,11 +74,26 @@ class HomeViewModel @Inject constructor(
             ).take(5)
         }
 
-        if (recommendationIds.isEmpty() || now < recommendationsUpdatedAt || now - recommendationsUpdatedAt >= RECOMMENDATION_REFRESH_MILLIS) {
-            recommendationsUpdatedAt = now
-            recommendationIds = computedRecommendations.mapTo(linkedSetOf()) { it.id }
+        val hasFreshRecommendationSnapshot = settings.homeRecommendationIds.isNotEmpty() &&
+            settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
+            now >= settings.homeRecommendationsUpdatedAtEpochMillis &&
+            now - settings.homeRecommendationsUpdatedAtEpochMillis < RECOMMENDATION_REFRESH_MILLIS
+        val selectedIds = if (hasFreshRecommendationSnapshot) {
+            settings.homeRecommendationIds
+        } else {
+            computedRecommendations.map { it.id }
         }
-        val selectedRecommendations = recommendationIds.mapNotNull(byId::get)
+        if (!hasFreshRecommendationSnapshot && !recommendationWriteInFlight) {
+            recommendationWriteInFlight = true
+            viewModelScope.launch {
+                try {
+                    settingsRepository.saveHomeRecommendations(selectedIds, now)
+                } finally {
+                    recommendationWriteInFlight = false
+                }
+            }
+        }
+        val selectedRecommendations = selectedIds.mapNotNull(byId::get)
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
@@ -87,9 +101,14 @@ class HomeViewModel @Inject constructor(
             .toList()
         val popular = catalog.filter { (it.rating ?: 0.0) > 8.5 }
             .sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(20)
-        val yearAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -365) }.get(Calendar.YEAR)
-        val newReleases = catalog.filter { it.year >= yearAgo && it.year <= Calendar.getInstance().get(Calendar.YEAR) }
-            .sortedWith(compareByDescending<AnimeCatalogItem> { it.year }.thenByDescending { it.rating ?: 0.0 }).take(20)
+        val today = LocalDate.now()
+        val earliestReleaseDate = today.minusDays(365)
+        val newReleases = catalog.filter { anime ->
+            val airedDate = anime.airedOn?.take(10)?.let { raw ->
+                runCatching { LocalDate.parse(raw) }.getOrNull()
+            }
+            airedDate != null && !airedDate.isBefore(earliestReleaseDate) && !airedDate.isAfter(today)
+        }.sortedWith(compareByDescending<AnimeCatalogItem> { it.airedOn }.thenByDescending { it.rating ?: 0.0 }).take(20)
         val announcements = catalog.filter { it.status.contains("анонс", true) || it.status.contains("upcoming", true) }
             .take(12)
         val ongoing = catalog.filter { it.status.contains("ongoing", true) || it.status.contains("онгоинг", true) || it.status.contains("выходит", true) }
