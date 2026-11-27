@@ -26,6 +26,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Crown
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
@@ -87,11 +93,11 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
     var customDraft by remember { mutableStateOf("") }
     var pendingStarsResumeCheck by remember { mutableStateOf(false) }
     var pendingPlusResumeCheck by remember { mutableStateOf(false) }
-    val hostActivity = remember(context) { context.findActivity() }
+    val lifecycleOwner = LocalLifecycleOwner.current
     val latestPaymentStatus by rememberUpdatedState(state.paymentStatus)
     val latestPlusStatus by rememberUpdatedState(state.plus)
 
-    DisposableEffect(hostActivity, viewModel) {
+    DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (pendingStarsResumeCheck) {
@@ -100,13 +106,13 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                 }
                 if (pendingPlusResumeCheck) {
                     pendingPlusResumeCheck = false
-                    if (latestPlusStatus != null && !latestPlusStatus.isPlus) viewModel.checkPlusActivation()
+                    if (latestPlusStatus?.isPlus == false) viewModel.checkPlusActivation()
                     else viewModel.loadPlusStatus()
                 }
             }
         }
-        hostActivity?.lifecycle?.addObserver(observer)
-        onDispose { hostActivity?.lifecycle?.removeObserver(observer) }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     fun openTelegramInvoice(url: String) {

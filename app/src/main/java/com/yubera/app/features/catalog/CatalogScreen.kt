@@ -60,7 +60,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
    else LazyVerticalGrid(GridCells.Fixed(2),state=grid,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
     items(state.items.drop(page*50).take(50),key=AnimeCatalogItem::id){anime->PosterCard(anime){onAnimeClick(anime)}}
    }
-   AnimatedVisibility(panel,modifier=Modifier.align(Alignment.TopEnd).padding(8.dp),enter=fadeIn()+scaleIn(initialScale=.94f),exit=fadeOut()+scaleOut(targetScale=.94f)){ FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false}) }
+   Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) { AnimatedVisibility(visible=panel,enter=fadeIn()+scaleIn(initialScale=.94f),exit=fadeOut()+scaleOut(targetScale=.94f)){ FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false}) } }
   }
   if(state.items.isNotEmpty()) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
    TextButton(onClick={page=(page-1).coerceAtLeast(0)},enabled=page>0){Text("‹")}
@@ -91,7 +91,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
  var error by remember{mutableStateOf<String?>(null)}
  Surface(modifier.widthIn(max=350.dp).fillMaxWidth(),color=YuberaSurface,shape=RoundedCornerShape(20.dp),border=androidx.compose.foundation.BorderStroke(1.dp,YuberaPrimary.copy(.45f)),shadowElevation=12.dp){
  Column(Modifier.padding(12.dp).heightIn(max=560.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
- Row(verticalAlignment=Alignment.CenterVertically){Text("Фильтры",Modifier.weight(1f),color=YuberaOnBackground,fontWeight=FontWeight.Bold);TextButton(onClick=onClose){Text("Закрыть")}}
+ Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Default.FilterList,contentDescription=null,tint=YuberaPrimary);Text("Фильтры",Modifier.weight(1f).padding(start=8.dp),color=YuberaOnBackground,fontWeight=FontWeight.Bold);IconButton(onClick=onClose){Icon(Icons.Default.Close,contentDescription="Закрыть фильтры",tint=YuberaOnBackground)}}
  Column(Modifier.weight(1f,fill=false).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
  SelectFilter("Статус",f.status,state.statuses){onDraft(f.copy(status=it))}
  SelectFilter("Тип",f.kind,state.kinds){onDraft(f.copy(kind=it))}

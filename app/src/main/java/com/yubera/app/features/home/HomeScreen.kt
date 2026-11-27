@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon

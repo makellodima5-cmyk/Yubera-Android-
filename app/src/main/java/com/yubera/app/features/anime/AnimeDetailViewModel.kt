@@ -421,17 +421,5 @@ class AnimeDetailViewModel @Inject constructor(
         socialState.value = socialState.value.copy(ratingError = null)
     }
 
-    fun loadSubscriptionSources() {
-        if (sourcesState.value.isNotEmpty() || sourcesLoadingState.value) return
-        viewModelScope.launch {
-            sourcesLoadingState.value = true
-            try {
-                sourcesState.value = kodikRepository.getSources(animeId)
-            } catch (_: Exception) {
-                sourcesState.value = emptyList()
-            } finally {
-                sourcesLoadingState.value = false
-            }
-        }
-    }
+
 }
