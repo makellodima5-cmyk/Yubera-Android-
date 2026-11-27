@@ -135,7 +135,9 @@ class RemoteCatalogRepository @Inject constructor(
      * A cheap conditional check for an unchanged catalog. WorkManager runs this
      * less often and only when network and battery constraints allow it.
      */
-    suspend fun refreshIfStale(minIntervalMillis: Long = DEFAULT_CHECK_INTERVAL_MILLIS) = withContext(Dispatchers.IO) {
+    override suspend fun refreshIfStale() = refreshIfStale(DEFAULT_CHECK_INTERVAL_MILLIS)
+
+    suspend fun refreshIfStale(minIntervalMillis: Long) = withContext(Dispatchers.IO) {
         require(minIntervalMillis >= 0L)
         checkedAtMutex.withLock {
             val metadata = catalogDao.getMetadata()
