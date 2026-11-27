@@ -20,9 +20,12 @@ fun List<AnimeCatalogItem>.filterForCatalog(query: String, genre: String?, year:
     filterForCatalog(query, CatalogFilters(status=status, genres=genre?.let(::setOf) ?: emptySet(), yearFrom=year, yearTo=year))
 
 fun List<AnimeCatalogItem>.filterForCatalog(query: String, filters: CatalogFilters): List<AnimeCatalogItem> {
-    val q=query.trim().lowercase()
+    val queryVariants = searchVariants(query)
     return filter { a ->
-        (q.isBlank() || a.title.lowercase().contains(q) || (a.englishTitle?.lowercase()?.contains(q)==true) || a.originalTitle.lowercase().contains(q)) &&
+        (query.isBlank() || listOf(a.title, a.englishTitle.orEmpty(), a.originalTitle).any { title ->
+            val variants = searchVariants(title)
+            queryVariants.any { q -> variants.any { it.contains(q) || fuzzyPrefixMatch(it, q) } }
+        }) &&
         (filters.status==null || a.status.equals(filters.status,true)) &&
         (filters.kind==null || a.kind.equals(filters.kind,true)) &&
         (filters.genres.isEmpty() || filters.genres.all { it in a.genres }) &&
