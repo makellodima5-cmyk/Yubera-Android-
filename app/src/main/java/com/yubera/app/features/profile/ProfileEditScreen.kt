@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -26,7 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
@@ -60,6 +61,7 @@ private val adminFrames = (1..8).map { n ->
 @Composable
 fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val profile = state.profile
     var confirmDiscard by remember { mutableStateOf(false) }
     val original = state.profile?.let { it.bio == state.bio && it.visibility == state.visibility && it.avatarFrame == state.selectedFrame } ?: true
     fun leave() { if (original) onBack() else confirmDiscard = true }
@@ -80,7 +82,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
         }
         if (state.loading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = YuberaPrimary) }
-        } else if (state.profile == null) {
+        } else if (profile == null) {
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(state.error ?: "Профиль недоступен", color = YuberaMuted)
                 Button(onClick = viewModel::load) { Text("Повторить") }
@@ -90,7 +92,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Box(Modifier.size(84.dp), contentAlignment = Alignment.Center) {
-                            if (!state.profile.photoUrl.isNullOrBlank()) AsyncImage(model = state.profile.photoUrl, contentDescription = "Аватар пользователя", modifier = Modifier.size(72.dp).clip(CircleShape)) else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(72.dp))
+                            if (!profile.photoUrl.isNullOrBlank()) AsyncImage(model = state.profile.photoUrl, contentDescription = "Аватар пользователя", modifier = Modifier.size(72.dp).clip(CircleShape)) else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(72.dp))
                             state.selectedFrame?.let { selected ->
                                 val frame = (supportFrames + plusFrames + adminFrames).firstOrNull { it.id == selected }
                                 frame?.resource?.let { Image(painterResource(it), contentDescription = "Выбранная рамка", modifier = Modifier.fillMaxSize()) }
