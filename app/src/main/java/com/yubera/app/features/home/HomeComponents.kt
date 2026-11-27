@@ -78,7 +78,7 @@ fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick
 
 @Composable
 fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
-    Box(Modifier.width(310.dp).height(204.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick=onClick)) {
+    Box(modifier.width(270.dp).height(218.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick=onClick)) {
         AnimeImage(anime,Modifier.fillMaxWidth().height(218.dp),preferBanner=true)
         Box(Modifier.fillMaxWidth().height(218.dp).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
         Column(Modifier.align(Alignment.BottomStart).padding(14.dp).fillMaxWidth(.84f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -93,11 +93,11 @@ fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
 @Composable
 fun HomeSectionHeader(title:String,actionLabel:String="Смотреть все",onAction:(()->Unit)?=null) {
     val icon=when(title) {
-        "Популярное"->Icons.Default.LocalFireDepartment
+        "Популярное"->Icons.Default.Whatshot
         "Новинки"->Icons.Default.NewReleases
         "Анонсы"->Icons.Default.Campaign
-        "Онгоинги"->Icons.Default.LiveTv
-        else->Icons.Default.Star
+        "Онгоинги"->Icons.Default.Wifi
+        else->Icons.Default.Whatshot
     }
     Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(7.dp)) {
