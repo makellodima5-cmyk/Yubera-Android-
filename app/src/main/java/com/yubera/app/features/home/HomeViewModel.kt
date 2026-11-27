@@ -37,16 +37,13 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val refreshState = MutableStateFlow(false)
     private val errorState = MutableStateFlow<String?>(null)
-    private val recommendationIds = MutableStateFlow<Set<String>>(emptySet())
+    private var recommendationIds: Set<String> = emptySet()
     private var recommendationsUpdatedAt = 0L
 
     val uiState = combine(
         catalogRepository.observeCatalog(),
         libraryRepository.progress,
         libraryRepository.favorites,
-        libraryRepository.watchLater,
-        libraryRepository.subscriptions,
-        recommendationIds,
         refreshState,
         errorState
     ) { values ->
@@ -56,21 +53,14 @@ class HomeViewModel @Inject constructor(
         val progress = values[1] as List<AnimeProgressEntity>
         @Suppress("UNCHECKED_CAST")
         val favorites = values[2] as List<com.yubera.app.core.database.entity.AnimeLibraryEntity>
-        @Suppress("UNCHECKED_CAST")
-        val watchLater = values[3] as List<com.yubera.app.core.database.entity.AnimeLibraryEntity>
-        @Suppress("UNCHECKED_CAST")
-        val subscriptions = values[4] as List<com.yubera.app.core.database.entity.AnimeSubscriptionEntity>
-        @Suppress("UNCHECKED_CAST")
-        val stableRecommendations = values[5] as Set<String>
-        val refreshing = values[6] as Boolean
-        val error = values[7] as String?
+        val refreshing = values[2] as Boolean
+        val error = values[3] as String?
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
         val completedIds = progress.filter { row ->
             row.durationMillis > 0L && row.positionMillis >= row.durationMillis * 0.90
         }.mapTo(mutableSetOf()) { it.animeId }
-        val viewedIds = progress.filter { it.episodeNumber != null }.mapTo(mutableSetOf()) { it.animeId }
         val watchedGenres = progress.filter { it.episodeNumber != null }
             .flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase() }.eachCount()
@@ -85,16 +75,11 @@ class HomeViewModel @Inject constructor(
             ).take(5)
         }
 
-        if (stableRecommendations.isEmpty() || now - recommendationsUpdatedAt >= RECOMMENDATION_REFRESH_MILLIS) {
+        if (recommendationIds.isEmpty() || now < recommendationsUpdatedAt || now - recommendationsUpdatedAt >= RECOMMENDATION_REFRESH_MILLIS) {
             recommendationsUpdatedAt = now
-            recommendationIds.value = computedRecommendations.mapTo(linkedSetOf()) { it.id }
+            recommendationIds = computedRecommendations.mapTo(linkedSetOf()) { it.id }
         }
-        val selectedIds = if (now - recommendationsUpdatedAt < RECOMMENDATION_REFRESH_MILLIS) {
-            recommendationIds.value.ifEmpty { computedRecommendations.mapTo(linkedSetOf()) { it.id } }
-        } else {
-            computedRecommendations.mapTo(linkedSetOf()) { it.id }
-        }
-        val selectedRecommendations = selectedIds.mapNotNull(byId::get)
+        val selectedRecommendations = recommendationIds.mapNotNull(byId::get)
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
