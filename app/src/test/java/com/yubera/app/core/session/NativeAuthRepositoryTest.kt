@@ -39,16 +39,19 @@ class NativeAuthRepositoryTest {
     }
 
     @Test
-    fun registrationRequiresBothConsents() {
+    fun registrationCreatesPkceAuthorizationUrlWithoutLegalConsentGate() {
         val store = FakeTokenStore()
         val repository = NativeAuthRepository(FakeApi(), store, FakeActiveAccountStore(store))
-        var rejected = false
-        try {
-            repository.createAuthorizationUrl("register", privacyConsent = true, termsAccepted = false)
-        } catch (_: IllegalArgumentException) {
-            rejected = true
+        val query = URI(repository.createAuthorizationUrl("register")).rawQuery.split("&").associate {
+            val parts = it.split("=", limit = 2)
+            URLDecoder.decode(parts[0], StandardCharsets.UTF_8) to URLDecoder.decode(parts[1], StandardCharsets.UTF_8)
         }
-        assertTrue(rejected)
+        assertEquals("register", query["flow"])
+        assertEquals("1", query["native"])
+        assertEquals("true", query["privacy_consent"])
+        assertEquals("true", query["terms_accepted"])
+        assertEquals(store.pending?.state, query["state"])
+        assertNotNull(store.pending)
     }
 
     @Test
