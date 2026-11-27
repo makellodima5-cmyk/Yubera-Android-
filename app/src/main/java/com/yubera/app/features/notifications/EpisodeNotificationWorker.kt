@@ -58,6 +58,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
         return try {
             val settingsRepository = entry.userSettingsRepository()
             val settings = settingsRepository.settings.first()
+            val infoNotificationsEnabled = settings.notificationsEnabled && settings.animeInfoNotificationsEnabled
             val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             createChannel(manager)
             if (!EpisodeNotificationPolicy.shouldDeliverNotification(
@@ -93,6 +94,14 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                         val update = updates[subscription.animeId] ?: return@forEach
                         val count = update.episodesAired?.coerceAtLeast(0) ?: return@forEach
                         val previous = subscription.lastKnownEpisodesAired
+
+                        if (infoNotificationsEnabled) {
+                            val currentTitle = titles[subscription.animeId]
+                            val latestTitle = update.displayName
+                            if (!currentTitle.isNullOrBlank() && latestTitle.isNotBlank() && currentTitle != latestTitle) {
+                                showInfoNotification(stableInfoId(accountId, subscription.animeId), latestTitle, subscription.animeId)
+                            }
+                        }
 
                         EpisodeNotificationPolicy.releasedEpisodes(previous, count).forEach { episode ->
                             ensureCurrentAccount(tokenStore, activeAccountStore, token, accountId)
@@ -225,11 +234,44 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
         }
     }
 
+    private fun showInfoNotification(id: Int, title: String, animeId: String): Boolean {
+        if (Build.VERSION.SDK_INT >= 33 && !hasPermission()) return false
+        val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
+            action = MainActivity.ACTION_OPEN_EPISODE
+            putExtra(MainActivity.EXTRA_ANIME_ID, animeId)
+            flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pending = PendingIntent.getActivity(
+            applicationContext,
+            id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText("Обновилась информация об отслеживаемом тайтле")
+            .setContentIntent(pending)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        return try {
+            NotificationManagerCompat.from(applicationContext).notify(id, notification)
+            true
+        } catch (_: SecurityException) {
+            false
+        }
+    }
+
+    private fun stableInfoId(accountId: String, animeId: String): Int =
+        (31 * accountId.hashCode() + animeId.hashCode()) xor INFO_NOTIFICATION_SALT
+
     private fun stableId(accountId: String, animeId: String, episode: Int): Int = 31 * (31 * accountId.hashCode() + animeId.hashCode()) + episode
 
     companion object {
         const val CHANNEL_ID = "yubera_new_episodes"
         const val MAX_IDS_PER_QUERY = 50
         const val REQUEST_SPACING_MILLIS = 700L
+        const val INFO_NOTIFICATION_SALT = 0x51A7
     }
 }
