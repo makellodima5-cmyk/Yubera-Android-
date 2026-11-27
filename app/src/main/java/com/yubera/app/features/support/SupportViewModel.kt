@@ -184,7 +184,8 @@ class SupportViewModel @Inject constructor(
     fun createPlusInvoice() {
         val current = mutableState.value
         if (!current.isAuthenticated || current.plusInvoiceCreating || current.plusBusy) return
-        if ((if (current.plusMonths == 1) current.plus?.price else current.plus?.threeMonthPrice) ?: 0 <= 0) {
+        val selectedPrice = if (current.plusMonths == 1) current.plus?.price else current.plus?.threeMonthPrice
+        if ((selectedPrice ?: 0) <= 0) {
             mutableState.update { it.copy(plusError = "Оформление YUBERA Plus сейчас недоступно.") }
             return
         }
