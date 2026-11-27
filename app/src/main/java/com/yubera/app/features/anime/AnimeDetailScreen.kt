@@ -67,6 +67,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.AnimeScreenshot
 import com.yubera.app.core.player.KodikLinkPolicy
+import com.yubera.app.core.player.KodikEpisode
 import com.yubera.app.features.player.KodikEmbedWebView
 import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaBackground
@@ -159,16 +160,22 @@ fun AnimeDetailScreen(
                     }
                 }
 
-                val hasTrailer = !anime.youtubeTrailerId.isNullOrBlank()
                 LaunchedEffect(anime.id, anime.kodikAvailable) {
                     if (anime.kodikAvailable == true) viewModel.loadSubscriptionSources()
                 }
-                LaunchedEffect(state.availableSources) {
-                    if (playerVoiceId == null) {
-                        state.availableSources.firstOrNull()?.let { source ->
-                            playerVoiceId = source.id
-                            playerEpisodeNumber = source.episodes.firstOrNull()?.number ?: 1
-                        }
+                LaunchedEffect(anime.id) {
+                    playerVoiceId = null
+                    playerEpisodeNumber = 1
+                }
+                val hasTrailer = !anime.youtubeTrailerId.isNullOrBlank()
+                LaunchedEffect(anime.id, state.availableSources) {
+                    val selected = state.availableSources.firstOrNull { it.id == playerVoiceId }
+                        ?: state.availableSources.firstOrNull()
+                    if (selected != null && selected.id != playerVoiceId) {
+                        playerVoiceId = selected.id
+                        playerEpisodeNumber = selected.episodes.firstOrNull()?.number ?: 1
+                    } else if (selected != null && selected.episodes.none { it.number == playerEpisodeNumber }) {
+                        playerEpisodeNumber = selected.episodes.firstOrNull()?.number ?: 1
                     }
                 }
                 if (anime.kodikAvailable == true || hasTrailer) {
