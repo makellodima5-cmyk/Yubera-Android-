@@ -198,9 +198,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             PackageManager.PERMISSION_GRANTED
         ) return false
 
+        val route = applicationContext.getSharedPreferences("episode_notification_routes", Context.MODE_PRIVATE)
+            .getString(id.toString(), null)
+            ?: return false
         val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
             action = MainActivity.ACTION_OPEN_EPISODE
-            putExtra(MainActivity.EXTRA_ANIME_ID, animeIdForPendingIntent(id))
+            putExtra(MainActivity.EXTRA_ANIME_ID, route)
             putExtra(MainActivity.EXTRA_EPISODE_NUMBER, episode)
             flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
