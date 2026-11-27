@@ -152,7 +152,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                     selected = activeTab == SupportTab.Plus,
                     onClick = { activeTab = SupportTab.Plus; viewModel.loadPlusStatus() },
                     label = { Text("YUBERA Plus") },
-                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
                     modifier = Modifier.weight(1f)
                 )
             }
