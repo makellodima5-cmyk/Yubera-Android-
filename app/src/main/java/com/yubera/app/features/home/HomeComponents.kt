@@ -37,9 +37,9 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
-    Box(Modifier.width(142.dp).height(218.dp).clip(RoundedCornerShape(16.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
-        AnimeImage(anime,Modifier.fillMaxWidth().height(218.dp))
-        Box(Modifier.fillMaxWidth().height(86.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
+    Box(Modifier.width(150.dp).height(224.dp).clip(RoundedCornerShape(16.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
+        AnimeImage(anime,Modifier.fillMaxWidth().height(224.dp))
+        Box(Modifier.fillMaxWidth().height(90.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
         Row(Modifier.fillMaxWidth().padding(8.dp).align(Alignment.TopStart),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
             anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
             anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
@@ -85,8 +85,18 @@ fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
 
 @Composable
 fun HomeSectionHeader(title:String,actionLabel:String="Смотреть все",onAction:(()->Unit)?=null) {
+    val icon=when(title) {
+        "Популярное"->Icons.Default.LocalFireDepartment
+        "Новинки"->Icons.Default.NewReleases
+        "Анонсы"->Icons.Default.Campaign
+        "Онгоинги"->Icons.Default.LiveTv
+        else->Icons.Default.Star
+    }
     Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
-        Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+            androidx.compose.material3.Icon(icon,contentDescription=null,tint=YuberaPrimary,modifier=Modifier.size(20.dp))
+            Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
+        }
         if(onAction!=null) Text("$actionLabel  ›",color=YuberaMuted,modifier=Modifier.clickable(onClick=onAction).padding(6.dp))
     }
 }
@@ -94,10 +104,9 @@ fun HomeSectionHeader(title:String,actionLabel:String="Смотреть все",
 @Composable
 private fun AnimeImage(anime:AnimeCatalogItem,modifier:Modifier,preferBanner:Boolean=false) {
     val image=if(preferBanner) anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
-    if(!image.isNullOrBlank()) {
-        AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=modifier,contentScale=ContentScale.Crop)
-    } else {
-        Box(modifier.background(YuberaPrimary.copy(.14f)),contentAlignment=Alignment.Center){Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)}
+    Box(modifier.background(YuberaSurface),contentAlignment=Alignment.Center) {
+        Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)
+        if(!image.isNullOrBlank()) AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=Modifier.fillMaxWidth().heightIn(min=1.dp),contentScale=ContentScale.Crop)
     }
 }
 
