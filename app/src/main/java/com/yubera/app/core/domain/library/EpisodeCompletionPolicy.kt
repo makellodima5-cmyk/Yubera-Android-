@@ -16,7 +16,7 @@ object EpisodeCompletionPolicy {
         val markerEpisode = completedNow ?: progress.completedEpisodeNumber ?: previous?.completedEpisodeNumber
         val markerTimestamp = when {
             completedNow != null -> progress.updatedAtEpochMillis
-            progress.completedEpisodeNumber != null -> progress.completedAtEpochMillis
+            progress.completedEpisodeNumber != null -> progress.completedAtEpochMillis ?: previous?.completedAtEpochMillis
             markerEpisode != null -> previous?.completedAtEpochMillis
             else -> null
         }

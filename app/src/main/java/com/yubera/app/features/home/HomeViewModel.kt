@@ -70,8 +70,8 @@ class HomeViewModel @Inject constructor(
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
         // Completion markers survive when the one-row-per-title progress record moves
-        // to another episode. The external Kodik WebView does not expose playback
-        // telemetry, so recommendations use markers only when progress snapshots exist.
+        // to another episode. Kodik does not expose reliable telemetry in this WebView;
+        // the player records a conservative sequential-advance completion fallback.
         val completedProgress = progress.filter { row ->
             row.completedEpisodeNumber != null || EpisodeCompletionPolicy.isEpisodeCompleted(row)
         }
@@ -95,10 +95,12 @@ class HomeViewModel @Inject constructor(
         val rotatedPool = recommendationPool.drop(rotation) + recommendationPool.take(rotation)
         val computedRecommendations = rotatedPool.take(5)
 
-        val storedRecommendationIds = settings.homeRecommendationIds.filter { id ->
+        val cachedRecommendationIds = settings.homeRecommendationIds
+        val storedRecommendationIds = cachedRecommendationIds.filter { id ->
             byId[id] != null && id !in titlesWithCompletedEpisode && byId[id]?.kodikAvailable != false
         }
-        val hasFreshRecommendationSnapshot = storedRecommendationIds.isNotEmpty() &&
+        val snapshotInvalidatedByCompletedTitle = storedRecommendationIds.size != cachedRecommendationIds.size
+        val hasFreshRecommendationSnapshot = !snapshotInvalidatedByCompletedTitle && storedRecommendationIds.isNotEmpty() &&
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
             now >= settings.homeRecommendationsUpdatedAtEpochMillis &&
             now - settings.homeRecommendationsUpdatedAtEpochMillis < RECOMMENDATION_REFRESH_MILLIS
