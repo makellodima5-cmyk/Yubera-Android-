@@ -49,7 +49,7 @@ class CatalogViewModel @Inject constructor(private val repository: RemoteCatalog
         val refreshing=values[5] as Boolean
         val error=values[6] as String?
         CatalogUiState(
-            items=catalog.filterForCatalog(q,filters).sortedForCatalog(order),
+            items=if(q.isBlank()) catalog.filterForCatalog(q,filters).sortedForCatalog(order) else catalog.filterForCatalog(q,filters).sortedWith(compareBy<AnimeCatalogItem>{searchPriority(it,q).coerceAtMost(2)}.thenByDescending{it.rating ?: 0.0}),
             genres=catalog.flatMap{it.genres}.distinct().sorted(),
             years=catalog.map{it.year}.filter{it>0}.distinct().sortedDescending(),
             statuses=catalog.map{it.status}.filter{it.isNotBlank()}.distinct().sorted(),
