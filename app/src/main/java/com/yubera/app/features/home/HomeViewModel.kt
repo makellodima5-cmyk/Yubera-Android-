@@ -58,13 +58,14 @@ class HomeViewModel @Inject constructor(
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        val completedEpisodeIds = progress.filter { row ->
-            val anime = byId[row.animeId] ?: return@filter false
-            val episode = row.episodeNumber ?: return@filter false
-            val aired = anime.episodesAired ?: anime.episodes
-            aired > 0 && episode >= aired && row.durationMillis > 0L &&
-                row.positionMillis >= (row.durationMillis * 0.90).toLong()
-        }.mapTo(mutableSetOf()) { it.animeId }
+        // A title leaves recommendations once the user has completed at least one episode.
+        // This is deliberately distinct from title completion (all episodes watched).
+        val titlesWithCompletedEpisode = progress.asSequence()
+            .filter { row ->
+                row.episodeNumber != null && row.durationMillis > 0L &&
+                    row.positionMillis >= (row.durationMillis * 0.90).toLong()
+            }
+            .mapTo(mutableSetOf()) { it.animeId }
         val watchedGenres = progress.filter { row ->
             val anime = byId[row.animeId] ?: return@filter false
             val episode = row.episodeNumber ?: return@filter false
@@ -73,7 +74,7 @@ class HomeViewModel @Inject constructor(
                 row.positionMillis >= (row.durationMillis * 0.90).toLong()
         }.flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
-        val eligible = catalog.filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
+        val eligible = catalog.filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
         val recommendationPool = if (watchedGenres.isEmpty()) {
             eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(20)
         } else {
@@ -89,7 +90,7 @@ class HomeViewModel @Inject constructor(
         val computedRecommendations = rotatedPool.take(5)
 
         val storedRecommendationIds = settings.homeRecommendationIds.filter { id ->
-            byId[id] != null && id !in completedEpisodeIds && byId[id]?.kodikAvailable != false
+            byId[id] != null && id !in titlesWithCompletedEpisode && byId[id]?.kodikAvailable != false
         }
         val hasFreshRecommendationSnapshot = storedRecommendationIds.isNotEmpty() &&
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
@@ -106,7 +107,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
+        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
