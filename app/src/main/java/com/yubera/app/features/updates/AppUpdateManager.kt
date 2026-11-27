@@ -19,6 +19,7 @@ class AppUpdateManager(private val context: Context) {
             .putString(ApkDownloadWorker.KEY_URL, update.apkUrl)
             .putString(ApkDownloadWorker.KEY_SHA256, update.apkSha256)
             .putLong(ApkDownloadWorker.KEY_EXPECTED_SIZE, update.fileSizeBytes ?: -1L)
+            .putInt(ApkDownloadWorker.KEY_EXPECTED_VERSION_CODE, update.versionCode)
             .build()
         val request = OneTimeWorkRequestBuilder<ApkDownloadWorker>()
             .setInputData(data)
