@@ -23,6 +23,8 @@ class CatalogUpdateWorker(context: Context, params: WorkerParameters) : Coroutin
             try {
                 entry.remoteCatalogRepository().refreshIfStale()
                 Result.success()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 entry.remoteCatalogRepository().markCheckDeferred()
                 throw error
