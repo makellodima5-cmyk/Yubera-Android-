@@ -98,14 +98,15 @@ A separate review is recorded in `docs/android/news-sources-review.md`. It ident
 - 2026-11-04: Reviewed additional anime-news sources and reuse restrictions. ANN is the first candidate to approach for native-app permission; Crunchyroll is not integrated without explicit written approval. See `docs/android/news-sources-review.md`.
 
 
-## Stage 2 integration hardening (2026-11-27)
+## Stage 2 — authentication and account session handling
 
-- The Android-only working branch `stage2-product-integration` was created from `main`; the `main` branch and Website/backend repository remain untouched.
-- Account-scoped personal-library mutations now run under a repository mutex and a Room transaction. The active account is rechecked inside the transaction before the mutation, and sync is triggered only after commit.
-- Added Room DAO provider bindings to Hilt so the personal-library repository's database dependencies are injectable.
-- Updated personal-library unit tests to use an in-memory Room database and cover independent favorite/watch-later timestamps, subscription tombstones, account partitioning and concurrent writes.
-- Native session restore now checks the token, persisted account ID and active account before and after the request. Only a previously bound account may be restored offline; unbound legacy rows are only claimed for the explicit legacy marker after server identity validation.
-- Current-profile reads are bound to the same active-account snapshot, preventing delayed profile data from another account appearing after a switch.
-- Added regression tests for stale session responses and offline restore requiring a previously bound identity.
-
-Validation for these new changes is pending CI on this branch. This section does not mark Stage 2 complete. The documented items elsewhere in this file remain prior project status, not evidence of fresh validation on this branch.
+- Native Telegram login uses the existing website OIDC entry point, a per-attempt state and PKCE verifier, and a one-time code exchange to obtain a revocable bearer session.
+- Pending OIDC state, verifier, access token and account ID are stored only as AES-GCM ciphertext using a non-exportable Android Keystore key; the application does not copy browser cookies or include Telegram/backend signing secrets.
+- The callback rejects invalid code shapes, empty or mismatched state, and unknown flow values before exchanging the code. A failure to delete stale pending state after a session was saved does not undo successful login.
+- Session restore requires the persisted account ID to match the active account. A legacy-unassigned session can claim legacy local rows only after the server validates its identity. Unbound tokens cannot claim data, and offline restoration is restricted to a previously account-bound session.
+- Delayed session/profile responses are discarded if the token, stored account ID or active account changes while the request is in flight. Server identity mismatch and an explicit unauthenticated/401 response fail closed.
+- Logout attempts remote revocation but clears local authenticated credentials and pending OAuth state even when remote logout or the active-account cleanup path throws.
+- Added regression tests for callback state/flow validation, account mismatch, legacy identity claiming, offline restore, delayed session/profile responses and logout cleanup failures.
+- Registration remains intentionally unavailable until approved user-agreement and privacy-policy documents are published. The app does not show draft legal documents or invent their URLs.
+- Stage 2 changes are restricted to Android. `main` and the Website/backend repository have not been modified. The temporary Hilt/Room/library experiments were removed from this stage; Stage 4 library and sync implementation remains outside this branch's scope.
+- Verification must be recorded against the latest branch commit below. CI must pass debug resource processing, lint, debug and release builds, and all unit tests before this stage is marked complete. Physical-device Telegram login/session validation is still a separate release acceptance check.
