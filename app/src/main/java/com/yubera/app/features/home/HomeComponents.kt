@@ -48,7 +48,7 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(90.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
         Row(Modifier.fillMaxWidth().padding(8.dp).align(Alignment.TopStart),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
             anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
-            anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
+            anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }\n            badge?.let { Pill(it) }
         }
         Text(anime.title,color=Color.White,fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis,modifier=Modifier.align(Alignment.BottomStart).padding(10.dp))
     }
