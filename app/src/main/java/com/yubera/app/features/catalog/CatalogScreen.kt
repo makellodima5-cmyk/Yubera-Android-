@@ -57,9 +57,10 @@ fun CatalogScreen(
     var panel by rememberSaveable { mutableStateOf(false) }
     var page by rememberSaveable { mutableIntStateOf(0) }
     var pendingScrollToTop by rememberSaveable { mutableStateOf(false) }
-    var skipInitialQueryFilterReset by rememberSaveable { mutableStateOf(true) }
+    var skipInitialQueryFilterReset by remember { mutableStateOf(true) }
     val grid = rememberLazyGridState()
-    val count = maxOf(1, (state.items.size + 49) / 50)
+    val actualPageCount = (state.items.size + 49) / 50
+    val count = maxOf(1, actualPageCount)
 
     LaunchedEffect(state.query, state.filters) {
         if (skipInitialQueryFilterReset) {
@@ -76,9 +77,9 @@ fun CatalogScreen(
             pendingScrollToTop = false
         }
     }
-    LaunchedEffect(count) {
-        if (page >= count) {
-            page = (count - 1).coerceAtLeast(0)
+    LaunchedEffect(actualPageCount) {
+        if (actualPageCount > 0 && page >= actualPageCount) {
+            page = (actualPageCount - 1).coerceAtLeast(0)
             pendingScrollToTop = true
         }
     }
@@ -128,7 +129,7 @@ fun CatalogScreen(
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             CatalogSortOrder.entries.forEach {
-                FilterChip(state.sortOrder == it, { viewModel.onSortOrderSelected(it); page = 0 }, label = { Text(it.title, maxLines = 1) })
+                FilterChip(state.sortOrder == it, { viewModel.onSortOrderSelected(it); page = 0; pendingScrollToTop = true }, label = { Text(it.title, maxLines = 1) })
             }
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -324,5 +325,16 @@ private fun PaginationNumbers(page: Int, pageCount: Int, onPage: (Int) -> Unit) 
                 fontWeight = if (number == page) FontWeight.Bold else FontWeight.Normal
             )
         }
+    }
+}
+
+
+@Composable
+private fun rememberCatalogMotionAllowed(): Boolean {
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+        }.getOrDefault(true)
     }
 }
