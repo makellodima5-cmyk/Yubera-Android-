@@ -35,7 +35,7 @@ import com.yubera.app.features.home.HomeViewModel
 import com.yubera.app.features.home.HomeSimpleDestination
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
-import com.yubera.app.features.news.NewsDetailScreen
+import com.yubera.app.features.news.NewsDetailScreen\nimport com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
 import com.yubera.app.features.support.SupportScreen

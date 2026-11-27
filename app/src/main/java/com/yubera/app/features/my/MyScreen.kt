@@ -58,7 +58,7 @@ import kotlin.math.abs
 @Composable private fun Carousel(fav:List<MyLibraryItem>,initial:Int,onCenter:(Int)->Unit,onOpen:(String)->Unit,onRemove:(String)->Unit){
  val scope=rememberCoroutineScope();var center by rememberSaveable{mutableIntStateOf(initial)};var drag by remember{mutableFloatStateOf(0f)};val n=fav.size
  LaunchedEffect(n,initial){center=if(n==0)0 else initial.coerceIn(0,n-1)}
- val cards=remember(center,favorites){if(n==0)emptyList()else(-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}.distinctBy{it.third.anime.id}}
+ val cards=remember(center,fav){if(n==0)emptyList()else(-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}.distinctBy{it.third.anime.id}}
  Box(Modifier.fillMaxWidth().height(350.dp).pointerInput(n){detectHorizontalDragGestures(onHorizontalDrag={c,d->c.consume();drag+=d},onDragEnd={if(abs(drag)>48&&n>1){center=(center+(if(drag<0)1 else -1)+n)%n;onCenter(center)};drag=0f},onDragCancel={drag=0f})},contentAlignment=Alignment.Center){
   cards.forEach{(idx,pos,item)->val scale by animateFloatAsState(if(pos==0)1f else if(abs(pos)==1).78f else .58f,tween(260),label="scale");val rotation by animateFloatAsState(pos*-18f,tween(260),label="rotation");val blur by animateFloatAsState(if(abs(pos)>1)2.2f else 0f,tween(260),label="blur")
    Poster(item.anime,Modifier.width(214.dp).height(318.dp).graphicsLayer{translationX=pos*118f;scaleX=scale;scaleY=scale;rotationY=rotation;cameraDistance=12*density;alpha=if(abs(pos)>1).56f else 1f}.blur(blur.dp),pos==0,{if(pos==0)onOpen(item.anime.id)else{center=idx;onCenter(idx);scope.launch{delay(260);onOpen(item.anime.id)}}},{onRemove(item.anime.id)})
@@ -66,7 +66,7 @@ import kotlin.math.abs
  }
 }
 @Composable private fun Poster(a:AnimeCatalogItem,modifier:Modifier,central:Boolean,click:()->Unit,remove:()->Unit){
- Card(modifier,click,shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),elevation=CardDefaults.cardElevation(if(central)8.dp else 2.dp)){Box(Modifier.fillMaxSize()){
+ Card(onClick=click,modifier=modifier,shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),elevation=CardDefaults.cardElevation(if(central)8.dp else 2.dp)){Box(Modifier.fillMaxSize()){
  if(!a.posterUrl.isNullOrBlank())AsyncImage(a.posterUrl,"Постер: \${a.title}",Modifier.fillMaxSize(),contentScale=ContentScale.Crop)else Box(Modifier.fillMaxSize().background(YuberaSurfaceElevated),contentAlignment=Alignment.Center){Text(a.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayLarge)}
  Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color(0xE8000000)))))
  Row(Modifier.fillMaxWidth().padding(8.dp),horizontalArrangement=Arrangement.SpaceBetween){a.rating?.let{Badge("★ %.1f".format(it),Color(0xFFFFB547))};a.ageRating?.let{Badge(it,Color.White)}}
