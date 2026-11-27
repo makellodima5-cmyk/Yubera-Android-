@@ -36,6 +36,8 @@ class RemoteCatalogRepositoryConcurrencyTest {
         var firstPageCalls = 0
         var secondPageCalls = 0
 
+        override suspend fun getVersionManifest(): AppUpdateManifestDto = error("Not used in catalogue tests")
+
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto {
             kotlinx.coroutines.delay(30)
             return when (page) {
