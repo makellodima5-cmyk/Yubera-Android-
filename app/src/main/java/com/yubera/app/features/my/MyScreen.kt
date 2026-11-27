@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowForward\nimport androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,7 +58,7 @@ import kotlin.math.abs
 @Composable private fun Carousel(fav:List<MyLibraryItem>,initial:Int,onCenter:(Int)->Unit,onOpen:(String)->Unit,onRemove:(String)->Unit){
  val scope=rememberCoroutineScope();var center by rememberSaveable{mutableIntStateOf(initial)};var drag by remember{mutableFloatStateOf(0f)};val n=fav.size
  LaunchedEffect(n,initial){center=if(n==0)0 else initial.coerceIn(0,n-1)}
- val cards=remember(center,n){if(n==0)emptyList()else(-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}.distinctBy{it.third.anime.id}}
+ val cards=remember(center,favorites){if(n==0)emptyList()else(-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}.distinctBy{it.third.anime.id}}
  Box(Modifier.fillMaxWidth().height(350.dp).pointerInput(n){detectHorizontalDragGestures(onHorizontalDrag={c,d->c.consume();drag+=d},onDragEnd={if(abs(drag)>48&&n>1){center=(center+(if(drag<0)1 else -1)+n)%n;onCenter(center)};drag=0f},onDragCancel={drag=0f})},contentAlignment=Alignment.Center){
   cards.forEach{(idx,pos,item)->val scale by animateFloatAsState(if(pos==0)1f else if(abs(pos)==1).78f else .58f,tween(260),label="scale");val rotation by animateFloatAsState(pos*-18f,tween(260),label="rotation");val blur by animateFloatAsState(if(abs(pos)>1)2.2f else 0f,tween(260),label="blur")
    Poster(item.anime,Modifier.width(214.dp).height(318.dp).graphicsLayer{translationX=pos*118f;scaleX=scale;scaleY=scale;rotationY=rotation;cameraDistance=12*density;alpha=if(abs(pos)>1).56f else 1f}.blur(blur.dp),pos==0,{if(pos==0)onOpen(item.anime.id)else{center=idx;onCenter(idx);scope.launch{delay(260);onOpen(item.anime.id)}}},{onRemove(item.anime.id)})

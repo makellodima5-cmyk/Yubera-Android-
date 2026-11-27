@@ -135,7 +135,7 @@ fun CatalogScreen(
                         FilterPanel(
                             state,
                             viewModel::updateDraft,
-                            viewModel::resetDraft,
+                            viewModel::resetFilters,
                             { viewModel.applyFilters(); panel = false; page = 0 },
                             { panel = false }
                         )
@@ -220,7 +220,26 @@ private fun FilterPanel(
     }
 }
 
-@Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
+@Composable
+private fun GenreFilter(options: List<String>, selected: Set<String>, onChange: (Set<String>) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(if (selected.isEmpty()) "Жанры: не выбрано" else "Жанры: ${selected.size}", Modifier.weight(1f), maxLines = 1)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 300.dp)) {
+            options.forEach { genre ->
+                DropdownMenuItem(
+                    text = { Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(genre in selected, onCheckedChange = null); Text(genre) } },
+                    onClick = { onChange(if (genre in selected) selected - genre else selected + genre) }
+                )
+            }
+            DropdownMenuItem(text = { Text("Готово") }, onClick = { expanded = false })
+        }
+    }
+}
+\n@Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
  var expanded by remember{mutableStateOf(false)}
  Box{OutlinedButton(onClick={expanded=true},Modifier.fillMaxWidth()){Text(title+": "+(value?: "Не выбрано"),Modifier.weight(1f),maxLines=1);Text("⌄")}
  DropdownMenu(expanded,onDismissRequest={expanded=false},modifier=Modifier.heightIn(max=260.dp)){
