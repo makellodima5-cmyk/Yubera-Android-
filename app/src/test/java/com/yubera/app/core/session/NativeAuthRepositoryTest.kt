@@ -212,6 +212,23 @@ class NativeAuthRepositoryTest {
     }
 
     @Test
+    fun networkFailureKeepsPreviouslyBoundLocalSessionAvailableOffline() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "account-a"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "account-a")
+        val api = FakeApi().apply { failSessionRequest = true }
+
+        val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
+
+        assertTrue(restored)
+        assertEquals("A".repeat(43), store.token)
+        assertEquals("account-a", store.storedAccountId)
+        assertEquals("account-a", activeAccountStore.currentAccountId())
+    }
+
+    @Test
     fun delayedSessionResponseAfterAccountSwitchCannotRestoreOldIdentity() = runTest {
         val store = FakeTokenStore().apply {
             token = "A".repeat(43)
