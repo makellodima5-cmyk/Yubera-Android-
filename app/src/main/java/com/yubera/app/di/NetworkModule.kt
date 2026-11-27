@@ -1,6 +1,7 @@
 package com.yubera.app.di
 
 import com.yubera.app.core.network.RetrofitFactory
+import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.data.auth.TelegramSessionApi
 import com.yubera.app.data.catalog.CatalogApi
 import com.yubera.app.data.library.TelegramLibrarySyncApi
@@ -68,7 +69,7 @@ object NetworkModule {
     fun provideShikimoriNewsApi(@Named("shikimori") retrofit: Retrofit): ShikimoriNewsApi =
         retrofit.create(ShikimoriNewsApi::class.java)
 
-    const val YUBERA_API_BASE_URL = "https://yume-website.yumesupport833.workers.dev/"
+    const val YUBERA_API_BASE_URL = YuberaEndpoints.API_BASE_URL
     const val SHIKIMORI_API_BASE_URL = "https://shikimori.io/"
     const val SHIKIMORI_USER_AGENT = "YUBERA Android"
 }
