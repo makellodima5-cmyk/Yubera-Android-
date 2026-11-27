@@ -35,11 +35,11 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 
 private data class FrameChoice(val id: String?, val title: String, val resource: Int?, val requirement: String)
 private val supportFrames = listOf(
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp","Союзник",R.drawable.yubera_contribution_avatar_frame_01_soyuznik_webp_webp_webp,"За поддержку"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp","Сторонник",R.drawable.yubera_contribution_avatar_frame_02_storonnik_webp_webp_webp,"За поддержку"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp","Преданный участник",R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik_webp_webp_webp,"За поддержку"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp","Почётный покровитель",R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel_webp_webp,"За поддержку"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp","Легенда YUBERA",R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera_webp_webp,"За поддержку")
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp","Союзник",R.drawable.yubera_contribution_avatar_frame_01_soyuznik_webp,"За поддержку"),
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp","Сторонник",R.drawable.yubera_contribution_avatar_frame_02_storonnik_webp,"За поддержку"),
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp","Преданный участник",R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik_webp,"За поддержку"),
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp","Почётный покровитель",R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel,"За поддержку"),
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp","Легенда YUBERA",R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera,"За поддержку")
 )
 private val plusFrames = listOf(
     FrameChoice("YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp","Sakura Gold",R.drawable.yubera_plus_avatar_frame_01_sakura_gold,"YUBERA Plus"),
