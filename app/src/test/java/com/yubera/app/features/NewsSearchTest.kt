@@ -34,8 +34,8 @@ class NewsSearchTest {
     @Test
     fun bookmarksModeShowsOnlySavedArticlesAndKeepsSearchAndCategoryFilters() {
         val result = filterNews(
-            feedArticles = articles,
-            bookmarkedArticles = listOf(articles[1], articles[2]),
+            feed = articles,
+            saved = listOf(articles[1], articles[2]),
             query = "фестиваль",
             category = NewsCategory.EVENTS,
             bookmarksOnly = true
