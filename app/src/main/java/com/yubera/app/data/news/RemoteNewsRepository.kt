@@ -24,8 +24,8 @@ class RemoteNewsRepository @Inject constructor(private val api:ShikimoriNewsApi,
   }
   if(rows.isNotEmpty())newsDao.replaceFeed(rows)
  }
- private fun plainText(v:String)=v.replace(Regex("(?is)<script[^>]*>.*?</script>")," ").replace(Regex("(?is)<style[^>]*>.*?</style>")," ").replace(Regex("<[^>]*>")," ").replace(Regex("\\\\[[^\\\\]]*\\\\]")," ").replace("&nbsp;"," ").replace("&amp;","&").replace("&quot;","\\\"").replace("&#39;","'").replace(Regex("\\\\s+")," ").trim()
- private fun extractImage(body:String):String?=listOf(Regex("(?is)<img[^>]+src=[\\\"'](https?://[^\\\"']+)[\\\"']").find(body)?.groupValues?.getOrNull(1),Regex("(?is)!\\\\[[^]]*]\\\\((https?://[^)]+)\\\\)").find(body)?.groupValues?.getOrNull(1)).firstOrNull{it?.startsWith("https://",true)==true&&!it.contains("avatar",true)}
- private fun extractVideo(body:String):String?=Regex("(?i)(https?://(?:www\\\\.)?(?:youtube\\\\.com/watch\\\\?v=[^\\\\s&<>]+|youtu\\\\.be/[^\\\\s?<>]+|youtube\\\\.com/embed/[^\\\\s?<>]+))").find(body)?.groupValues?.getOrNull(1)?.replace("http://","https://")?.trimEnd('.',',',')',']')
+ private fun plainText(v:String)=v.replace(Regex("""(?is)<script[^>]*>.*?</script>""")," ").replace(Regex("""(?is)<style[^>]*>.*?</style>""")," ").replace(Regex("""<[^>]*>""")," ").replace(Regex("""\[[^\]]*\]""")," ").replace("&nbsp;"," ").replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace(Regex("""\s+""")," ").trim()
+ private fun extractImage(body:String):String?=listOf(Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(body)?.groupValues?.getOrNull(1),Regex("""(?is)!\[[^]]*\]\((https://[^)]+)\)""").find(body)?.groupValues?.getOrNull(1)).firstOrNull{it?.contains("avatar",true)==false}
+ private fun extractVideo(body:String):String?=Regex("""(?i)(https?://(?:www\.)?(?:youtube\.com/watch\?v=[^\s&<>]+|youtu\.be/[^\s?<>]+|youtube\.com/embed/[^\s?<>]+))""").find(body)?.groupValues?.getOrNull(1)?.replace("http://","https://")?.trimEnd('.',',',')',']')
  companion object{const val PAGE_SIZE=30;const val MAX_SUMMARY_LENGTH=2400}
 }

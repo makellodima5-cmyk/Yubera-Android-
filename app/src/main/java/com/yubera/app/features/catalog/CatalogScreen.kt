@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -200,10 +201,7 @@ private fun FilterPanel(
                 SelectFilter("Статус", f.status, state.statuses) { onDraft(f.copy(status = it)) }
                 SelectFilter("Тип", f.kind, state.kinds) { onDraft(f.copy(kind = it)) }
                 SelectFilter("Возраст", f.ageRating, state.ageRatings) { onDraft(f.copy(ageRating = it)) }
-                Text("Жанры", color = YuberaMuted)
-                state.genres.forEach { g ->
-                    FilterChip(g in f.genres, { onDraft(f.copy(genres = if (g in f.genres) f.genres - g else f.genres + g)) }, label = { Text(g) })
-                }
+                GenreFilter(state.genres, f.genres) { selected -> onDraft(f.copy(genres = selected)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     OutlinedTextField(from, { from = it.filter(Char::isDigit); onDraft(f.copy(yearFrom = from.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год от") }, singleLine = true)
                     OutlinedTextField(to, { to = it.filter(Char::isDigit); onDraft(f.copy(yearTo = to.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год до") }, singleLine = true)
