@@ -394,6 +394,25 @@ class NativeAuthRepositoryTest {
             mutableAccountId.value = accountId
         }
 
+        override suspend fun activateAccountIfCurrent(
+            expectedToken: String,
+            expectedStoredAccountId: String?,
+            expectedActiveAccountId: String?,
+            accountId: String,
+            accessToken: String,
+            claimLegacyRows: Boolean
+        ): Boolean {
+            beforeActivation?.invoke()
+            beforeActivation = null
+            if (
+                tokenStore.getAccessToken() != expectedToken ||
+                tokenStore.getAccountId() != expectedStoredAccountId ||
+                mutableAccountId.value != expectedActiveAccountId
+            ) return false
+            activateAccount(accountId, accessToken, claimLegacyRows)
+            return true
+        }
+
         override suspend fun clearActiveAccount() {
             tokenStore.clearAuthenticatedSession()
             mutableAccountId.value = null
@@ -409,6 +428,22 @@ class NativeAuthRepositoryTest {
         override suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean) {
             tokenStore.saveAuthenticatedSession(accessToken, accountId)
             activeAccountId.value = accountId
+        }
+        override suspend fun activateAccountIfCurrent(
+            expectedToken: String,
+            expectedStoredAccountId: String?,
+            expectedActiveAccountId: String?,
+            accountId: String,
+            accessToken: String,
+            claimLegacyRows: Boolean
+        ): Boolean {
+            if (
+                tokenStore.getAccessToken() != expectedToken ||
+                tokenStore.getAccountId() != expectedStoredAccountId ||
+                activeAccountId.value != expectedActiveAccountId
+            ) return false
+            activateAccount(accountId, accessToken, claimLegacyRows)
+            return true
         }
         override suspend fun clearActiveAccount() {
             tokenStore.clearAuthenticatedSession()
