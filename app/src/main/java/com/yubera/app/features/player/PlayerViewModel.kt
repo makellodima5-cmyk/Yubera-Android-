@@ -55,9 +55,12 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun selectEpisode(number: Int) {
-        val source = mutableState.value.sources.firstOrNull { it.id == mutableState.value.selectedSourceId } ?: return
-        val episode = source.episodes.firstOrNull { it.number == number } ?: return
+        val source = mutableState.value.sources.firstOrNull { candidate ->
+            candidate.episodes.any { it.number == number }
+        } ?: return
+        val episode = source.episodes.first { it.number == number }
         mutableState.value = mutableState.value.copy(
+            selectedSourceId = source.id,
             selectedEpisodeNumber = episode.number,
             selectedEpisodeUrl = episode.link
         )
