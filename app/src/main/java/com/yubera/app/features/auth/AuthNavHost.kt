@@ -66,7 +66,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
 @Composable private fun WelcomeScreen(onSignIn:()->Unit,onRegister:()->Unit) {
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.34f to Color.Transparent,.52f to YuberaBackground.copy(.60f),.70f to YuberaBackground.copy(.93f),1f to YuberaBackground.copy(.86f)))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.34f to Color.Transparent,.52f to YuberaBackground.copy(.24f),.70f to YuberaBackground.copy(.42f),1f to YuberaBackground.copy(.36f)))))
         Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=28.dp,vertical=16.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.SpaceBetween) {
             Spacer(Modifier.height(2.dp))
             Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(156.dp),contentScale=ContentScale.Fit)
@@ -92,7 +92,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     var launching by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.56f),.78f to YuberaBackground.copy(.90f),1f to YuberaBackground))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.24f),.78f to YuberaBackground.copy(.46f),1f to YuberaBackground.copy(.42f)))))
         Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
             Spacer(Modifier.height(10.dp))
             Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(140.dp),contentScale=ContentScale.Fit)
@@ -145,7 +145,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     var launching by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.38f to Color.Transparent,.58f to YuberaBackground.copy(.46f),.78f to YuberaBackground.copy(.88f),1f to YuberaBackground.copy(.92f)))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.38f to Color.Transparent,.58f to YuberaBackground.copy(.22f),.78f to YuberaBackground.copy(.44f),1f to YuberaBackground.copy(.40f)))))
         Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
             Spacer(Modifier.height(10.dp))
             Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(140.dp),contentScale=ContentScale.Fit)
