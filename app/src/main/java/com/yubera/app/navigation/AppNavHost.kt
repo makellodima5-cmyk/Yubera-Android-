@@ -117,7 +117,7 @@ fun AppNavHost(
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
             ) { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category").orEmpty()
-                val homeEntry = remember(navController) { navController.getBackStackEntry(AppDestination.Home.route) }
+                val homeEntry = remember(backStackEntry) { navController.getBackStackEntry(AppDestination.Home.route) }
                 val sharedHomeViewModel: HomeViewModel = hiltViewModel(homeEntry)
                 HomeCategoryScreen(
                     category = category,
