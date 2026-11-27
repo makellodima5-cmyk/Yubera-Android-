@@ -44,7 +44,9 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     libraryRepository: PersonalLibraryRepository,
-    settingsRepository: UserSettingsRepository
+    settingsRepository: UserSettingsRepository,
+    private val notificationDao: AnimeEpisodeNotificationDao,
+    private val activeAccountStore: ActiveAccountStore
 ) : ViewModel() {
     private val refreshState = MutableStateFlow(false)
     private val errorState = MutableStateFlow<String?>(null)
