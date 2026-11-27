@@ -46,11 +46,17 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
                     FileOutputStream(file).use { output ->
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                         while (true) {
-                            if (isStopped) return Result.retry()
+                            if (isStopped) {
+                                file.delete()
+                                return Result.retry()
+                            }
                             val count = input.read(buffer)
                             if (count < 0) break
                             total += count
-                            if (total > MAX_APK_BYTES || expectedSize > 0 && total > expectedSize) return Result.failure()
+                            if (total > MAX_APK_BYTES || expectedSize > 0 && total > expectedSize) {
+                                file.delete()
+                                return Result.failure()
+                            }
                             digest.update(buffer, 0, count)
                             output.write(buffer, 0, count)
                         }
