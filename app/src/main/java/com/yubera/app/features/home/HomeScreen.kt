@@ -26,7 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Casino
-import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
@@ -148,7 +148,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Bookmarks, contentDescription = null, tint = Color(0xFFFFB59D), modifier = Modifier.size(30.dp))
+                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB59D), modifier = Modifier.size(30.dp))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text("Поддержка и YUBERA Plus", color = Color.White, fontWeight = FontWeight.Bold)
                             Text("Поддержать проект и открыть дополнительные возможности", color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.bodySmall)
