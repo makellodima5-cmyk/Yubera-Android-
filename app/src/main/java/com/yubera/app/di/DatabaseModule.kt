@@ -26,7 +26,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): YuberaDatabase =
         Room.databaseBuilder(context, YuberaDatabase::class.java, "yubera.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             .build()
 
     @Provides fun provideAnimeEpisodeNotificationDao(database: YuberaDatabase): AnimeEpisodeNotificationDao = database.animeEpisodeNotificationDao()
@@ -63,6 +63,13 @@ object DatabaseModule {
             database.execSQL("ALTER TABLE anime_library ADD COLUMN watchLaterUpdatedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
             database.execSQL("UPDATE anime_library SET favoriteUpdatedAtEpochMillis = CASE WHEN isFavorite = 1 THEN updatedAtEpochMillis ELSE 0 END, watchLaterUpdatedAtEpochMillis = CASE WHEN isInWatchLater = 1 THEN updatedAtEpochMillis ELSE 0 END")
             database.execSQL("ALTER TABLE anime_subscriptions ADD COLUMN isSubscribed INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE anime_progress ADD COLUMN completedEpisodeNumber INTEGER")
+            database.execSQL("ALTER TABLE anime_progress ADD COLUMN completedAtEpochMillis INTEGER")
         }
     }
 
