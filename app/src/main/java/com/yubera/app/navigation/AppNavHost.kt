@@ -140,7 +140,7 @@ fun AppNavHost(
                 HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
             }
             composable(AppDestination.Catalog.route) {
-                CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") })
+                CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") })
             }
             composable(AppDestination.My.route) {
                 MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
