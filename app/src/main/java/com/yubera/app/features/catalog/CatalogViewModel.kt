@@ -75,7 +75,7 @@ class CatalogViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogUiState())
 
-    init { refresh() }
+    init { refreshIfStale() }
 
     fun onQueryChange(value: String) { query.value = value }
     fun onGenreSelected(value: String?) { selectedGenre.value = value }
@@ -83,13 +83,17 @@ class CatalogViewModel @Inject constructor(
     fun onStatusSelected(value: String?) { selectedStatus.value = value }
     fun onSortOrderSelected(value: CatalogSortOrder) { sortOrder.value = value }
 
-    fun refresh() {
+    fun refresh() = refreshWith(force = true)
+
+    private fun refreshIfStale() = refreshWith(force = false)
+
+    private fun refreshWith(force: Boolean) {
         if (isRefreshing.value) return
         viewModelScope.launch {
             isRefreshing.value = true
             errorMessage.value = null
             try {
-                repository.refresh()
+                if (force) repository.refresh() else repository.refreshIfStale()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
