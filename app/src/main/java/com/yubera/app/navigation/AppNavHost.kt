@@ -56,6 +56,7 @@ fun AppNavHost(
     }
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
+    var catalogResetNonce by remember { mutableIntStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
         currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute == "support"
 
@@ -142,7 +143,7 @@ fun AppNavHost(
                 HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
             }
             composable(AppDestination.Catalog.route) {
-                CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") })
+                CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") }, resetKey = catalogResetNonce)
             }
             composable(AppDestination.My.route) {
                 MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
