@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeProgressEntity
+import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
+import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.data.settings.UserSettingsRepository
@@ -18,6 +20,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,7 +36,8 @@ data class HomeUiState(
     val ongoing: List<AnimeCatalogItem> = emptyList(),
     val catalogue: List<AnimeCatalogItem> = emptyList(),
     val isRefreshing: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val unreadNotificationCount: Int = 0
 )
 
 @HiltViewModel
@@ -45,17 +50,22 @@ class HomeViewModel @Inject constructor(
     private val errorState = MutableStateFlow<String?>(null)
     private var recommendationWriteInFlight = false
 
+    private val unreadNotifications = activeAccountStore.activeAccountId.flatMapLatest { accountId ->
+        if (accountId.isNullOrBlank()) flowOf(0) else notificationDao.observeUnreadDeliveredCount(accountId)
+    }
+
     val uiState = combine(
         catalogRepository.observeCatalog(),
         libraryRepository.progress,
         settingsRepository.settings,
-        refreshState,
-        errorState
+        combine(refreshState, errorState) { refreshing, error -> refreshing to error },
+        unreadNotifications
     ) { catalog: List<AnimeCatalogItem>,
         progress: List<AnimeProgressEntity>,
         settings: com.yubera.app.data.settings.UserSettings,
-        refreshing: Boolean,
-        error: String? ->
+        refreshAndError: Pair<Boolean, String?>,
+        unreadCount: Int ->
+        val (refreshing, error) = refreshAndError
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
@@ -136,11 +146,17 @@ class HomeViewModel @Inject constructor(
             ongoing = ongoing,
             catalogue = catalog,
             isRefreshing = refreshing,
-            errorMessage = error
+            errorMessage = error,
+            unreadNotificationCount = unreadCount
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     init { refresh() }
+
+    fun markNotificationsRead() {
+        val accountId = activeAccountStore.currentAccountId() ?: return
+        viewModelScope.launch { notificationDao.markAllDeliveredAsRead(accountId, System.currentTimeMillis()) }
+    }
 
     fun refresh() {
         viewModelScope.launch {

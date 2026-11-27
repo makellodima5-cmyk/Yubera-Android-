@@ -9,5 +9,6 @@ data class AnimeEpisodeNotificationEntity(
     val episodeNumber: Int,
     val createdAtEpochMillis: Long,
     val deliveredAtEpochMillis: Long? = null,
-    @ColumnInfo(defaultValue = "'legacy-unassigned'") val accountId: String = "legacy-unassigned"
+    @ColumnInfo(defaultValue = "'legacy-unassigned'") val accountId: String = "legacy-unassigned",
+    val readAtEpochMillis: Long? = null
 )

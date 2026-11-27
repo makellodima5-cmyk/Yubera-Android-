@@ -48,6 +48,53 @@ class EpisodeCompletionPolicyTest {
     }
 
     @Test
+    fun marksPreviousEpisodeWhenOpeningTheNextSequentialEpisode() {
+        val previous = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 3,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 100L
+        )
+        val next = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 4,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 200L
+        )
+
+        val result = EpisodeCompletionPolicy.markSequentialAdvance(next, previous, 4, 200L)
+
+        assertEquals(3, result.completedEpisodeNumber)
+        assertEquals(200L, result.completedAtEpochMillis)
+    }
+
+    @Test
+    fun doesNotInferCompletionWhenSkippingAnEpisode() {
+        val previous = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 3,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 100L
+        )
+        val next = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 5,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 200L
+        )
+
+        val result = EpisodeCompletionPolicy.markSequentialAdvance(next, previous, 5, 200L)
+
+        assertNull(result.completedEpisodeNumber)
+        assertNull(result.completedAtEpochMillis)
+    }
+
+
+    @Test
+    fun mergeKeepsExplicitSequentialCompletionMarker() {
+        val marked = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 4,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 200L,
+            completedEpisodeNumber = 3, completedAtEpochMillis = 200L
+        )
+        val result = EpisodeCompletionPolicy.merge(marked, null)
+        assertEquals(3, result.completedEpisodeNumber)
+        assertEquals(200L, result.completedAtEpochMillis)
+    }
+
+    @Test
     fun preservesTitleCompletionWhenCurrentEpisodeChanges() {
         val previous = AnimeProgressEntity(
             animeId = "anime-1", seasonNumber = null, episodeNumber = 3,

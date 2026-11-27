@@ -13,9 +13,10 @@ object EpisodeCompletionPolicy {
             progress.durationMillis > 0L &&
                 progress.positionMillis >= (progress.durationMillis * COMPLETION_RATIO).toLong()
         }
-        val markerEpisode = completedNow ?: previous?.completedEpisodeNumber
+        val markerEpisode = completedNow ?: progress.completedEpisodeNumber ?: previous?.completedEpisodeNumber
         val markerTimestamp = when {
             completedNow != null -> progress.updatedAtEpochMillis
+            progress.completedEpisodeNumber != null -> progress.completedAtEpochMillis
             markerEpisode != null -> previous?.completedAtEpochMillis
             else -> null
         }
@@ -23,6 +24,20 @@ object EpisodeCompletionPolicy {
             completedEpisodeNumber = markerEpisode,
             completedAtEpochMillis = markerTimestamp
         )
+    }
+
+    fun markSequentialAdvance(
+        nextProgress: AnimeProgressEntity,
+        previousProgress: AnimeProgressEntity?,
+        openedEpisodeNumber: Int,
+        completedAtEpochMillis: Long
+    ): AnimeProgressEntity {
+        val previousCompletedEpisode = previousProgress?.episodeNumber?.takeIf {
+            openedEpisodeNumber == it + 1
+        }
+        val marker = previousProgress?.completedEpisodeNumber ?: previousCompletedEpisode
+        val markerTime = previousProgress?.completedAtEpochMillis ?: previousCompletedEpisode?.let { completedAtEpochMillis }
+        return nextProgress.copy(completedEpisodeNumber = marker, completedAtEpochMillis = markerTime)
     }
 
     fun isEpisodeCompleted(progress: AnimeProgressEntity): Boolean =

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import com.yubera.app.core.database.entity.AnimeEpisodeNotificationEntity
 
 @Dao
@@ -16,6 +17,12 @@ interface AnimeEpisodeNotificationDao {
 
     @Query("UPDATE anime_episode_notifications SET deliveredAtEpochMillis = :deliveredAt WHERE accountId = :accountId AND animeId = :animeId AND episodeNumber = :episodeNumber")
     suspend fun markDelivered(accountId: String, animeId: String, episodeNumber: Int, deliveredAt: Long)
+
+    @Query("SELECT COUNT(*) FROM anime_episode_notifications WHERE accountId = :accountId AND deliveredAtEpochMillis IS NOT NULL AND readAtEpochMillis IS NULL")
+    fun observeUnreadDeliveredCount(accountId: String): Flow<Int>
+
+    @Query("UPDATE anime_episode_notifications SET readAtEpochMillis = :readAt WHERE accountId = :accountId AND deliveredAtEpochMillis IS NOT NULL AND readAtEpochMillis IS NULL")
+    suspend fun markAllDeliveredAsRead(accountId: String, readAt: Long)
 
     @Query("UPDATE anime_episode_notifications SET accountId = :accountId WHERE accountId = 'legacy-unassigned'")
     suspend fun claimLegacyRows(accountId: String): Int

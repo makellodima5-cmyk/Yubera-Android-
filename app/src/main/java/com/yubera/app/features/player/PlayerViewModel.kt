@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.core.player.KodikRepository
 import com.yubera.app.core.player.KodikSource
@@ -122,15 +123,23 @@ class PlayerViewModel @Inject constructor(
         val existing = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
         if (existing?.episodeNumber == number) return
 
-        libraryRepository.saveProgress(
-            AnimeProgressEntity(
-                animeId = animeId,
-                seasonNumber = null,
-                episodeNumber = number,
-                positionMillis = 0L,
-                durationMillis = 0L,
-                updatedAtEpochMillis = System.currentTimeMillis()
-            )
+        val now = System.currentTimeMillis()
+        val openedProgress = AnimeProgressEntity(
+            animeId = animeId,
+            seasonNumber = null,
+            episodeNumber = number,
+            positionMillis = 0L,
+            durationMillis = 0L,
+            updatedAtEpochMillis = now
         )
+        // Kodik is an external WebView embed and exposes no reliable playhead/duration.
+        // Infer one completed episode only when the user advances sequentially.
+        val completionAwareProgress = EpisodeCompletionPolicy.markSequentialAdvance(
+            nextProgress = openedProgress,
+            previousProgress = existing,
+            openedEpisodeNumber = number,
+            completedAtEpochMillis = now
+        )
+        libraryRepository.saveProgress(completionAwareProgress)
     }
 }

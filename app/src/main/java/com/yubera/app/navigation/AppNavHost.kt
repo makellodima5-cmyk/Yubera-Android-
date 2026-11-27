@@ -134,6 +134,9 @@ fun AppNavHost(
                 HomeSimpleDestination("Подборки", "Тематические коллекции будут оформлены отдельным техническим заданием.", { navController.popBackStack() })
             }
             composable("notifications") {
+                val homeEntry = remember(navController) { navController.getBackStackEntry(AppDestination.Home.route) }
+                val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
+                LaunchedEffect(homeViewModel) { homeViewModel.markNotificationsRead() }
                 HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
             }
             composable(AppDestination.Catalog.route) {
