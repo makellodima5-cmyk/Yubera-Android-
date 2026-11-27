@@ -1,7 +1,9 @@
 package com.yubera.app.features
 
 import com.yubera.app.core.catalog.AnimeCatalogItem
+import com.yubera.app.features.catalog.CatalogFilters
 import com.yubera.app.features.catalog.CatalogSortOrder
+import com.yubera.app.features.catalog.validate
 import com.yubera.app.features.catalog.filterForCatalog
 import com.yubera.app.features.catalog.sortedForCatalog
 import com.yubera.app.features.catalog.searchPriority
@@ -53,6 +55,28 @@ class CatalogSortOrderTest {
         val query = "Alpha"
         assertEquals(0, searchPriority(items.first { it.title == query }, query))
         assertEquals(3, searchPriority(items.first { it.title == "Beta" }, query))
+    }
+
+    @Test
+    fun fullCatalogFilterCombinesTypeAgeGenresYearsAndRating() {
+        val candidates = listOf(
+            anime("match", "Match", 2024, 8.5, "Завершён", listOf("Фэнтези")).copy(kind = "TV", ageRating = "16+"),
+            anime("low", "Low rating", 2024, 6.0, "Завершён", listOf("Фэнтези")).copy(kind = "TV", ageRating = "16+"),
+            anime("year", "Wrong year", 2022, 9.0, "Завершён", listOf("Фэнтези")).copy(kind = "TV", ageRating = "16+"),
+            anime("genre", "Wrong genre", 2024, 9.0, "Завершён", listOf("Драма")).copy(kind = "TV", ageRating = "16+"),
+            anime("kind", "Wrong kind", 2024, 9.0, "Завершён", listOf("Фэнтези")).copy(kind = "Movie", ageRating = "16+"),
+            anime("age", "Wrong age", 2024, 9.0, "Завершён", listOf("Фэнтези")).copy(kind = "TV", ageRating = "12+")
+        )
+        val filters = CatalogFilters(status = "Завершён", kind = "TV", genres = setOf("Фэнтези"), ageRating = "16+", yearFrom = 2023, yearTo = 2025, minRating = 8.0)
+        assertEquals(listOf("match"), candidates.filterForCatalog("", filters).map { it.id })
+    }
+
+    @Test
+    fun filterYearValidationRejectsInvalidBoundsAndReversedRanges() {
+        assertEquals("Укажите корректный год «От».", CatalogFilters(yearFrom = 1899).validate(2027))
+        assertEquals("Укажите корректный год «До».", CatalogFilters(yearTo = 2028).validate(2027))
+        assertEquals("Год «От» не может быть больше года «До».", CatalogFilters(yearFrom = 2025, yearTo = 2020).validate(2027))
+        assertEquals(null, CatalogFilters(yearFrom = 2020, yearTo = 2025).validate(2027))
     }
 
     @Test
