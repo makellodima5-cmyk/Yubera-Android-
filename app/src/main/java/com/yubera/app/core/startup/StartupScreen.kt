@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -89,8 +91,8 @@ fun StartupScreen(state:StartupUiState,onRetry:()->Unit,onReady:()->Unit) {
 
 @Composable
 private fun heightFraction(fraction:Float):androidx.compose.ui.unit.Dp {
-    val density=androidx.compose.ui.platform.LocalDensity.current
-    val config=androidx.compose.ui.platform.LocalConfiguration.current
+    val density=LocalDensity.current
+    val config=LocalConfiguration.current
     return with(density){(config.screenHeightDp.dp.toPx()*fraction).toDp()}
 }
 
