@@ -116,6 +116,7 @@ private fun SplashWaves(phase:Float) {
                 startX=center-halfWidth,
                 endX=center+halfWidth
             )
+            drawPath(path,Color(0xFF8E351D).copy(.42f),style=Stroke(width=1.3.dp.toPx(),cap=StrokeCap.Round))
             drawPath(path,shine,style=Stroke(width=5.dp.toPx(),cap=StrokeCap.Round))
             drawPath(path,shine,style=Stroke(width=2.dp.toPx(),cap=StrokeCap.Round))
         }
