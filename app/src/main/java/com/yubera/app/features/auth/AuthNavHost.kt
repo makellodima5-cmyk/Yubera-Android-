@@ -80,8 +80,8 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     }
 }
 @Composable private fun WelcomeButton(text:String,icon:androidx.compose.ui.graphics.vector.ImageVector,primary:Boolean,onClick:()->Unit,modifier:Modifier=Modifier) {
-    val shape=RoundedCornerShape(22.dp); val interaction=remember{MutableInteractionSource()}; val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if(pressed).975f else 1f,tween(if(pressed)150 else 190),label="welcomePress")
+    val motionAllowed=rememberMotionAllowed(); val shape=RoundedCornerShape(22.dp); val interaction=remember{MutableInteractionSource()}; val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if(pressed && motionAllowed).975f else 1f,tween(if(pressed)150 else 190),label="welcomePress")
     Box(modifier.fillMaxWidth().height(58.dp).scale(scale).background(if(primary)Brush.horizontalGradient(listOf(Color(0xFFFF7A12),Color(0xFFFF4E17))) else Brush.linearGradient(listOf(Color(0xC015141C),Color(0xC015141C))),shape).border(1.dp,if(primary)Color(0xFFFFA15B).copy(.7f) else Color(0xFF77727F),shape).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),contentAlignment=Alignment.Center) {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) { Icon(icon,null,tint=Color.White,modifier=Modifier.size(21.dp)); Spacer(Modifier.width(10.dp)); Text(text,color=Color.White,fontSize=18.sp,fontWeight=FontWeight.SemiBold) }
     }
@@ -114,9 +114,9 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     TelegramActionButton(text="Войти через Telegram",onClick=onClick)
 }
 @Composable private fun TelegramActionButton(text:String,enabled:Boolean=true,onClick:()->Unit) {
-    val interaction=remember{MutableInteractionSource()}
+    val motionAllowed=rememberMotionAllowed(); val interaction=remember{MutableInteractionSource()}
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if(pressed).975f else 1f,tween(if(pressed)150 else 190),label="telegramActionPress")
+    val scale by animateFloatAsState(if(pressed && motionAllowed).975f else 1f,tween(if(pressed)150 else 190),label="telegramActionPress")
     Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(Color(0xFF229ED9),RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,enabled=enabled,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         TelegramPlane(Modifier.size(22.dp).semantics { contentDescription = "Telegram" })
         Spacer(Modifier.width(11.dp))
