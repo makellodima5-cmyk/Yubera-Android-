@@ -46,6 +46,48 @@ class RoomActiveAccountStore @Inject constructor(
         }
     }
 
+    override suspend fun activateAccountIfCurrent(
+        expectedToken: String,
+        expectedStoredAccountId: String?,
+        expectedActiveAccountId: String?,
+        accountId: String,
+        accessToken: String,
+        claimLegacyRows: Boolean
+    ): Boolean {
+        require(accountId.isNotBlank() && accessToken.isNotBlank())
+        return mutex.withLock {
+            val previousAccountId = mutableAccountId.value
+            if (
+                tokenStore.getAccessToken() != expectedToken ||
+                tokenStore.getAccountId() != expectedStoredAccountId ||
+                previousAccountId != expectedActiveAccountId
+            ) {
+                return@withLock false
+            }
+
+            mutableAccountId.value = null
+            try {
+                if (claimLegacyRows) {
+                    database.withTransaction {
+                        database.animeLibraryDao().claimLegacyRows(accountId)
+                        database.animeProgressDao().claimLegacyRows(accountId)
+                        database.animeSubscriptionDao().claimLegacyRows(accountId)
+                        database.animeEpisodeNotificationDao().claimLegacyRows(accountId)
+                    }
+                }
+                // All account switches and logout operations use this same mutex.
+                // Once the snapshot check succeeds, logout cannot interleave between
+                // validating the old session and publishing the restored account.
+                tokenStore.saveAuthenticatedSession(accessToken, accountId)
+                mutableAccountId.value = accountId
+                true
+            } catch (error: Exception) {
+                mutableAccountId.value = previousAccountId
+                throw error
+            }
+        }
+    }
+
     override suspend fun clearActiveAccount() {
         mutex.withLock {
             mutableAccountId.value = null
