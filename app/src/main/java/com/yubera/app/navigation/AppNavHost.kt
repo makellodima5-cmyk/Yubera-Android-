@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.navArgument
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
@@ -29,6 +30,7 @@ import com.yubera.app.features.anime.AnimeDetailScreen
 import com.yubera.app.features.catalog.CatalogScreen
 import com.yubera.app.features.home.HomeScreen
 import com.yubera.app.features.home.HomeCategoryScreen
+import com.yubera.app.features.home.HomeViewModel
 import com.yubera.app.features.home.HomeSimpleDestination
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
@@ -115,6 +117,8 @@ fun AppNavHost(
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
             ) { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category").orEmpty()
+                val homeEntry = remember(navController) { navController.getBackStackEntry(AppDestination.Home.route) }
+                val sharedHomeViewModel: HomeViewModel = hiltViewModel(homeEntry)
                 HomeCategoryScreen(
                     category = category,
                     onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
@@ -122,7 +126,8 @@ fun AppNavHost(
                         val route = "player/${Uri.encode(id)}" + (episode?.let { "?episode=$it" } ?: "")
                         navController.navigate(route)
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    viewModel = sharedHomeViewModel
                 )
             }
             composable("collections") {
