@@ -58,7 +58,7 @@ fun AppNavHost(
     val currentRoute = entry?.destination?.route
     var catalogResetNonce by remember { mutableStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute == "support"
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -67,7 +67,7 @@ fun AppNavHost(
                 NavigationBar(containerColor = YuberaBackground) {
                     AppDestination.all.forEach { destination ->
                         NavigationBarItem(
-                            selected = currentRoute == destination.route,
+                            selected = currentRoute == destination.route || (currentRoute == "support" && destination.route == AppDestination.Home.route),
                             onClick = {
                                 navController.navigate(destination.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
