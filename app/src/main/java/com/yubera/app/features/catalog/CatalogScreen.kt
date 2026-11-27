@@ -39,7 +39,7 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
-fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()->Unit={},viewModel:CatalogViewModel=hiltViewModel()) {
+fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()->Unit={},resetKey:Int=0,viewModel:CatalogViewModel=hiltViewModel()) {
  val state by viewModel.uiState.collectAsState()
  var panel by rememberSaveable { mutableStateOf(false) }
  var page by rememberSaveable { mutableIntStateOf(0) }
