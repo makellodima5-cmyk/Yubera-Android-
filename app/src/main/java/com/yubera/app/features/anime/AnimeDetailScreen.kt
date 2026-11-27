@@ -387,7 +387,7 @@ private fun CommentsSection(comments: List<LocalTitleComment>, draft: String, on
 
 @Composable
 private fun FrameViewer(frames: List<AnimeScreenshot>, initialIndex: Int, onClose: () -> Unit) {
-    var index by remember { mutableIntStateOf(initialIndex.coerceIn(frames.indices)) }
+    var index by remember(frames, initialIndex) { mutableIntStateOf(initialIndex.coerceIn(frames.indices)) }
     Dialog(onDismissRequest = onClose) {
         Surface(color = YuberaBackground, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
