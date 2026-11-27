@@ -59,7 +59,7 @@ class CatalogViewModel @Inject constructor(private val repository: RemoteCatalog
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogUiState())
 
     init { refreshIfStale() }
-    fun onQueryChange(value:String) { query.value=value }
+    fun onQueryChange(value:String) { query.value=value }\n    fun resetCatalog() { query.value=""; appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters(); sortOrder.value=CatalogSortOrder.CATALOG }
     fun onGenreSelected(value:String?) { draftFilters.value=draftFilters.value.copy(genres=value?.let(::setOf) ?: emptySet()); applyFilters() }
     fun onYearSelected(value:Int?) { draftFilters.value=draftFilters.value.copy(yearFrom=value,yearTo=value); applyFilters() }
     fun onStatusSelected(value:String?) { draftFilters.value=draftFilters.value.copy(status=value); applyFilters() }
