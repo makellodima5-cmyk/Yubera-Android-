@@ -2,6 +2,8 @@ package com.yubera.app.features.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.animateContentSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,7 +92,7 @@ fun HomeScreen(
                             horizontalArrangement=Arrangement.spacedBy(10.dp)
                         ) {
                             items(state.recommended,key=AnimeCatalogItem::id) { anime ->
-                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f))
+                                val targetScale=if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f\n                                val scale by animateFloatAsState(targetScale,tween(220),label="recommendationScale")\n                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(scale))
                             }
                         }
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically) {
