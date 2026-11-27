@@ -19,7 +19,9 @@ data class CatalogUiState(
     val years: List<Int> = emptyList(),
     val statuses: List<String> = emptyList(),
     val kinds: List<String> = emptyList(),
-    val ageRatings: List<String> = emptyList(),\n    val ratingMin: Double = 0.0,\n    val ratingMax: Double = 10.0,
+    val ageRatings: List<String> = emptyList(),
+    val ratingMin: Double = 0.0,
+    val ratingMax: Double = 10.0,
     val query: String = "",
     val filters: CatalogFilters = CatalogFilters(),
     val draftFilters: CatalogFilters = CatalogFilters(),
@@ -52,14 +54,17 @@ class CatalogViewModel @Inject constructor(private val repository: RemoteCatalog
             years=catalog.map{it.year}.filter{it>0}.distinct().sortedDescending(),
             statuses=catalog.map{it.status}.filter{it.isNotBlank()}.distinct().sorted(),
             kinds=catalog.mapNotNull{it.kind}.filter{it.isNotBlank()}.distinct().sorted(),
-            ageRatings=catalog.mapNotNull{it.ageRating}.filter{it.isNotBlank()}.distinct().sorted(),\n            ratingMin=catalog.mapNotNull{it.rating}.minOrNull() ?: 0.0,\n            ratingMax=catalog.mapNotNull{it.rating}.maxOrNull() ?: 10.0,
+            ageRatings=catalog.mapNotNull{it.ageRating}.filter{it.isNotBlank()}.distinct().sorted(),
+            ratingMin=catalog.mapNotNull{it.rating}.minOrNull() ?: 0.0,
+            ratingMax=catalog.mapNotNull{it.rating}.maxOrNull() ?: 10.0,
             query=q, filters=filters, draftFilters=draft, sortOrder=order,
             isRefreshing=refreshing,errorMessage=error
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogUiState())
 
     init { refreshIfStale() }
-    fun onQueryChange(value:String) { query.value=value }\n    fun resetCatalog() { query.value=""; appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters(); sortOrder.value=CatalogSortOrder.CATALOG }
+    fun onQueryChange(value:String) { query.value=value }
+    fun resetCatalog() { query.value=""; appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters(); sortOrder.value=CatalogSortOrder.CATALOG }
     fun onGenreSelected(value:String?) { draftFilters.value=draftFilters.value.copy(genres=value?.let(::setOf) ?: emptySet()); applyFilters() }
     fun onYearSelected(value:Int?) { draftFilters.value=draftFilters.value.copy(yearFrom=value,yearTo=value); applyFilters() }
     fun onStatusSelected(value:String?) { draftFilters.value=draftFilters.value.copy(status=value); applyFilters() }
