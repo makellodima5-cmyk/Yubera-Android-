@@ -2,7 +2,7 @@ package com.yubera.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.compose.animation.Crossfade\nimport androidx.compose.animation.core.tween\nimport androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
@@ -31,12 +31,14 @@ class MainActivity : ComponentActivity() {
             YuberaTheme(themeMode=settings.themeMode) {
                 val state by startupViewModel.uiState.collectAsState()
                 var splashFinished by remember { mutableStateOf(false) }
-                if (!splashFinished) StartupScreen(state, startupViewModel::retry) { splashFinished=true }
-                else when(val ready=state) {
-                    StartupUiState.Initializing, is StartupUiState.Failed -> StartupScreen(ready, startupViewModel::retry) { splashFinished=false }
-                    is StartupUiState.Ready -> when(ready.destination) {
-                        StartupDestination.SignIn -> AuthNavHost()
-                        StartupDestination.Home -> AppNavHost(pendingAnimeRoute=pendingAnimeRoute, onAnimeRouteHandled={ pendingAnimeRoute=null })
+                Crossfade(targetState=splashFinished && state is StartupUiState.Ready,animationSpec=tween(240),label="startupToApp") { showApp ->
+                    if(!showApp) StartupScreen(state,startupViewModel::retry) { splashFinished=true }
+                    else when(val ready=state) {
+                        StartupUiState.Initializing, is StartupUiState.Failed -> StartupScreen(ready,startupViewModel::retry) { splashFinished=false }
+                        is StartupUiState.Ready -> when(ready.destination) {
+                            StartupDestination.SignIn -> AuthNavHost()
+                            StartupDestination.Home -> AppNavHost(pendingAnimeRoute=pendingAnimeRoute,onAnimeRouteHandled={pendingAnimeRoute=null})
+                        }
                     }
                 }
             }
