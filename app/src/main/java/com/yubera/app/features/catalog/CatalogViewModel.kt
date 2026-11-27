@@ -18,89 +18,65 @@ data class CatalogUiState(
     val genres: List<String> = emptyList(),
     val years: List<Int> = emptyList(),
     val statuses: List<String> = emptyList(),
+    val kinds: List<String> = emptyList(),
+    val ageRatings: List<String> = emptyList(),
     val query: String = "",
-    val selectedGenre: String? = null,
-    val selectedYear: Int? = null,
-    val selectedStatus: String? = null,
+    val filters: CatalogFilters = CatalogFilters(),
+    val draftFilters: CatalogFilters = CatalogFilters(),
     val sortOrder: CatalogSortOrder = CatalogSortOrder.CATALOG,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 )
 
 @HiltViewModel
-class CatalogViewModel @Inject constructor(
-    private val repository: RemoteCatalogRepository
-) : ViewModel() {
+class CatalogViewModel @Inject constructor(private val repository: RemoteCatalogRepository) : ViewModel() {
     private val query = MutableStateFlow("")
-    private val selectedGenre = MutableStateFlow<String?>(null)
-    private val selectedYear = MutableStateFlow<Int?>(null)
-    private val selectedStatus = MutableStateFlow<String?>(null)
+    private val appliedFilters = MutableStateFlow(CatalogFilters())
+    private val draftFilters = MutableStateFlow(CatalogFilters())
     private val sortOrder = MutableStateFlow(CatalogSortOrder.CATALOG)
     private val isRefreshing = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
 
-    val uiState = combine(
-        repository.observeCatalog(),
-        query,
-        selectedGenre,
-        selectedYear,
-        selectedStatus,
-        sortOrder,
-        isRefreshing,
-        errorMessage
-    ) { values ->
+    val uiState = combine(repository.observeCatalog(), query, appliedFilters, draftFilters, sortOrder, isRefreshing, errorMessage) { values ->
         @Suppress("UNCHECKED_CAST")
-        val catalog = values[0] as List<AnimeCatalogItem>
-        val search = values[1] as String
-        val genre = values[2] as String?
-        val year = values[3] as Int?
-        val status = values[4] as String?
-        val order = values[5] as CatalogSortOrder
-        val refreshing = values[6] as Boolean
-        val error = values[7] as String?
-
-        val filtered = catalog.filterForCatalog(search, genre, year, status)
+        val catalog=values[0] as List<AnimeCatalogItem>
+        val q=values[1] as String
+        val filters=values[2] as CatalogFilters
+        val draft=values[3] as CatalogFilters
+        val order=values[4] as CatalogSortOrder
+        val refreshing=values[5] as Boolean
+        val error=values[6] as String?
         CatalogUiState(
-            items = filtered.sortedForCatalog(order),
-            genres = catalog.flatMap { it.genres }.distinct().sorted(),
-            years = catalog.map { it.year }.filter { it > 0 }.distinct().sortedDescending(),
-            statuses = catalog.map { it.status }.filter { it.isNotBlank() }.distinct().sorted(),
-            query = search,
-            selectedGenre = genre,
-            selectedYear = year,
-            selectedStatus = status,
-            sortOrder = order,
-            isRefreshing = refreshing,
-            errorMessage = error
+            items=catalog.filterForCatalog(q,filters).sortedForCatalog(order),
+            genres=catalog.flatMap{it.genres}.distinct().sorted(),
+            years=catalog.map{it.year}.filter{it>0}.distinct().sortedDescending(),
+            statuses=catalog.map{it.status}.filter{it.isNotBlank()}.distinct().sorted(),
+            kinds=catalog.mapNotNull{it.kind}.filter{it.isNotBlank()}.distinct().sorted(),
+            ageRatings=catalog.mapNotNull{it.ageRating}.filter{it.isNotBlank()}.distinct().sorted(),
+            query=q, filters=filters, draftFilters=draft, sortOrder=order,
+            isRefreshing=refreshing,errorMessage=error
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogUiState())
 
     init { refreshIfStale() }
-
-    fun onQueryChange(value: String) { query.value = value }
-    fun onGenreSelected(value: String?) { selectedGenre.value = value }
-    fun onYearSelected(value: Int?) { selectedYear.value = value }
-    fun onStatusSelected(value: String?) { selectedStatus.value = value }
-    fun onSortOrderSelected(value: CatalogSortOrder) { sortOrder.value = value }
-
-    fun refresh() = refreshWith(force = true)
-
-    private fun refreshIfStale() = refreshWith(force = false)
-
-    private fun refreshWith(force: Boolean) {
-        if (isRefreshing.value) return
+    fun onQueryChange(value:String) { query.value=value }
+    fun onGenreSelected(value:String?) { draftFilters.value=draftFilters.value.copy(genres=value?.let(::setOf) ?: emptySet()); applyFilters() }
+    fun onYearSelected(value:Int?) { draftFilters.value=draftFilters.value.copy(yearFrom=value,yearTo=value); applyFilters() }
+    fun onStatusSelected(value:String?) { draftFilters.value=draftFilters.value.copy(status=value); applyFilters() }
+    fun onSortOrderSelected(value:CatalogSortOrder) { sortOrder.value=value }
+    fun updateDraft(value:CatalogFilters) { draftFilters.value=value }
+    fun resetDraft() { draftFilters.value=CatalogFilters() }
+    fun applyFilters() { appliedFilters.value=draftFilters.value }
+    fun refresh()=refreshWith(true)
+    private fun refreshIfStale()=refreshWith(false)
+    private fun refreshWith(force:Boolean) {
+        if(isRefreshing.value)return
         viewModelScope.launch {
-            isRefreshing.value = true
-            errorMessage.value = null
-            try {
-                if (force) repository.refresh() else repository.refreshIfStale()
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                errorMessage.value = "Не удалось обновить каталог. Проверьте подключение к интернету."
-            } finally {
-                isRefreshing.value = false
-            }
+            isRefreshing.value=true; errorMessage.value=null
+            try { if(force) repository.refresh() else repository.refreshIfStale() }
+            catch(cancelled:CancellationException){throw cancelled}
+            catch(_:Exception){errorMessage.value="Не удалось обновить каталог. Проверьте подключение к интернету."}
+            finally{isRefreshing.value=false}
         }
     }
 }
