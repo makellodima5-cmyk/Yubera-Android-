@@ -11,7 +11,7 @@ import java.io.FileInputStream
 import java.security.MessageDigest
 
 class ApkInstaller(private val context: Context) {
-    fun createInstallIntent(apk: File, expectedSha256: String): Intent? {
+    fun createInstallIntent(apk: File, expectedSha256: String, expectedVersionCode: Int): Intent? {
         if (!apk.isFile || apk.length() <= 0L || !expectedSha256.matches(Regex("(?i)[0-9a-f]{64}"))) return null
         if (apk.canonicalFile.parentFile != File(context.cacheDir, "updates").canonicalFile) return null
         val actual = FileInputStream(apk).use { input ->
@@ -24,7 +24,9 @@ class ApkInstaller(private val context: Context) {
             }
             digest.digest().joinToString("") { "%02x".format(it) }
         }
-        if (!actual.equals(expectedSha256, ignoreCase = true)) return null
+        if (!actual.equals(expectedSha256, ignoreCase = true) ||
+            !ApkValidation.matchesInstalledPackage(context, apk, expectedVersionCode)
+        ) return null
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
             return Intent(
