@@ -28,6 +28,8 @@ class AppUpdateRepository @Inject constructor(private val client:OkHttpClient,pr
  }
  fun storedUpdate():AppUpdateInfo? {
   val p=context.getSharedPreferences(PREFERENCES,Context.MODE_PRIVATE);val code=p.getInt(KEY_VERSION_CODE,0).takeIf{it>0}?:return null
+  val installed=runCatching{PackageInfoCompat.getLongVersionCode(context.packageManager.getPackageInfo(context.packageName,0)).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()}.getOrDefault(0)
+  if(installed>=code){clearStoredUpdate();return null}
   val name=p.getString(KEY_VERSION_NAME,null)?.takeIf{it.isNotBlank()}?:return null
   val url=p.getString(KEY_APK_URL,null)?.takeIf(AppUpdateManifestPolicy::isAllowedApkUrl)?:return null
   val sha=p.getString(KEY_SHA256,null)?.takeIf{it.matches(Regex("(?i)[0-9a-f]{64}"))}?:return null
