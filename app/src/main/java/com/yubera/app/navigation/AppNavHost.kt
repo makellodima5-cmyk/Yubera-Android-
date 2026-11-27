@@ -99,6 +99,10 @@ fun AppNavHost(
             composable(AppDestination.Home.route) {
                 HomeScreen(
                     onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
+                    onContinueClick = { id, episode ->
+                        val route = "player/${Uri.encode(id)}" + (episode?.let { "?episode=$it" } ?: "")
+                        navController.navigate(route)
+                    },
                     onCollectionsClick = { navController.navigate(AppDestination.My.route) }
                 )
             }
