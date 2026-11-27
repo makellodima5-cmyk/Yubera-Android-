@@ -117,30 +117,23 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                             val saved = notificationDao.getByEpisode(accountId, subscription.animeId, episode)
                             if (saved?.deliveredAtEpochMillis == null) {
                                 val currentSubscription = subscriptionDao.getByAnimeId(accountId, subscription.animeId)
-                                if (currentSubscription?.notificationsEnabled == true && currentSubscription.isSubscribed) {
-                                    val currentSettings = settingsRepository.settings.first()
-                                    val canDeliver = EpisodeNotificationPolicy.shouldDeliverNotification(
+                                val currentSettings = settingsRepository.settings.first()
+                                val canDeliver = currentSubscription?.isSubscribed == true &&
+                                    EpisodeNotificationPolicy.shouldDeliverNotification(
                                         notificationsEnabled = currentSettings.notificationsEnabled,
                                         newEpisodeNotificationsEnabled = currentSettings.newEpisodeNotificationsEnabled,
                                         subscriptionNotificationsEnabled = currentSubscription.notificationsEnabled,
                                         systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
                                     )
-                                    if (!canDeliver) {
-                                        if (!currentSettings.notificationsEnabled || !currentSettings.newEpisodeNotificationsEnabled) {
-                                            throw GlobalNotificationsDisabledException()
-                                        }
-                                        throw IllegalStateException("Notifications became unavailable during delivery")
-                                    }
+                                if (canDeliver && episodeNotificationsEnabled) {
                                     ensureCurrentAccount(tokenStore, activeAccountStore, token, accountId)
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
                                     val notificationId = stableId(accountId, subscription.animeId, episode)
-                                    if (episodeNotificationsEnabled) {
-                                        if (!showNotification(notificationId, title, subscription.animeId, episode)) {
-                                            throw IllegalStateException("Notification permission became unavailable during delivery")
-                                        }
-                                        notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
+                                    if (!showNotification(notificationId, title, subscription.animeId, episode)) {
+                                        throw IllegalStateException("Notification permission became unavailable during delivery")
                                     }
+                                    notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
                                 }
                             }
                         }
