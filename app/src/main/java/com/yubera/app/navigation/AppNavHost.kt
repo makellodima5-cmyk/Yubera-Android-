@@ -97,7 +97,11 @@ fun AppNavHost(
             modifier = Modifier.padding(padding)
         ) {
             composable(AppDestination.Home.route) {
-                HomeScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
+                HomeScreen(
+                    onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
+                    onNotificationsClick = { navController.navigate("notifications") },
+                    onCollectionsClick = { navController.navigate(AppDestination.My.route) }
+                )
             }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") })
