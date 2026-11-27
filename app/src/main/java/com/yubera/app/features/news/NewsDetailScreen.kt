@@ -3,49 +3,35 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.yubera.app.core.ui.components.SectionBannerHeader
+import coil3.compose.AsyncImage
 import com.yubera.app.core.ui.theme.*
-
-@Composable
-fun NewsDetailScreen(onBack: () -> Unit, viewModel: NewsDetailViewModel = hiltViewModel()) {
- val state by viewModel.uiState.collectAsState()
- val article = state.article
- val context = LocalContext.current
- Column(Modifier.fillMaxSize()) {
-  TextButton(onClick = onBack) { Text("← Назад") }
-  SectionBannerHeader(title = "Публикация", subtitle = "Материал и первоисточник")
-  if (article == null) {
-   Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
-    Text("Публикация не найдена в сохранённой ленте.", color = YuberaOnBackground)
-    Text("Обновите новости и откройте публикацию снова.", color = YuberaMuted)
-   }
-  } else {
-   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    Text(article.title, color = YuberaOnBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(listOfNotNull(article.authorName.takeIf(String::isNotBlank), article.createdAt.take(10), article.commentsCount.takeIf { it > 0 }?.let { "$it комментариев" }).joinToString(" · "), color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-    article.linkedTitle?.let { Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
-     Column(Modifier.padding(14.dp)) { Text("Связанное аниме", color = YuberaMuted, style = MaterialTheme.typography.labelMedium); Text(it, color = YuberaOnBackground, fontWeight = FontWeight.SemiBold) }
-    } }
-    Text(article.summary.ifBlank { "Краткое описание отсутствует. Полный материал доступен на сайте первоисточника." }, color = YuberaOnBackground, style = MaterialTheme.typography.bodyLarge)
-    Text("Источник: Shikimori. В приложении сохранён краткий фрагмент публикации, а не полный текст.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-     Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(article.sourceUrl))) }) { Text("Открыть источник") }
-     TextButton(onClick = viewModel::toggleBookmark) { Text(if (state.isBookmarked) "В закладках" else "В закладки") }
-    }
-    TextButton(onClick = {
-     val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_SUBJECT, article.title); putExtra(Intent.EXTRA_TEXT, "§{article.title}\n§{article.sourceUrl}") }
-     context.startActivity(Intent.createChooser(share, "Поделиться публикацией"))
-    }) { Text("Поделиться") }
-   }
-  }
+@Composable fun NewsDetailScreen(onBack:()->Unit,viewModel:NewsDetailViewModel=hiltViewModel()){
+ val state by viewModel.uiState.collectAsState();val a=state.article;val ctx=LocalContext.current
+ Column(Modifier.fillMaxSize()){
+ TextButton(onBack){Text("‹ Назад")}
+ if(a==null)Box(Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){Text("Публикация недоступна в локальном кэше",color=YuberaMuted)}
+ else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+ if(!a.imageUrl.isNullOrBlank())AsyncImage(a.imageUrl,"Обложка публикации",Modifier.fillMaxWidth().height(210.dp),contentScale=ContentScale.Crop)
+ Text(a.category,color=YuberaPrimary,style=MaterialTheme.typography.labelMedium)
+ Text(a.title,color=YuberaOnBackground,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+ Text(listOfNotNull(a.authorName.takeIf(String::isNotBlank),a.createdAt.take(10),a.commentsCount.takeIf{it>0}?.let{"$it комментариев"}).joinToString(" · "),color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
+ a.linkedTitle?.let{Text("Связанный тайтл: $it",color=YuberaMuted)}
+ Text(a.summary.ifBlank{"Краткое содержание отсутствует."},color=YuberaOnBackground,style=MaterialTheme.typography.bodyLarge)
+ a.videoUrl?.let{Button(onClick={safeOpen(ctx,it)}){Text("▶ Смотреть трейлер")}}
+ Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={safeOpen(ctx,a.sourceUrl)}){Text("Оригинал Shikimori")};TextButton(onClick=viewModel::toggleBookmark){Icon(Icons.Default.Bookmark,null,tint=if(state.isBookmarked)YuberaPrimary else YuberaMuted);Text(if(state.isBookmarked)"В закладках" else "Сохранить")}}
+ TextButton(onClick={val share=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_SUBJECT,a.title);putExtra(Intent.EXTRA_TEXT,a.title+"\n"+a.sourceUrl)};ctx.startActivity(Intent.createChooser(share,"Поделиться"))){Text("Поделиться")}
+ }
  }
 }
+private fun safeOpen(ctx:android.content.Context,url:String){val u=runCatching{Uri.parse(url)}.getOrNull()?:return;if(u.scheme=="https"&&u.host!=null)runCatching{ctx.startActivity(Intent(Intent.ACTION_VIEW,u))}}

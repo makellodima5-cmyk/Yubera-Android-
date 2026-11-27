@@ -1,31 +1,5 @@
 package com.yubera.app.features.news
-
 import com.yubera.app.core.database.entity.NewsArticleEntity
 import com.yubera.app.core.news.NewsCategory
-
-fun List<NewsArticleEntity>.searchNews(query: String): List<NewsArticleEntity> {
-    val normalized = query.trim().lowercase()
-    if (normalized.isBlank()) return this
-    return filter { article ->
-        article.title.lowercase().contains(normalized) ||
-            article.summary.lowercase().contains(normalized) ||
-            article.linkedTitle?.lowercase()?.contains(normalized) == true ||
-            article.authorName.lowercase().contains(normalized)
-    }
-}
-
-fun filterNews(
-    feedArticles: List<NewsArticleEntity>,
-    bookmarkedArticles: List<NewsArticleEntity>,
-    query: String,
-    category: NewsCategory,
-    bookmarksOnly: Boolean
-): List<NewsArticleEntity> {
-    val source = if (bookmarksOnly) bookmarkedArticles else feedArticles
-    val categorized = if (category == NewsCategory.ALL) {
-        source
-    } else {
-        source.filter { it.category == category.name }
-    }
-    return categorized.searchNews(query)
-}
+fun List<NewsArticleEntity>.searchNews(query:String):List<NewsArticleEntity>{val q=query.trim().lowercase();if(q.isBlank())return this;return filter{it.title.lowercase().contains(q)||it.summary.lowercase().contains(q)||it.linkedTitle?.lowercase()?.contains(q)==true||it.authorName.lowercase().contains(q)||it.category.lowercase().contains(q)}}
+fun filterNews(feed:List<NewsArticleEntity>,saved:List<NewsArticleEntity>,query:String,category:NewsCategory,bookmarksOnly:Boolean):List<NewsArticleEntity>{val src=if(bookmarksOnly)saved else feed;return (if(category==NewsCategory.ALL)src else src.filter{it.category==category.name}).searchNews(query)}
