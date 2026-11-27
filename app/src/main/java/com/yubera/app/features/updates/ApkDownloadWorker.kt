@@ -15,6 +15,8 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
         val checksum = inputData.getString(KEY_SHA256)?.lowercase() ?: return Result.failure()
         if (!url.startsWith("https://") || !checksum.matches(Regex("[0-9a-f]{64}"))) return Result.failure()
         val expectedSize = inputData.getLong(KEY_EXPECTED_SIZE, -1L)
+        val expectedVersionCode = inputData.getInt(KEY_EXPECTED_VERSION_CODE, -1)
+        if (expectedVersionCode <= 0) return Result.failure()
         var currentUrl = URL(url)
         for (redirectCount in 0..MAX_REDIRECTS) {
             val connection = currentUrl.openConnection() as? HttpURLConnection ?: return Result.failure()
@@ -59,12 +61,17 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
                             }
                             digest.update(buffer, 0, count)
                             output.write(buffer, 0, count)
+                            if (expectedSize > 0 && total % (5L * 1024L * 1024L) < count) {
+                                setProgress(androidx.work.workDataOf(KEY_PROGRESS to ((total * 100L / expectedSize).coerceIn(0L, 100L)).toInt()))
+                            }
                         }
                         output.fd.sync()
                     }
                 }
                 val actual = digest.digest().joinToString("") { "%02x".format(it) }
-                if (actual != checksum || expectedSize > 0 && total != expectedSize || !isZipArchive(file)) {
+                if (actual != checksum || expectedSize > 0 && total != expectedSize || !isZipArchive(file) ||
+                    !ApkValidation.matchesInstalledPackage(applicationContext, file, expectedVersionCode)
+                ) {
                     file.delete()
                     return Result.failure()
                 }
@@ -89,6 +96,8 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
         const val KEY_URL = "apk_url"
         const val KEY_SHA256 = "apk_sha256"
         const val KEY_EXPECTED_SIZE = "expected_size"
+        const val KEY_EXPECTED_VERSION_CODE = "expected_version_code"
+        const val KEY_PROGRESS = "progress"
         const val KEY_PATH = "apk_path"
         const val MAX_APK_BYTES = 250L * 1024L * 1024L
         const val MAX_REDIRECTS = 3
