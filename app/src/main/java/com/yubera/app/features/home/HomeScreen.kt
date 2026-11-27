@@ -143,7 +143,7 @@ fun HomeScreen(
                     Row(
                         Modifier.fillMaxWidth().background(
                             androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                listOf(Color(0xFF332027), Color(0xFF29202F), Color(0xFF3A2520))
+                                listOf(Color(0xFF202126), Color(0xFF27282E), Color(0xFF1A1B20))
                             )
                         ).padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,

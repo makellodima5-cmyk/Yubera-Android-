@@ -59,7 +59,7 @@ fun AppNavHost(
     val currentRoute = entry?.destination?.route
     var catalogResetNonce by remember { mutableIntStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute?.startsWith("my-list/") == true || currentRoute == "news-bookmarks"
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -153,9 +153,9 @@ fun AppNavHost(
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") }, resetKey = catalogResetNonce)
             }
             composable(AppDestination.My.route) {
-                MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
+                MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { section -> if(section.isBlank()) navController.popBackStack() else navController.navigate("my-list/${Uri.encode(section)}") }, onNotificationsClick = { navController.navigate("notifications") })
             }
-            composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }) }
+            composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }\n            composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.Profile.route) { ProfileScreen() }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(

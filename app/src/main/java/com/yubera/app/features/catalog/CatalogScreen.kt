@@ -56,7 +56,7 @@ fun CatalogScreen(
         page = 0
         grid.scrollToItem(0)
     }
-    LaunchedEffect(page) { grid.scrollToItem(0) }
+    LaunchedEffect(page) { panel = false; grid.scrollToItem(0) }
     LaunchedEffect(resetKey) {
         if (resetKey > 0) {
             page = 0
