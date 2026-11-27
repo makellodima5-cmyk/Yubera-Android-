@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import com.yubera.app.data.catalog.CatalogApi
-import com.yubera.app.core.player.KodikLinkPolicy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.URI
 import java.util.Locale
@@ -29,6 +28,7 @@ class AppUpdateRepository @Inject constructor(
             require(manifest.versionName.isNotBlank())
             require(manifest.minimumSupportedVersionCode > 0 && manifest.minimumSupportedVersionCode <= manifest.versionCode)
             require(manifest.apkSha256.matches(Regex("(?i)[0-9a-f]{64}")))
+            require(manifest.fileSizeBytes == null || manifest.fileSizeBytes in 1..MAX_APK_BYTES)
             require(isAllowedApkUrl(manifest.apkUrl))
             if (manifest.versionCode <= currentCode) {
                 AppUpdateCheckResult.UpToDate
@@ -62,5 +62,6 @@ class AppUpdateRepository @Inject constructor(
     companion object {
         const val SUPPORTED_SCHEMA_VERSION = 1
         const val UPDATE_HOST = "yume-website.yumesupport833.workers.dev"
+        const val MAX_APK_BYTES = 250L * 1024L * 1024L
     }
 }
