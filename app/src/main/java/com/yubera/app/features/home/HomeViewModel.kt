@@ -11,6 +11,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -111,15 +114,19 @@ class HomeViewModel @Inject constructor(
         val today = LocalDate.now()
         val earliestReleaseDate = today.minusDays(365)
         val newReleases = catalog.filter { anime ->
-            val airedDate = anime.airedOn?.take(10)?.let { raw ->
-                runCatching { LocalDate.parse(raw) }.getOrNull()
-            }
-            airedDate != null && !airedDate.isBefore(earliestReleaseDate) && !airedDate.isAfter(today)
+            val release = anime.airedOn?.toReleaseDate()
+            release != null && !release.isBefore(earliestReleaseDate) && !release.isAfter(today)
         }.sortedWith(compareByDescending<AnimeCatalogItem> { it.airedOn }.thenByDescending { it.rating ?: 0.0 }).take(20)
-        val announcements = catalog.filter { it.status.contains("анонс", true) || it.status.contains("upcoming", true) }
-            .take(12)
-        val ongoing = catalog.filter { it.status.contains("ongoing", true) || it.status.contains("онгоинг", true) || it.status.contains("выходит", true) }
-            .take(20)
+        val announcements = catalog.filter { anime ->
+            val status = anime.status.lowercase(Locale.ROOT)
+            status.contains("анонс") || status.contains("upcoming") || status.contains("not yet aired") ||
+                ((anime.airedOn?.toReleaseDate()?.isAfter(today) == true) && anime.year >= today.year)
+        }.take(12)
+        val ongoing = catalog.filter { anime ->
+            val status = anime.status.lowercase(Locale.ROOT)
+            status.contains("ongoing") || status.contains("онгоинг") || status.contains("выходит") ||
+                (anime.nextEpisodeAt?.isNotBlank() == true && (anime.episodesAired ?: 0) < anime.episodes)
+        }.take(20)
         val randomPool = catalog.filter { it.kodikAvailable != false }
         HomeUiState(
             continueWatching = continueList,
@@ -155,5 +162,18 @@ class HomeViewModel @Inject constructor(
 
     private companion object {
         const val RECOMMENDATION_REFRESH_MILLIS = 24L * 60L * 60L * 1_000L
+    }
+}
+
+private fun String.toReleaseDate(): LocalDate? {
+    val value = trim()
+    runCatching { LocalDate.parse(value.take(10)) }.getOrNull()?.let { return it }
+    val formats = listOf(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.ROOT)
+    )
+    return formats.firstNotNullOfOrNull { formatter ->
+        runCatching { LocalDateTime.parse(value, formatter).toLocalDate() }.getOrNull()
     }
 }
