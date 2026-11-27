@@ -123,9 +123,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
                                     val notificationId = stableId(accountId, subscription.animeId, episode)
-                                    applicationContext.getSharedPreferences("episode_notification_routes", Context.MODE_PRIVATE)
-                                        .edit().putString(notificationId.toString(), subscription.animeId).apply()
-                                    if (!showNotification(notificationId, title, episode)) {
+                                    if (!showNotification(notificationId, title, subscription.animeId, episode)) {
                                         throw IllegalStateException("Notification permission became unavailable during delivery")
                                     }
                                     notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
@@ -191,19 +189,16 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             manager.getNotificationChannel(CHANNEL_ID)?.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    private fun showNotification(id: Int, title: String, episode: Int): Boolean {
+    private fun showNotification(id: Int, title: String, animeId: String, episode: Int): Boolean {
         // Permission can be revoked between the worker's initial check and delivery.
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) return false
 
-        val route = applicationContext.getSharedPreferences("episode_notification_routes", Context.MODE_PRIVATE)
-            .getString(id.toString(), null)
-            ?: return false
         val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
             action = MainActivity.ACTION_OPEN_EPISODE
-            putExtra(MainActivity.EXTRA_ANIME_ID, route)
+            putExtra(MainActivity.EXTRA_ANIME_ID, animeId)
             putExtra(MainActivity.EXTRA_EPISODE_NUMBER, episode)
             flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -231,15 +226,6 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
     }
 
     private fun stableId(accountId: String, animeId: String, episode: Int): Int = 31 * (31 * accountId.hashCode() + animeId.hashCode()) + episode
-
-    /**
-     * Resolve anime id from the stable notification identity using the current
-     * subscription DAO at delivery time, instead of carrying it as user input.
-     * PendingIntent extras are completed by the notification id lookup below.
-     */
-    private fun animeIdForPendingIntent(notificationId: Int): String =
-        applicationContext.getSharedPreferences("episode_notification_routes", Context.MODE_PRIVATE)
-            .getString(notificationId.toString(), "").orEmpty()
 
     companion object {
         const val CHANNEL_ID = "yubera_new_episodes"
