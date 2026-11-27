@@ -18,7 +18,7 @@ class AppUpdateRepository @Inject constructor(
     suspend fun check(): AppUpdateCheckResult {
         val currentCode = runCatching {
             val info = context.packageManager.getPackageInfo(context.packageName, 0)
-            if (Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt() else @Suppress("DEPRECATION") info.versionCode
+            if (Build.VERSION.SDK_INT >= 28) info.longVersionCode.coerceAtMost(Int.MAX_VALUE.toLong()).toInt() else @Suppress("DEPRECATION") info.versionCode
         }.getOrElse { return AppUpdateCheckResult.Failed("Не удалось определить текущую версию приложения.") }
 
         return try {
