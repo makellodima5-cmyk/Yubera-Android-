@@ -17,21 +17,32 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.ui.theme.*
 @Composable fun NewsDetailScreen(onBack:()->Unit,viewModel:NewsDetailViewModel=hiltViewModel()){
- val state by viewModel.uiState.collectAsState();val a=state.article;val ctx=LocalContext.current
+ val state by viewModel.uiState.collectAsState()
+ val article=state.article
+ val context=LocalContext.current
  Column(Modifier.fillMaxSize()){
- TextButton(onBack){Text("‹ Назад")}
- if(a==null)Box(Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){Text("Публикация недоступна в локальном кэше",color=YuberaMuted)}
- else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
- if(!a.imageUrl.isNullOrBlank())AsyncImage(a.imageUrl,"Обложка публикации",Modifier.fillMaxWidth().height(210.dp),contentScale=ContentScale.Crop)
- Text(a.category,color=YuberaPrimary,style=MaterialTheme.typography.labelMedium)
- Text(a.title,color=YuberaOnBackground,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
- Text(listOfNotNull(a.authorName.takeIf(String::isNotBlank),a.createdAt.take(10),a.commentsCount.takeIf{it>0}?.let{"$it комментариев"}).joinToString(" · "),color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
- a.linkedTitle?.let{Text("Связанный тайтл: $it",color=YuberaMuted)}
- Text(a.summary.ifBlank{"Краткое содержание отсутствует."},color=YuberaOnBackground,style=MaterialTheme.typography.bodyLarge)
- a.videoUrl?.let{Button(onClick={safeOpen(ctx,it)}){Text("▶ Смотреть трейлер")}}
- Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={safeOpen(ctx,a.sourceUrl)}){Text("Оригинал Shikimori")};TextButton(onClick=viewModel::toggleBookmark){Icon(Icons.Default.Bookmark,null,tint=if(state.isBookmarked)YuberaPrimary else YuberaMuted);Text(if(state.isBookmarked)"В закладках" else "Сохранить")}}
- TextButton(onClick={val share=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_SUBJECT,a.title);putExtra(Intent.EXTRA_TEXT,a.title+"\n"+a.sourceUrl)};ctx.startActivity(Intent.createChooser(share,"Поделиться"))){Text("Поделиться")}
- }
+  TextButton(onBack){Text("‹ Назад")}
+  if(article==null){
+   Box(Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){Text("Публикация недоступна в локальном кэше",color=YuberaMuted)}
+  }else{
+   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+    if(!article.imageUrl.isNullOrBlank())AsyncImage(article.imageUrl,"Обложка публикации",Modifier.fillMaxWidth().height(210.dp),contentScale=ContentScale.Crop)
+    Text(article.category,color=YuberaPrimary,style=MaterialTheme.typography.labelMedium)
+    Text(article.title,color=YuberaOnBackground,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+    Text(listOfNotNull(article.authorName.takeIf(String::isNotBlank),article.createdAt.take(10),article.commentsCount.takeIf{it>0}?.let{"$it комментариев"}).joinToString(" · "),color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
+    article.linkedTitle?.let{Text("Связанный тайтл: $it",color=YuberaMuted)}
+    Text(article.summary.ifBlank{"Краткое содержание отсутствует."},color=YuberaOnBackground,style=MaterialTheme.typography.bodyLarge)
+    article.videoUrl?.let{url->Button(onClick={safeOpen(context,url)}){Text("▶ Смотреть трейлер")}}
+    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+     Button(onClick={safeOpen(context,article.sourceUrl)}){Text("Оригинал Shikimori")}
+     TextButton(onClick=viewModel::toggleBookmark){Icon(Icons.Default.Bookmark,contentDescription=null,tint=if(state.isBookmarked)YuberaPrimary else YuberaMuted);Text(if(state.isBookmarked)"В закладках" else "Сохранить")}
+    }
+    TextButton(onClick={
+     val share=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_SUBJECT,article.title);putExtra(Intent.EXTRA_TEXT,article.title+"\n"+article.sourceUrl)}
+     context.startActivity(Intent.createChooser(share,"Поделиться"))
+    }){Text("Поделиться")}
+   }
+  }
  }
 }
-private fun safeOpen(ctx:android.content.Context,url:String){val u=runCatching{Uri.parse(url)}.getOrNull()?:return;if(u.scheme=="https"&&u.host!=null)runCatching{ctx.startActivity(Intent(Intent.ACTION_VIEW,u))}}
+private fun safeOpen(context:android.content.Context,url:String){val uri=runCatching{Uri.parse(url)}.getOrNull()?:return;if(uri.scheme=="https"&&uri.host!=null)runCatching{context.startActivity(Intent(Intent.ACTION_VIEW,uri))}}

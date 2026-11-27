@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 class RemoteNewsRepository @Inject constructor(private val api:ShikimoriNewsApi,private val newsDao:NewsDao,private val bookmarkDao:NewsBookmarkDao):NewsRepository{
- override fun observeNews():Flow<List<NewsArticleEntity>>=newsDao.observeFeed()
- override fun observeBookmarkedNews():Flow<List<NewsArticleEntity>>=newsDao.observeBookmarked()
- override fun observeBookmarkedIds():Flow<List<Long>>=bookmarkDao.observeBookmarkedIds()
- override fun observeNewsArticle(articleId:Long):Flow<NewsArticleEntity?>=newsDao.observeAll().map{it.firstOrNull{a->a.id==articleId}}
+ override fun observeNews(): Flow<List<NewsArticleEntity>> = newsDao.observeFeed()
+ override fun observeBookmarkedNews(): Flow<List<NewsArticleEntity>> = newsDao.observeBookmarked()
+ override fun observeBookmarkedIds(): Flow<List<Long>> = bookmarkDao.observeBookmarkedIds()
+ override fun observeNewsArticle(articleId:Long): Flow<NewsArticleEntity?> = newsDao.observeAll().map{it.firstOrNull{a->a.id==articleId}}
  override suspend fun setBookmarked(articleId:Long,bookmarked:Boolean)=withContext(Dispatchers.IO){if(bookmarked)bookmarkDao.save(NewsBookmarkEntity(articleId,System.currentTimeMillis()))else bookmarkDao.remove(articleId)}
  override suspend fun refresh()=withContext(Dispatchers.IO){
   val topics=api.getNews(page=1,limit=PAGE_SIZE)
@@ -24,8 +24,12 @@ class RemoteNewsRepository @Inject constructor(private val api:ShikimoriNewsApi,
   }
   if(rows.isNotEmpty())newsDao.replaceFeed(rows)
  }
- private fun plainText(v:String)=v.replace(Regex("""(?is)<script[^>]*>.*?</script>""")," ").replace(Regex("""(?is)<style[^>]*>.*?</style>""")," ").replace(Regex("""<[^>]*>""")," ").replace(Regex("""\[[^\]]*\]""")," ").replace("&nbsp;"," ").replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace(Regex("""\s+""")," ").trim()
- private fun extractImage(body:String):String?=listOf(Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(body)?.groupValues?.getOrNull(1),Regex("""(?is)!\[[^]]*\]\((https://[^)]+)\)""").find(body)?.groupValues?.getOrNull(1)).firstOrNull{it?.contains("avatar",true)==false}
+ private fun plainText(value:String)=value.replace(Regex("""(?is)<script[^>]*>.*?</script>""")," ").replace(Regex("""(?is)<style[^>]*>.*?</style>""")," ").replace(Regex("""<[^>]*>""")," ").replace(Regex("""\[[^\]]*\]""")," ").replace("&nbsp;"," ").replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace(Regex("""\s+""")," ").trim()
+ private fun extractImage(body:String):String?{
+  val html=Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(body)?.groupValues?.getOrNull(1)
+  val markdown=Regex("""(?is)!\[[^]]*\]\((https://[^)]+)\)""").find(body)?.groupValues?.getOrNull(1)
+  return listOf(html,markdown).firstOrNull{it!=null&&!it.contains("avatar",true)}
+ }
  private fun extractVideo(body:String):String?=Regex("""(?i)(https?://(?:www\.)?(?:youtube\.com/watch\?v=[^\s&<>]+|youtu\.be/[^\s?<>]+|youtube\.com/embed/[^\s?<>]+))""").find(body)?.groupValues?.getOrNull(1)?.replace("http://","https://")?.trimEnd('.',',',')',']')
  companion object{const val PAGE_SIZE=30;const val MAX_SUMMARY_LENGTH=2400}
 }

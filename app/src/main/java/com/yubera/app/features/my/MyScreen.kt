@@ -75,4 +75,23 @@ import kotlin.math.abs
  }}
 }
 @Composable private fun Badge(text:String,color:Color){Box(Modifier.clip(RoundedCornerShape(7.dp)).background(Color.Black.copy(.65f)).padding(horizontal=7.dp,vertical=4.dp)){Text(text,color=color,style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.SemiBold)}}
-@Composable private fun Tile(icon:androidx.compose.ui.graphics.vector.ImageVector,title:String,subtitle:String,count:Int,onClick:()->Unit){Card(onClick,Modifier.fillMaxWidth().padding(horizontal=18.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(18.dp),border=androidx.compose.foundation.BorderStroke(1.dp,YuberaSurfaceElevated)){Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)){Icon(icon,null,tint=YuberaPrimary,modifier=Modifier.size(28.dp));Column(Modifier.weight(1f)){Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold);Text(subtitle,color=YuberaMuted,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)}Text(count.toString(),color=YuberaMuted);Icon(Icons.Default.ArrowForward,null,tint=YuberaMuted)}}}
+@Composable
+private fun Tile(
+ icon: androidx.compose.ui.graphics.vector.ImageVector,
+ title: String,
+ subtitle: String,
+ count: Int,
+ onClick: () -> Unit
+) {
+ Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), border = androidx.compose.foundation.BorderStroke(1.dp, YuberaSurfaceElevated)) {
+  Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+   Icon(icon, contentDescription = null, tint = YuberaPrimary, modifier = Modifier.size(28.dp))
+   Column(Modifier.weight(1f)) {
+    Text(title, color = YuberaOnBackground, fontWeight = FontWeight.Bold)
+    Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+   }
+   Text(count.toString(), color = YuberaMuted)
+   Icon(Icons.Default.ArrowForward, contentDescription = null, tint = YuberaMuted)
+  }
+ }
+}
