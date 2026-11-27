@@ -14,6 +14,22 @@ import org.junit.Test
 
 class RemoteCatalogRepositoryTest {
     @Test
+    fun revisionProbeSkipsDownloadingRemainingPagesWhenUnchanged() = runTest {
+        val dao = FakeCatalogDao()
+        dao.replaceSnapshot(
+            listOf(entity("cached")),
+            CatalogMetadataEntity(revision = 11, updatedAt = "known", checkedAtEpochMillis = 0L)
+        )
+        val api = FakeCatalogApi(listOf(page(1, 11, items("remote", 48))))
+
+        repository(api, dao).refreshIfStale(minIntervalMillis = 0L)
+
+        assertEquals(listOf(1), api.requestedPages)
+        assertEquals(listOf("cached"), dao.rows.value.map { it.animeId })
+        assertTrue((dao.metadata?.checkedAtEpochMillis ?: 0L) > 0L)
+    }
+
+    @Test
     fun downloadsAllPagesAndCommitsOneCompleteRevision() = runTest {
         val dao = FakeCatalogDao()
         val api = FakeCatalogApi(
