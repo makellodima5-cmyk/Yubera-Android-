@@ -1,6 +1,7 @@
 package com.yubera.app
 
 import android.app.Application
+import com.yubera.app.features.catalog.CatalogUpdateScheduler
 import com.yubera.app.features.library.LibrarySyncScheduler
 import com.yubera.app.features.notifications.EpisodeNotificationScheduler
 import dagger.hilt.android.HiltAndroidApp
@@ -9,6 +10,7 @@ import dagger.hilt.android.HiltAndroidApp
 class YuberaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        CatalogUpdateScheduler.schedule(this)
         EpisodeNotificationScheduler.schedule(this)
         LibrarySyncScheduler.schedule(this)
     }
