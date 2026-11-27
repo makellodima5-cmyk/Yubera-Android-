@@ -19,29 +19,6 @@ interface CatalogApi {
 }
 
 @Serializable
-data class AppVersionManifestDto(
-    val schemaVersion: Int = 1,
-    val versionCode: Int,
-    val versionName: String,
-    val minimumSupportedVersionCode: Int = 1,
-    val releaseNotes: String = "",
-    val apkUrl: String,
-    val apkSha256: String,
-    val fileSizeBytes: Long? = null,
-    val publishedAt: String = ""
-) {
-    companion object {
-        val UNAVAILABLE = AppVersionManifestDto(
-            versionCode = 0,
-            versionName = "",
-            minimumSupportedVersionCode = 1,
-            apkUrl = "",
-            apkSha256 = ""
-        )
-    }
-}
-
-@Serializable
 data class CatalogPageDto(
     val schemaVersion: Int = 1,
     val revision: Long = 0,
