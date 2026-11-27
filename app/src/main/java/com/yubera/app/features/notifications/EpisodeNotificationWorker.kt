@@ -67,7 +67,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             ) return Result.success()
 
             val subscriptionDao = entry.animeSubscriptionDao()
-            val subscriptions = subscriptionDao.getNotificationSubscriptions(accountId)
+            val subscriptions = subscriptionDao.getAll(accountId).filter { it.isSubscribed }
             if (subscriptions.isEmpty()) return Result.success()
 
             val catalogDao = entry.catalogDao()
@@ -93,7 +93,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                         val count = update.episodesAired?.coerceAtLeast(0) ?: return@forEach
                         val previous = subscription.lastKnownEpisodesAired
 
-                        if (infoNotificationsEnabled) {
+                        if (infoNotificationsEnabled && subscription.notificationsEnabled) {
                             val currentTitle = titles[subscription.animeId]
                             val latestTitle = update.displayName
                             if (!currentTitle.isNullOrBlank() && latestTitle.isNotBlank() && currentTitle != latestTitle) {
