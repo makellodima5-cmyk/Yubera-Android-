@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Crown
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
@@ -125,7 +124,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                     selected = activeTab == SupportTab.Plus,
                     onClick = { activeTab = SupportTab.Plus; viewModel.loadPlusStatus() },
                     label = { Text("YUBERA Plus") },
-                    leadingIcon = { Icon(Icons.Default.Crown, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
                     modifier = Modifier.weight(1f)
                 )
             }
