@@ -105,6 +105,7 @@ private fun SplashWaves(phase:Float) {
             Path().apply { moveTo(0f,h*.84f); cubicTo(w*.22f,h*.86f,w*.42f,h*.90f,w*.62f,h*.91f); cubicTo(w*.82f,h*.94f,w*.93f,h*.96f,w,h*.96f) }
         )
         paths.forEachIndexed { index,path ->
+            drawPath(path,Color(0xFF8E351D).copy(.42f),style=Stroke(width=1.3.dp.toPx(),cap=StrokeCap.Round))
             val center=((phase+index*.34f)%1f)*w
             val halfWidth=w*.24f
             val shine=Brush.horizontalGradient(
