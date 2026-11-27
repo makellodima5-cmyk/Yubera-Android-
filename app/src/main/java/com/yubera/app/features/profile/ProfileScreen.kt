@@ -227,10 +227,10 @@ fun ProfileScreen(
                 Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
                     Text("Обновления YUBERA",color=YuberaOnBackground,style=MaterialTheme.typography.titleMedium)
                     when(val result=appUpdate.checkResult){
-                        is com.yubera.app.features.updates.AppUpdateCheckResult.Available->{Text("Доступна версия ${result.update.versionName} (код ${result.update.versionCode).",color=YuberaOnBackground);if(result.isMandatory)Text("Это обязательное обновление.",color=YuberaOnBackground);result.update.releaseNotes.takeIf{it.isNotBlank()}?.let{Text(it,color=YuberaMuted,style=MaterialTheme.typography.bodySmall)}}
+                        is com.yubera.app.features.updates.AppUpdateCheckResult.Available->{Text("Доступна версия ${result.update.versionName} (код ${result.update.versionCode}).",color=YuberaOnBackground);if(result.isMandatory)Text("Это обязательное обновление.",color=YuberaOnBackground);result.update.releaseNotes.takeIf{it.isNotBlank()}?.let{Text(it,color=YuberaMuted,style=MaterialTheme.typography.bodySmall)}}
                         com.yubera.app.features.updates.AppUpdateCheckResult.UpToDate->Text("Установлена актуальная версия.",color=YuberaMuted)
                         is com.yubera.app.features.updates.AppUpdateCheckResult.Failed->Text(result.reason,color=YuberaMuted)
-                        null->appUpdate.availableUpdate?.let{Text("Доступна версия ${it.versionName} (код ${it.versionCode).",color=YuberaOnBackground)}?:Text("Проверка обновлений ещё не выполнена.",color=YuberaMuted)
+                        null->appUpdate.availableUpdate?.let{Text("Доступна версия ${it.versionName} (код ${it.versionCode}).",color=YuberaOnBackground)}?:Text("Проверка обновлений ещё не выполнена.",color=YuberaMuted)
                     }
                     when(appUpdate.downloadWorkInfo?.state){
                         androidx.work.WorkInfo.State.ENQUEUED->Text("Загрузка ожидает подключения к сети.",color=YuberaMuted)
