@@ -102,6 +102,11 @@ class RemoteCatalogRepository @Inject constructor(
         }
     }
 
+    suspend fun markCheckDeferred() {
+        val metadata = catalogDao.getMetadata() ?: return
+        catalogDao.saveMetadata(metadata.copy(checkedAtEpochMillis = System.currentTimeMillis()))
+    }
+
     private fun validateFirstPage(page: CatalogPageDto) {
         require(page.schemaVersion == SUPPORTED_SCHEMA_VERSION) { "Версия API каталога не поддерживается." }
         require(page.page == 1) { "API каталога вернул неверную первую страницу." }
