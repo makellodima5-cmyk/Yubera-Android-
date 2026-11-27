@@ -57,6 +57,7 @@ fun ProfileScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val accountProfile by viewModel.accountProfile.collectAsState()
+    val appUpdate by viewModel.appUpdate.collectAsState()
     val context = LocalContext.current
     val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
     var confirmLogout by remember { mutableStateOf(false) }
@@ -64,6 +65,7 @@ fun ProfileScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.refreshAccountProfile()
+        viewModel.checkForUpdates()
     }
 
     if (confirmLogout) {
@@ -221,6 +223,28 @@ fun ProfileScreen(
                 }
             }
 
+            Card(modifier=Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(18.dp)){
+                Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
+                    Text("Обновления YUBERA",color=YuberaOnBackground,style=MaterialTheme.typography.titleMedium)
+                    when(val result=appUpdate.checkResult){
+                        is com.yubera.app.features.updates.AppUpdateCheckResult.Available->{Text("Доступна версия ${result.update.versionName} (код ${result.update.versionCode).",color=YuberaOnBackground);if(result.isMandatory)Text("Это обязательное обновление.",color=YuberaOnBackground);result.update.releaseNotes.takeIf{it.isNotBlank()}?.let{Text(it,color=YuberaMuted,style=MaterialTheme.typography.bodySmall)}}
+                        com.yubera.app.features.updates.AppUpdateCheckResult.UpToDate->Text("Установлена актуальная версия.",color=YuberaMuted)
+                        is com.yubera.app.features.updates.AppUpdateCheckResult.Failed->Text(result.reason,color=YuberaMuted)
+                        null->appUpdate.availableUpdate?.let{Text("Доступна версия ${it.versionName} (код ${it.versionCode).",color=YuberaOnBackground)}?:Text("Проверка обновлений ещё не выполнена.",color=YuberaMuted)
+                    }
+                    when(appUpdate.downloadWorkInfo?.state){
+                        androidx.work.WorkInfo.State.ENQUEUED->Text("Загрузка ожидает подключения к сети.",color=YuberaMuted)
+                        androidx.work.WorkInfo.State.RUNNING->{val progress=appUpdate.downloadWorkInfo?.progress?.getInt("progress",-1)?:-1;Text(if(progress>=0)"Скачивание: $progress%" else "Скачивание APK…",color=YuberaMuted)}
+                        androidx.work.WorkInfo.State.SUCCEEDED->Text("APK скачан и проверен. Установка требует подтверждения Android.",color=YuberaMuted)
+                        androidx.work.WorkInfo.State.FAILED->Text("Не удалось скачать или проверить APK.",color=YuberaMuted)
+                        androidx.work.WorkInfo.State.CANCELLED->Text("Загрузка отменена.",color=YuberaMuted)
+                        else->Unit
+                    }
+                    Button(onClick=viewModel::checkForUpdates,enabled=!appUpdate.isChecking){Text(if(appUpdate.isChecking)"Проверяем…" else "Проверить обновления")}
+                    if(appUpdate.availableUpdate!=null&&appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick=viewModel::downloadUpdate,enabled=appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.RUNNING){Text(if(appUpdate.isMandatory)"Скачать обязательное обновление" else "Скачать обновление")}
+                    if(appUpdate.downloadWorkInfo?.state==androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick={val install=viewModel.createInstallIntent();if(install!=null)runCatching{context.startActivity(install)}}){Text("Установить / разрешить установку")}
+                }
+            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = YuberaSurface),
