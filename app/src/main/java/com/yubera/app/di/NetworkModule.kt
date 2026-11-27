@@ -9,6 +9,7 @@ import com.yubera.app.data.library.TelegramLibrarySyncApi
 import com.yubera.app.data.news.ShikimoriEpisodeUpdatesApi
 import com.yubera.app.data.news.ShikimoriNewsApi
 import com.yubera.app.data.player.KodikApi
+import com.yubera.app.data.support.SupportApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,6 +55,9 @@ object NetworkModule {
 
     @Provides
     fun provideKodikApi(retrofit: Retrofit): KodikApi = retrofit.create(KodikApi::class.java)
+
+    @Provides
+    fun provideSupportApi(retrofit: Retrofit): SupportApi = retrofit.create(SupportApi::class.java)
 
     @Provides
     fun provideAnimeSocialApi(retrofit: Retrofit): AnimeSocialApi = retrofit.create(AnimeSocialApi::class.java)
