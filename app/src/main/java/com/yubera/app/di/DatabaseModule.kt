@@ -26,7 +26,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): YuberaDatabase =
         Room.databaseBuilder(context, YuberaDatabase::class.java, "yubera.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
             .build()
 
     @Provides fun provideAnimeEpisodeNotificationDao(database: YuberaDatabase): AnimeEpisodeNotificationDao = database.animeEpisodeNotificationDao()
@@ -79,6 +79,12 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE news_articles ADD COLUMN imageUrl TEXT")
+            database.execSQL("ALTER TABLE news_articles ADD COLUMN videoUrl TEXT")
+        }
+    }
     private val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE catalog_metadata ADD COLUMN checkedAtEpochMillis INTEGER NOT NULL DEFAULT 0")
