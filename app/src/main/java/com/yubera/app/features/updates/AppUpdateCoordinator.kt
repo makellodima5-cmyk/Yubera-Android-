@@ -17,6 +17,8 @@ class AppUpdateCoordinator @Inject constructor(
     private val installer by lazy { ApkInstaller(context) }
 
     suspend fun check(): AppUpdateCheckResult = repository.check()
+    fun storedUpdate(): AppUpdateInfo? = repository.storedUpdate()
+    fun storedMandatory(): Boolean = repository.storedMandatory()
 
     fun download(update: AppUpdateInfo) = manager.downloadUpdate(update)
 
@@ -24,6 +26,6 @@ class AppUpdateCoordinator @Inject constructor(
 
     fun createUserConfirmedInstallIntent(workInfo: WorkInfo, update: AppUpdateInfo): Intent? {
         val apk = manager.verifiedApkPath(workInfo) ?: return null
-        return installer.createInstallIntent(apk, update.apkSha256)
+        return installer.createInstallIntent(apk, update.apkSha256, update.versionCode)
     }
 }
