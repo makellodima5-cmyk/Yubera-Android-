@@ -125,7 +125,7 @@ fun HomeScreen(
             if(state.ongoing.isNotEmpty()) item { AnimeStrip("Онгоинги",state.ongoing,"ongoing",onAnimeClick,onViewAll) }
             item {
                 Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    Card(onClick={state.catalogue.filter { it.kodikAvailable != false }.randomOrNull()?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
+                    Card(onClick={state.catalogue.filter { it.kodikAvailable == true }.randomOrNull()?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Casino,contentDescription="Случайный выбор",tint=YuberaPrimary)
                             Text("Случайное аниме",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
