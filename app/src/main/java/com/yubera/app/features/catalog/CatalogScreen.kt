@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -237,7 +238,8 @@ private fun GenreFilter(options: List<String>, selected: Set<String>, onChange: 
         }
     }
 }
-\n@Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
+
+@Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
  var expanded by remember{mutableStateOf(false)}
  Box{OutlinedButton(onClick={expanded=true},Modifier.fillMaxWidth()){Text(title+": "+(value?: "Не выбрано"),Modifier.weight(1f),maxLines=1);Text("⌄")}
  DropdownMenu(expanded,onDismissRequest={expanded=false},modifier=Modifier.heightIn(max=260.dp)){
