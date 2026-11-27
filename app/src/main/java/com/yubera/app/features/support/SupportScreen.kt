@@ -359,10 +359,14 @@ private fun YuberaPlusContent(
                     Text(if (sub.autoRenew) "Автопродление включено" else "Автопродление выключено", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            if (sub.autoRenew) {
-                OutlinedButton(onClick = { onChangeRenewal(false) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Отключить автопродление") }
+            if (sub.isRecurring) {
+                if (sub.autoRenew) {
+                    OutlinedButton(onClick = { onChangeRenewal(false) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Отключить автопродление") }
+                } else {
+                    OutlinedButton(onClick = { onChangeRenewal(true) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Включить автопродление") }
+                }
             } else {
-                OutlinedButton(onClick = { onChangeRenewal(true) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Включить автопродление") }
+                Text("Автопродление недоступно для этой подписки. Продлить её можно после окончания текущего периода.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             }
             OutlinedButton(onClick = onCheckActivation, enabled = !state.plusChecking, modifier = Modifier.fillMaxWidth()) {
                 if (state.plusChecking) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
