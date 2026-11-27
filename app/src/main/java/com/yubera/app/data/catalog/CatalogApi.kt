@@ -2,15 +2,34 @@ package com.yubera.app.data.catalog
 
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.Query
 
 interface CatalogApi {
+    @Headers("Cache-Control: no-cache")
     @GET("api/mobile/catalog")
     suspend fun getCatalogPage(
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int
     ): CatalogPageDto
+
+    @Headers("Cache-Control: no-cache")
+    @GET("api/mobile/version")
+    suspend fun getVersionManifest(): AppVersionManifestDto
 }
+
+@Serializable
+data class AppVersionManifestDto(
+    val schemaVersion: Int = 1,
+    val versionCode: Int,
+    val versionName: String,
+    val minimumSupportedVersionCode: Int = 1,
+    val releaseNotes: String = "",
+    val apkUrl: String,
+    val apkSha256: String,
+    val fileSizeBytes: Long? = null,
+    val publishedAt: String = ""
+)
 
 @Serializable
 data class CatalogPageDto(
