@@ -53,6 +53,7 @@ import com.yubera.app.data.settings.ThemeMode
 
 @Composable
 fun ProfileScreen(
+    onEditProfile: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
@@ -109,7 +110,7 @@ fun ProfileScreen(
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                            Text("Настройка аватара появится позже", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                            Text("Профиль и рамки синхронизируются с Website", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     when {
@@ -150,7 +151,7 @@ fun ProfileScreen(
                             Button(onClick = viewModel::refreshAccountProfile) { Text("Повторить") }
                         }
                     }
-                    TextButton(onClick = { confirmLogout = true }) { Text("Выйти из аккаунта") }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { TextButton(onClick = onEditProfile) { Text("Редактировать профиль") }; TextButton(onClick = { confirmLogout = true }) { Text("Выйти из аккаунта") } }
                 }
             }
 

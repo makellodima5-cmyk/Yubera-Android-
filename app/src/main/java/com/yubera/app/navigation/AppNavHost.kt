@@ -39,6 +39,7 @@ import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
+import com.yubera.app.features.profile.ProfileEditScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -159,7 +160,8 @@ fun AppNavHost(
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
             composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
-            composable(AppDestination.Profile.route) { ProfileScreen() }
+            composable(AppDestination.Profile.route) { ProfileScreen(onEditProfile = { navController.navigate("profile-edit") }) }
+            composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
