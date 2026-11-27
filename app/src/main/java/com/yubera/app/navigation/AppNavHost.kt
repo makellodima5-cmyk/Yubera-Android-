@@ -52,7 +52,7 @@ fun AppNavHost(
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute == "notifications" || currentRoute == "random" || currentRoute == "collections"
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -97,7 +97,7 @@ fun AppNavHost(
             modifier = Modifier.padding(padding)
         ) {
             composable(AppDestination.Home.route) {
-                HomeScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
+                HomeScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onNotificationsClick = { navController.navigate("notifications") }, onRandomAnimeClick = { navController.navigate("random") }, onCollectionsClick = { navController.navigate("collections") })
             }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") })
@@ -107,6 +107,9 @@ fun AppNavHost(
             }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.Profile.route) { ProfileScreen() }
+            composable("notifications") { com.yubera.app.features.notifications.NotificationsScreen(onBack = { navController.popBackStack() }) }
+            composable("random") { com.yubera.app.features.random.RandomAnimeScreen(onBack = { navController.popBackStack() }, onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }) }
+            composable("collections") { com.yubera.app.features.collections.CollectionsScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
                 arguments = listOf(navArgument("animeId") { type = NavType.StringType })
