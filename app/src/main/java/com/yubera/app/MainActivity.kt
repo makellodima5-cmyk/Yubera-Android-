@@ -2,7 +2,9 @@ package com.yubera.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.compose.animation.Crossfade\nimport androidx.compose.animation.core.tween\nimport androidx.activity.ComponentActivity
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
