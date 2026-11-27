@@ -38,7 +38,7 @@ class ApkDownloadWorker(context: Context, params: WorkerParameters) : CoroutineW
                 val contentLength = connection.contentLengthLong
                 if (expectedSize > 0 && contentLength > 0 && contentLength != expectedSize) return Result.failure()
 
-                val file = File(applicationContext.cacheDir, "updates/yubera-update.apk")
+                val file = File(applicationContext.cacheDir, "updates/yubera-update-${id}.apk")
                 file.parentFile?.mkdirs()
                 val digest = MessageDigest.getInstance("SHA-256")
                 var total = 0L
