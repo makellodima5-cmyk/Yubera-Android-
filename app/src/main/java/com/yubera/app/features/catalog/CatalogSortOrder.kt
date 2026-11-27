@@ -50,7 +50,18 @@ fun CatalogFilters.validate(maxYear: Int): String? {
     return null
 }
 
-private fun searchVariants(value: String): Set<String> {
+fun searchPriority(anime:AnimeCatalogItem, query:String):Int {
+ if(query.isBlank()) return 0
+ val qs=searchVariants(query)
+ val ts=listOf(anime.title,anime.englishTitle.orEmpty(),anime.originalTitle).flatMap(::searchVariants)
+ return when {
+  qs.any{q->ts.any{it==q}}->0
+  qs.any{q->ts.any{it.startsWith(q)}}->1
+  qs.any{q->ts.any{it.contains(q)}}->2
+  else->3
+}
+}
+\nprivate fun searchVariants(value: String): Set<String> {
     val raw=value.trim().lowercase().replace(Regex("[^\\p{L}\\p{N}]"),"")
     if(raw.isEmpty()) return setOf("")
     val latinToCyrillic=mapOf('q' to 'й','w' to 'ц','e' to 'у','r' to 'к','t' to 'е','y' to 'н','u' to 'г','i' to 'ш','o' to 'щ','p' to 'з','[' to 'х',']' to 'ъ','a' to 'ф','s' to 'ы','d' to 'в','f' to 'а','g' to 'п','h' to 'р','j' to 'о','k' to 'л','l' to 'д',';' to 'ж','z' to 'я','x' to 'ч','c' to 'с','v' to 'м','b' to 'и','n' to 'т','m' to 'ь')
