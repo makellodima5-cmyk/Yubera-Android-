@@ -37,7 +37,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,viewModel:CatalogViewMod
  var page by rememberSaveable { mutableIntStateOf(0) }
  val grid=rememberLazyGridState()
  val count=maxOf(1,(state.items.size+49)/50)
- LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}
+ LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}\n LaunchedEffect(page){grid.scrollToItem(0)}
  Column(Modifier.fillMaxSize()){
   SectionBannerHeader(title="Каталог",subtitle="Аниме, которое стоит открыть")
   Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){
@@ -50,7 +50,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,viewModel:CatalogViewMod
    else LazyVerticalGrid(GridCells.Fixed(2),state=grid,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
     items(state.items.drop(page*50).take(50),key=AnimeCatalogItem::id){anime->PosterCard(anime){onAnimeClick(anime)}}
    }
-   if(panel) FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0;grid.scrollToItem(0)},{panel=false},Modifier.align(Alignment.TopEnd).padding(8.dp))
+   if(panel) FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false},Modifier.align(Alignment.TopEnd).padding(8.dp))
   }
   if(state.items.isNotEmpty()) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
    TextButton(onClick={page=(page-1).coerceAtLeast(0);grid.scrollToItem(0)},enabled=page>0){Text("‹")}
@@ -74,7 +74,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,viewModel:CatalogViewMod
  }
 }
 
-@Composable private fun FilterPanel(state:CatalogUiState,onDraft:(CatalogFilters)->Unit,onReset:()->Unit,onApply:suspend()->Unit,onClose:()->Unit,modifier:Modifier=Modifier){
+@Composable private fun FilterPanel(state:CatalogUiState,onDraft:(CatalogFilters)->Unit,onReset:()->Unit,onApply:()->Unit,onClose:()->Unit,modifier:Modifier=Modifier){
  val f=state.draftFilters
  var from by remember(f.yearFrom){mutableStateOf(f.yearFrom?.toString().orEmpty())}
  var to by remember(f.yearTo){mutableStateOf(f.yearTo?.toString().orEmpty())}
