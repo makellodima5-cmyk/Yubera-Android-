@@ -11,7 +11,8 @@ interface CatalogApi {
     suspend fun getCatalogPage(
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int
-    ): CatalogPageDto}
+    ): CatalogPageDto
+}
 
 @Serializable
 data class CatalogPageDto(
