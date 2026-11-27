@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [main, stage1-technical-foundation, stage2-completion, stage3-background-updates]
+    branches: [main]
   pull_request:
-    branches: [main, stage1-technical-foundation, stage2-completion, stage3-background-updates]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
