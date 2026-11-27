@@ -277,6 +277,37 @@ class NativeAuthRepositoryTest {
         assertNull(store.pending)
     }
 
+
+    @Test
+    fun callbackRejectsEmptyStateBeforeCallingExchange() = runTest {
+        val store = FakeTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "login")
+        }
+        val api = FakeApi()
+
+        runCatching {
+            NativeAuthRepository(api, store, FakeActiveAccountStore(store))
+                .completeCallback("C".repeat(43), "")
+        }
+
+        assertFalse(api.exchangeCalled)
+    }
+
+    @Test
+    fun callbackRejectsUnsupportedPendingFlowBeforeCallingExchange() = runTest {
+        val store = FakeTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "unexpected")
+        }
+        val api = FakeApi()
+
+        runCatching {
+            NativeAuthRepository(api, store, FakeActiveAccountStore(store))
+                .completeCallback("C".repeat(43), "expected-state")
+        }
+
+        assertFalse(api.exchangeCalled)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
