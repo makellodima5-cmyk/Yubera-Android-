@@ -11,6 +11,7 @@ import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.entity.AnimeLibraryEntity
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.session.SecureTokenStore
 import com.yubera.app.data.library.TelegramLibrarySyncApi
@@ -229,7 +230,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 if (item.deleted) {
                     progressDao.deleteByAnimeId(accountId, item.animeId)
                 } else {
-                    progressDao.upsert(AnimeProgressEntity(
+                    val remoteProgress = AnimeProgressEntity(
                         animeId = item.animeId,
                         seasonNumber = item.payload.seasonNumber,
                         episodeNumber = item.payload.episodeNumber,
@@ -237,7 +238,9 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                         durationMillis = item.payload.durationMillis ?: 0L,
                         updatedAtEpochMillis = item.updatedAtEpochMillis,
                         accountId = accountId
-                    ))
+                    )
+                    val localProgress = progressDao.getByAnimeId(accountId, item.animeId)
+                    progressDao.upsert(EpisodeCompletionPolicy.merge(remoteProgress, localProgress))
                 }
             }
             TYPE_SUBSCRIPTION -> {
