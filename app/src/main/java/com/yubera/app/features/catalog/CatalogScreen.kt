@@ -58,6 +58,7 @@ fun CatalogScreen(
     var page by rememberSaveable { mutableIntStateOf(0) }
     var pendingScrollToTop by rememberSaveable { mutableStateOf(false) }
     var skipInitialQueryFilterReset by remember { mutableStateOf(true) }
+    var lastResetKey by rememberSaveable { mutableIntStateOf(resetKey) }
     val grid = rememberLazyGridState()
     val actualPageCount = (state.items.size + 49) / 50
     val count = maxOf(1, actualPageCount)
@@ -84,7 +85,8 @@ fun CatalogScreen(
         }
     }
     LaunchedEffect(resetKey) {
-        if (resetKey > 0) {
+        if (resetKey != lastResetKey) {
+            lastResetKey = resetKey
             page = 0
             panel = false
             viewModel.resetCatalog()
