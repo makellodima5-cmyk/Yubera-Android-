@@ -294,6 +294,10 @@ private class FullscreenKodikWebChromeClient(
 
     override fun onHideCustomView() = hideCustomView()
 
+    override fun onShowCustomView(view: View?, requestedOrientation: Int, callback: CustomViewCallback?) {
+        onShowCustomView(view, callback)
+    }
+
     fun hideCustomView() {
         val dialog = fullscreenDialog ?: return
         fullscreenDialog = null
