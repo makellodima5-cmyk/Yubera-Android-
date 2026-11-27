@@ -5,6 +5,7 @@ import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.entity.CatalogAnimeEntity
 import com.yubera.app.core.database.entity.CatalogMetadataEntity
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ class RemoteCatalogRepository @Inject constructor(
      * concurrently or overwrite a newer revision with an older response.
      */
     private val refreshMutex = Mutex()
+    private val checkedAtMutex = Mutex()
 
     override fun observeCatalog(): Flow<List<AnimeCatalogItem>> =
         catalogDao.observeAll().map { rows ->
@@ -47,8 +49,9 @@ class RemoteCatalogRepository @Inject constructor(
             repeat(MAX_REVISION_ATTEMPTS) {
                 val first = api.getCatalogPage(page = 1, pageSize = PAGE_SIZE)
                 validateFirstPage(first)
-
-                if (catalogDao.getMetadata()?.revision == first.revision) {
+                val cachedMetadata = catalogDao.getMetadata()
+                if (cachedMetadata?.revision == first.revision) {
+                    catalogDao.saveMetadata(cachedMetadata.copy(checkedAtEpochMillis = System.currentTimeMillis()))
                     return@withLock
                 }
 
@@ -91,7 +94,7 @@ class RemoteCatalogRepository @Inject constructor(
                 }
                 catalogDao.replaceSnapshot(
                     items = entities,
-                    metadata = CatalogMetadataEntity(revision = first.revision, updatedAt = first.updatedAt)
+                    metadata = CatalogMetadataEntity(revision = first.revision, updatedAt = first.updatedAt, checkedAtEpochMillis = System.currentTimeMillis())
                 )
                 return@withLock
             }
@@ -118,9 +121,26 @@ class RemoteCatalogRepository @Inject constructor(
     private fun expectedPageCount(total: Int, pageSize: Int): Int =
         if (total == 0) 1 else ((total.toLong() + pageSize - 1L) / pageSize).toInt()
 
+    /**
+     * A cheap conditional check for an unchanged catalog. WorkManager runs this
+     * less often and only when network and battery constraints allow it.
+     */
+    suspend fun refreshIfStale(minIntervalMillis: Long = DEFAULT_CHECK_INTERVAL_MILLIS) = withContext(Dispatchers.IO) {
+        require(minIntervalMillis >= 0L)
+        checkedAtMutex.withLock {
+            val metadata = catalogDao.getMetadata()
+            val now = System.currentTimeMillis()
+            if (metadata != null && now - metadata.checkedAtEpochMillis in 0 until minIntervalMillis) {
+                return@withLock
+            }
+            refresh()
+        }
+    }
+
     companion object {
         const val PAGE_SIZE = 48
         const val SUPPORTED_SCHEMA_VERSION = 1
         const val MAX_REVISION_ATTEMPTS = 2
+        val DEFAULT_CHECK_INTERVAL_MILLIS: Long = TimeUnit.HOURS.toMillis(6)
     }
 }
