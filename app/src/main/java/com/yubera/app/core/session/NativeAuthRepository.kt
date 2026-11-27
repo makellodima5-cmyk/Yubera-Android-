@@ -63,50 +63,59 @@ class NativeAuthRepository @Inject constructor(
             return false
         }
 
+        val storedAccountId = tokenStore.getAccountId()
+        val initialAccountId = activeAccountStore.currentAccountId()
+        val legacyAccountPending = storedAccountId == null &&
+            initialAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
+        val previouslyBoundSession = storedAccountId != null &&
+            storedAccountId.isNotBlank() &&
+            storedAccountId == initialAccountId
+        if (!legacyAccountPending && !previouslyBoundSession) {
+            activeAccountStore.clearActiveAccount()
+            return false
+        }
+
         return try {
             val response = api.getSession("Bearer $token")
-            val accountId = response.user?.id?.trim().orEmpty()
+            if (!sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId)) return false
 
-            // A logout or account switch may have happened while the request was in flight.
-            // Never let a stale response restore the old credentials.
-            if (tokenStore.getAccessToken() != token) return false
-
-            if (!response.authenticated || accountId.isEmpty()) {
+            val serverAccountId = response.user?.id?.trim().orEmpty()
+            if (!response.authenticated || serverAccountId.isEmpty()) {
+                activeAccountStore.clearActiveAccount()
+                false
+            } else if (storedAccountId != null && storedAccountId != serverAccountId) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                val storedAccountId = tokenStore.getAccountId()
-                val currentAccountId = activeAccountStore.currentAccountId()
-                val legacyAccountPending = storedAccountId == null &&
-                    currentAccountId == ActiveAccountStore.LEGACY_UNASSIGNED_ACCOUNT_ID
-                val storedIdentityMatches = legacyAccountPending ||
-                    (storedAccountId != null && storedAccountId == currentAccountId)
-                if (!storedIdentityMatches) {
-                    return false
-                }
-                if (storedAccountId != null && storedAccountId != accountId) {
-                    activeAccountStore.clearActiveAccount()
-                    return false
-                }
-
-                val claimLegacy = legacyAccountPending
-                activeAccountStore.activateAccount(accountId, token, claimLegacyRows = claimLegacy)
+                activeAccountStore.activateAccount(
+                    serverAccountId,
+                    token,
+                    claimLegacyRows = legacyAccountPending
+                )
                 true
             }
         } catch (error: HttpException) {
-            if (tokenStore.getAccessToken() != token) {
+            if (!sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId)) {
                 false
             } else if (error.code() == 401) {
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                true
+                previouslyBoundSession
             }
         } catch (_: Exception) {
-            // Preserve offline access only while the same stored token remains active.
-            tokenStore.getAccessToken() == token
+            sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId) && previouslyBoundSession
         }
     }
+
+    private fun sessionSnapshotIsCurrent(
+        token: String,
+        accountId: String?,
+        activeAccountId: String?
+    ): Boolean =
+        tokenStore.getAccessToken() == token &&
+            tokenStore.getAccountId() == accountId &&
+            activeAccountStore.currentAccountId() == activeAccountId
 
     /**
      * Fetches the public profile fields for the currently authenticated YUBERA account.
