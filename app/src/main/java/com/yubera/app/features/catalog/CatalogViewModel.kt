@@ -70,7 +70,8 @@ class CatalogViewModel @Inject constructor(private val repository: RemoteCatalog
     fun onStatusSelected(value:String?) { draftFilters.value=draftFilters.value.copy(status=value); applyFilters() }
     fun onSortOrderSelected(value:CatalogSortOrder) { sortOrder.value=value }
     fun updateDraft(value:CatalogFilters) { draftFilters.value=value }
-    fun resetDraft() { draftFilters.value=CatalogFilters() }\n    fun resetFilters() { appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters() }\n    fun resetFilters() { appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters() }
+    fun resetDraft() { draftFilters.value=CatalogFilters() }
+    fun resetFilters() { appliedFilters.value=CatalogFilters(); draftFilters.value=CatalogFilters() }
     fun applyFilters() { appliedFilters.value=draftFilters.value }
     fun refresh()=refreshWith(true)
     private fun refreshIfStale()=refreshWith(false)
