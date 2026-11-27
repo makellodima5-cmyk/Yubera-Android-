@@ -3,6 +3,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import com.yubera.app.core.session.NativeAuthRepository
+import com.yubera.app.data.auth.YuberaProfileApi
+import com.yubera.app.data.auth.YuberaCommunityProfile
 import com.yubera.app.data.auth.TelegramSessionUser
 import com.yubera.app.data.settings.ThemeMode
 import com.yubera.app.data.settings.UserSettings
@@ -20,15 +22,16 @@ import kotlinx.coroutines.launch
 data class AccountProfileUiState(val user:TelegramSessionUser?=null,val isLoading:Boolean=false,val errorMessage:String?=null)
 data class AppUpdateUiState(val isChecking:Boolean=false,val checkResult:AppUpdateCheckResult?=null,val availableUpdate:AppUpdateInfo?=null,val isMandatory:Boolean=false,val downloadWorkInfo:WorkInfo?=null)
 @HiltViewModel
-class SettingsViewModel @Inject constructor(private val repository:UserSettingsRepository,private val authRepository:NativeAuthRepository,private val appUpdateCoordinator:AppUpdateCoordinator):ViewModel(){
+class SettingsViewModel @Inject constructor(private val repository:UserSettingsRepository,private val authRepository:NativeAuthRepository,private val appUpdateCoordinator:AppUpdateCoordinator,private val yuberaProfileApi:YuberaProfileApi):ViewModel(){
  val settings=repository.settings.stateIn(viewModelScope,kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000),UserSettings())
  private val mutableAccountProfile=MutableStateFlow(AccountProfileUiState());val accountProfile=mutableAccountProfile.asStateFlow()
+ private val mutableCommunityProfile=MutableStateFlow<YuberaCommunityProfile?>(null);val communityProfile=mutableCommunityProfile.asStateFlow()
  private val mutableAppUpdate=MutableStateFlow(AppUpdateUiState(availableUpdate=appUpdateCoordinator.storedUpdate(),isMandatory=appUpdateCoordinator.storedMandatory()));val appUpdate=mutableAppUpdate.asStateFlow()
  init{viewModelScope.launch{appUpdateCoordinator.observeDownload().collect{w->mutableAppUpdate.update{it.copy(downloadWorkInfo=w)}}}}
  fun checkForUpdates(){if(mutableAppUpdate.value.isChecking)return;viewModelScope.launch{mutableAppUpdate.update{it.copy(isChecking=true)};val result=appUpdateCoordinator.check();mutableAppUpdate.update{s->s.copy(isChecking=false,checkResult=result,availableUpdate=when(result){is AppUpdateCheckResult.Available->result.update;AppUpdateCheckResult.UpToDate->null;is AppUpdateCheckResult.Failed->s.availableUpdate},isMandatory=when(result){is AppUpdateCheckResult.Available->result.isMandatory;AppUpdateCheckResult.UpToDate->false;is AppUpdateCheckResult.Failed->s.isMandatory})}}}
  fun downloadUpdate(){mutableAppUpdate.value.availableUpdate?.let(appUpdateCoordinator::download)}
  fun createInstallIntent():android.content.Intent?{val work=mutableAppUpdate.value.downloadWorkInfo?:return null;val update=mutableAppUpdate.value.availableUpdate?:return null;return appUpdateCoordinator.createUserConfirmedInstallIntent(work,update)}
- fun refreshAccountProfile(){if(mutableAccountProfile.value.isLoading)return;viewModelScope.launch{mutableAccountProfile.value=AccountProfileUiState(isLoading=true);try{val user=authRepository.getCurrentProfile();mutableAccountProfile.value=if(user!=null)AccountProfileUiState(user=user)else AccountProfileUiState(errorMessage="Не удалось подтвердить активную Telegram-сессию. Войдите в аккаунт заново.")}catch(_:Exception){mutableAccountProfile.value=AccountProfileUiState(errorMessage="Не удалось загрузить данные аккаунта. Проверьте подключение и повторите попытку.")}}}
+ fun refreshAccountProfile(){if(mutableAccountProfile.value.isLoading)return;viewModelScope.launch{mutableAccountProfile.value=AccountProfileUiState(isLoading=true);try{val user=authRepository.getCurrentProfile();mutableAccountProfile.value=if(user!=null)AccountProfileUiState(user=user)else AccountProfileUiState(errorMessage="Не удалось подтвердить активную Telegram-сессию. Войдите в аккаунт заново.");val bearer=authRepository.getSessionAuthorization();mutableCommunityProfile.value=if(user!=null&&bearer!=null)runCatching{yuberaProfileApi.getMyProfile(bearer).profile}.getOrNull()else null}catch(_:Exception){mutableAccountProfile.value=AccountProfileUiState(errorMessage="Не удалось загрузить данные аккаунта. Проверьте подключение и повторите попытку.")}}}
  fun setTheme(mode:ThemeMode){viewModelScope.launch{repository.setThemeMode(mode)}}
  fun setNotifications(enabled:Boolean){viewModelScope.launch{repository.setNotificationsEnabled(enabled)}}
  fun setNewEpisodes(enabled:Boolean){viewModelScope.launch{repository.setNewEpisodeNotificationsEnabled(enabled)}}

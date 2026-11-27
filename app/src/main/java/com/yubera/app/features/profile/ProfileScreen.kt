@@ -20,6 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -58,6 +61,7 @@ fun ProfileScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val accountProfile by viewModel.accountProfile.collectAsState()
+    val communityProfile by viewModel.communityProfile.collectAsState()
     val appUpdate by viewModel.appUpdate.collectAsState()
     val context = LocalContext.current
     val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
@@ -102,15 +106,15 @@ fun ProfileScreen(
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Аватар профиля",
-                            tint = YuberaMuted,
-                            modifier = Modifier.size(52.dp)
-                        )
+                        Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
+                            val photo = accountProfile.user?.photoUrl
+                            if (!photo.isNullOrBlank()) AsyncImage(model = photo, contentDescription = "Аватар профиля", modifier = Modifier.size(52.dp).clip(androidx.compose.foundation.shape.CircleShape))
+                            else Icon(Icons.Default.AccountCircle, contentDescription = "Аватар профиля", tint = YuberaMuted, modifier = Modifier.size(52.dp))
+                            communityProfile?.avatarFrame?.let { frame -> profileFrameResource(frame)?.let { Image(painterResource(it), contentDescription = "Рамка аватара", modifier = Modifier.fillMaxSize()) } }
+                        }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                            Text("Профиль и рамки синхронизируются с Website", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                            communityProfile?.let { p -> if (p.isPlus) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelMedium); if (p.bio.isNotBlank()) Text(p.bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3); p.xp?.let { Text("Уровень ${it.level} · ${it.title}", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }; p.support?.let { Text("Поддержка: ${it.title}", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) } } ?: Text("Профиль и рамки синхронизируются с Website", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     when {
@@ -285,4 +289,28 @@ private fun SettingSwitch(
         Text(title, color = if (enabled) YuberaOnBackground else YuberaMuted, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
+}
+
+
+@Composable
+private fun profileFrameResource(frame: String): Int? = when(frame) {
+    "Admin_Frame_01.webp" -> R.drawable.admin_frame_01
+    "Admin_Frame_02.webp" -> R.drawable.admin_frame_02
+    "Admin_Frame_03.webp" -> R.drawable.admin_frame_03
+    "Admin_Frame_04.webp" -> R.drawable.admin_frame_04
+    "Admin_Frame_05.webp" -> R.drawable.admin_frame_05
+    "Admin_Frame_06.webp" -> R.drawable.admin_frame_06
+    "Admin_Frame_07.webp" -> R.drawable.admin_frame_07
+    "Admin_Frame_08.webp" -> R.drawable.admin_frame_08
+    "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik_webp
+    "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik_webp
+    "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik_webp
+    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
+    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
+    "YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp" -> R.drawable.yubera_plus_avatar_frame_01_sakura_gold
+    "YUBERA_Plus_Avatar_Frame_02_Mystic_Kitsune.webp" -> R.drawable.yubera_plus_avatar_frame_02_mystic_kitsune
+    "YUBERA_Plus_Avatar_Frame_03_Samurai_Steel.webp" -> R.drawable.yubera_plus_avatar_frame_03_samurai_steel
+    "YUBERA_Plus_Avatar_Frame_04_Celestial_Archive.webp" -> R.drawable.yubera_plus_avatar_frame_04_celestial_archive
+    "YUBERA_Plus_Avatar_Frame_05_Cyberpunk_Neon.webp" -> R.drawable.yubera_plus_avatar_frame_05_cyberpunk_neon
+    else -> null
 }

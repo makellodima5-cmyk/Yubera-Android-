@@ -36,8 +36,12 @@ data class YuberaCommunityProfile(
     val isAdmin: Boolean = false,
     val visibility: String = "private",
     val isPlus: Boolean = false,
-    val support: YuberaSupportStatus? = null
+    val support: YuberaSupportStatus? = null,
+    val xp: YuberaXpStatus? = null
 )
+
+@Serializable
+data class YuberaXpStatus(val total: Int = 0, val level: Int = 1, val title: String = "", val remaining: Int = 0, val progress: Float = 0f)
 
 @Serializable
 data class YuberaSupportStatus(
