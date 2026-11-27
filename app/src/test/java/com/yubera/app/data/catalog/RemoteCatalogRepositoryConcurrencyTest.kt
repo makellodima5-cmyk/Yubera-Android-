@@ -35,7 +35,6 @@ class RemoteCatalogRepositoryConcurrencyTest {
     private class CountingCatalogApi : CatalogApi {
         var firstPageCalls = 0
         var secondPageCalls = 0
-
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto {
             kotlinx.coroutines.delay(30)
             return when (page) {

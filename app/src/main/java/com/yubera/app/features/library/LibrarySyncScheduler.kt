@@ -17,14 +17,14 @@ object LibrarySyncScheduler {
     fun schedule(context: Context) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
             .build()
-        val periodic = PeriodicWorkRequestBuilder<LibrarySyncWorker>(6, TimeUnit.HOURS)
+        val periodic = PeriodicWorkRequestBuilder<LibrarySyncWorker>(12, TimeUnit.HOURS)
             .setConstraints(constraints)
             .addTag(UNIQUE_PERIODIC_WORK)
             .build()
         val manager = WorkManager.getInstance(context)
         manager.enqueueUniquePeriodicWork(UNIQUE_PERIODIC_WORK, ExistingPeriodicWorkPolicy.KEEP, periodic)
-        enqueueNow(context)
     }
 
     fun enqueueNow(context: Context) {
@@ -37,7 +37,7 @@ object LibrarySyncScheduler {
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_IMMEDIATE_WORK,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.KEEP,
             request
         )
     }

@@ -2,9 +2,11 @@ package com.yubera.app.data.catalog
 
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.Query
 
 interface CatalogApi {
+    @Headers("Cache-Control: no-cache")
     @GET("api/mobile/catalog")
     suspend fun getCatalogPage(
         @Query("page") page: Int,
