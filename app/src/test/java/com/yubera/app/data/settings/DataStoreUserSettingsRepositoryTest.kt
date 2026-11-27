@@ -64,4 +64,16 @@ class DataStoreUserSettingsRepositoryTest {
         assertTrue(settings.newEpisodeNotificationsEnabled)
         assertFalse(settings.animeInfoNotificationsEnabled)
     }
+    @Test
+    fun storesHomeRecommendationsAndRotationTimestamp() = runBlocking {
+        val ids = listOf("anime-1", "anime-2", "anime-3")
+        val updatedAt = 1_800_000_000_000L
+
+        repository.saveHomeRecommendations(ids, updatedAt)
+
+        val settings = repository.settings.first()
+        assertEquals(ids, settings.homeRecommendationIds)
+        assertEquals(updatedAt, settings.homeRecommendationsUpdatedAtEpochMillis)
+    }
+
 }
