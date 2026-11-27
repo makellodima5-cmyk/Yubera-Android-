@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.yubera.app.core.player.KodikLinkPolicy
+import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
@@ -223,7 +224,7 @@ private fun PlayerWebView(
                         }
                     }
                     tag = url
-                    if (KodikLinkPolicy.isTrustedHttpsUrl(url)) loadUrl(url)
+                    if (KodikLinkPolicy.isTrustedHttpsUrl(url)) loadEmbedWrapper(url)
                 }
             },
             update = { webView ->
@@ -232,7 +233,7 @@ private fun PlayerWebView(
                     loading = true
                     loadError = null
                     webView.stopLoading()
-                    webView.loadUrl(url)
+                    webView.loadEmbedWrapper(url)
                 }
             },
             onRelease = { webView ->
@@ -258,6 +259,17 @@ private fun PlayerWebView(
             }
         }
     }
+}
+
+private fun WebView.loadEmbedWrapper(playerUrl: String) {
+    if (!KodikLinkPolicy.isTrustedHttpsUrl(playerUrl)) return
+    val safeUrl = playerUrl.replace(\"&\", \"&amp;\").replace(\"\\\", \"&quot;\").replace(\"<\", \"&lt;\").replace(\">\", \"&gt;\")
+    val wrapper = \"\"\"<!doctype html>
+<html lang=\\\"ru\\\"><head><meta charset=\\\"utf-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\\\">
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{display:block;width:100%;height:100%;border:0}#fallback{display:none;color:#fff;font:16px sans-serif;text-align:center;padding:24px;position:absolute;inset:0;box-sizing:border-box;background:#000}</style></head>
+<body><iframe id=\\\"kodik\\\" src=\\\"$safeUrl\\\" allow=\\\"autoplay; fullscreen; encrypted-media; picture-in-picture\\\" allowfullscreen referrerpolicy=\\\"strict-origin-when-cross-origin\\\"></iframe><div id=\\\"fallback\\\">Не удалось загрузить встроенный плеер. Попробуйте перезагрузить.</div>
+<script>const f=document.getElementById('kodik'),e=document.getElementById('fallback');let done=false;f.addEventListener('load',()=>{done=true;e.style.display='none'});f.addEventListener('error',()=>{e.style.display='block'});setTimeout(()=>{if(!done)e.style.display='block'},20000);</script></body></html>\"\"\"
+    loadDataWithBaseURL(YuberaEndpoints.SITE_ORIGIN + \\"/android-player/\\", wrapper, \"text/html\", \"UTF-8\", null)
 }
 
 private class FullscreenKodikWebChromeClient(
