@@ -51,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,17 +88,19 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
     var pendingStarsResumeCheck by remember { mutableStateOf(false) }
     var pendingPlusResumeCheck by remember { mutableStateOf(false) }
     val hostActivity = remember(context) { context.findActivity() }
+    val latestPaymentStatus by rememberUpdatedState(state.paymentStatus)
+    val latestPlusStatus by rememberUpdatedState(state.plus)
 
     DisposableEffect(hostActivity, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (pendingStarsResumeCheck) {
                     pendingStarsResumeCheck = false
-                    if (state.paymentStatus == "pending") viewModel.checkStarsPayment()
+                    if (latestPaymentStatus == "pending") viewModel.checkStarsPayment()
                 }
                 if (pendingPlusResumeCheck) {
                     pendingPlusResumeCheck = false
-                    if (state.plus != null && !state.plus.isPlus) viewModel.checkPlusActivation()
+                    if (latestPlusStatus != null && !latestPlusStatus.isPlus) viewModel.checkPlusActivation()
                     else viewModel.loadPlusStatus()
                 }
             }
