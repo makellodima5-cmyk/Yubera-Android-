@@ -23,12 +23,12 @@ class MainActivity : ComponentActivity() {
     private val startupViewModel: StartupViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
 
-    private var pendingEpisodeRoute: PendingEpisodeRoute? = null
+    private var pendingAnimeRoute: PendingAnimeRoute? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        pendingEpisodeRoute = intent.toPendingEpisodeRoute()
+        pendingAnimeRoute = intent.toPendingAnimeRoute()
 
         setContent {
             val settings by settingsViewModel.settings.collectAsState()
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                             StartupDestination.SignIn -> AuthNavHost()
                             StartupDestination.Home -> AppNavHost(
                                 pendingEpisodeRoute = pendingEpisodeRoute,
-                                onEpisodeRouteHandled = { pendingEpisodeRoute = null }
+                                onEpisodeRouteHandled = { pendingAnimeRoute = null }
                             )
                         }
                     }
@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingEpisodeRoute = intent.toPendingEpisodeRoute()
+        pendingAnimeRoute = intent.toPendingAnimeRoute()
     }
 
     companion object {
