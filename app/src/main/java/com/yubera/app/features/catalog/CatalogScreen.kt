@@ -1,6 +1,6 @@
 package com.yubera.app.features.catalog
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility\nimport androidx.compose.animation.fadeIn\nimport androidx.compose.animation.fadeOut\nimport androidx.compose.animation.scaleIn\nimport androidx.compose.animation.scaleOut\nimport androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -9,7 +9,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList\nimport androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,9 +38,11 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
  var page by rememberSaveable { mutableIntStateOf(0) }
  val grid=rememberLazyGridState()
  val count=maxOf(1,(state.items.size+49)/50)
- LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}\n LaunchedEffect(page){grid.scrollToItem(0)}
+ LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}
+ LaunchedEffect(page){grid.scrollToItem(0)}
  Column(Modifier.fillMaxSize()){
-  Box(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),contentAlignment=Alignment.Center){ YuberaLogo(width=124.dp); IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)){Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)} }\n  Text("Каталог",Modifier.padding(start=16.dp),color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
+  Box(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),contentAlignment=Alignment.Center){ YuberaLogo(width=124.dp); IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)){Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)} }
+  Text("Каталог",Modifier.padding(start=16.dp),color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
   Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){
    OutlinedTextField(state.query,viewModel::onQueryChange,Modifier.weight(1f),placeholder={Text("Название аниме")},singleLine=true)
    IconButton(onClick={panel=!panel},modifier=Modifier.padding(start=6.dp).background(YuberaSurface,RoundedCornerShape(12.dp))){Icon(Icons.Default.FilterList,"Фильтры",tint=YuberaPrimary)}
@@ -50,12 +53,12 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
    else LazyVerticalGrid(GridCells.Fixed(2),state=grid,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
     items(state.items.drop(page*50).take(50),key=AnimeCatalogItem::id){anime->PosterCard(anime){onAnimeClick(anime)}}
    }
-   if(panel) FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false},Modifier.align(Alignment.TopEnd).padding(8.dp))
+   AnimatedVisibility(panel,modifier=Modifier.align(Alignment.TopEnd).padding(8.dp),enter=fadeIn()+scaleIn(initialScale=.94f),exit=fadeOut()+scaleOut(targetScale=.94f)){ FilterPanel(state,viewModel::updateDraft,viewModel::resetDraft,{viewModel.applyFilters();panel=false;page=0},{panel=false}) }
   }
   if(state.items.isNotEmpty()) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
-   TextButton(onClick={page=(page-1).coerceAtLeast(0);grid.scrollToItem(0)},enabled=page>0){Text("‹")}
+   TextButton(onClick={page=(page-1).coerceAtLeast(0)},enabled=page>0){Text("‹")}
    Text((page+1).toString()+" / "+count,color=YuberaMuted)
-   TextButton(onClick={page=(page+1).coerceAtMost(count-1);grid.scrollToItem(0)},enabled=page<count-1){Text("›")}
+   TextButton(onClick={page=(page+1).coerceAtMost(count-1)},enabled=page<count-1){Text("›")}
   }
  }
 }
