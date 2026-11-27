@@ -45,61 +45,66 @@ class RemoteCatalogRepository @Inject constructor(
         }
 
     override suspend fun refresh() = withContext(Dispatchers.IO) {
-        refreshMutex.withLock {
-            repeat(MAX_REVISION_ATTEMPTS) {
-                val first = api.getCatalogPage(page = 1, pageSize = PAGE_SIZE)
-                validateFirstPage(first)
-                val cachedMetadata = catalogDao.getMetadata()
-                if (cachedMetadata?.revision == first.revision) {
-                    catalogDao.saveMetadata(cachedMetadata.copy(checkedAtEpochMillis = System.currentTimeMillis()))
-                    return@withLock
-                }
+        refreshMutex.withLock { downloadAndStoreSnapshot() }
+    }
 
-                val allItems = first.items.toMutableList()
-                var revisionChanged = false
-                for (pageNumber in 2..first.totalPages) {
-                    val next = api.getCatalogPage(page = pageNumber, pageSize = PAGE_SIZE)
-                    if (next.revision != first.revision || next.schemaVersion != first.schemaVersion) {
-                        revisionChanged = true
-                        break
-                    }
-                    require(next.page == pageNumber) { "API каталога вернул неверный номер страницы." }
-                    require(next.pageSize == first.pageSize) { "Размер страницы изменился во время загрузки каталога." }
-                    require(next.items.size <= next.pageSize) { "API каталога превысил размер страницы." }
-                    val remainingItems = first.total - allItems.size
-                    require(next.items.size >= minOf(remainingItems, next.pageSize)) {
-                        "API каталога вернул неполную страницу."
-                    }
-                    require(next.items.none { it.id.isBlank() }) { "Каталог содержит пустой ID." }
-                    require(next.items.map { it.id }.toSet().size == next.items.size) { "Каталог содержит повторяющиеся ID." }
-                    allItems += next.items
-                }
-
-                if (revisionChanged) return@repeat
-
-                val uniqueItems = allItems.distinctBy { it.id }
-                require(uniqueItems.size == first.total) { "Каталог содержит повторяющиеся или отсутствующие ID." }
-                val entities = uniqueItems.mapIndexed { index, item ->
-                    require(item.id.isNotBlank()) { "Каталог содержит пустой ID." }
-                    CatalogAnimeEntity(
-                        animeId = item.id,
-                        title = item.title,
-                        originalTitle = item.original,
-                        year = item.year,
-                        status = item.status,
-                        genresJson = json.encodeToString(item.genres),
-                        payloadJson = json.encodeToString(item),
-                        position = index
-                    )
-                }
-                catalogDao.replaceSnapshot(
-                    items = entities,
-                    metadata = CatalogMetadataEntity(revision = first.revision, updatedAt = first.updatedAt, checkedAtEpochMillis = System.currentTimeMillis())
-                )
-                return@withLock
+    private suspend fun downloadAndStoreSnapshot() {
+        repeat(MAX_REVISION_ATTEMPTS) {
+            val first = api.getCatalogPage(page = 1, pageSize = PAGE_SIZE)
+            validateFirstPage(first)
+            val cachedMetadata = catalogDao.getMetadata()
+            if (cachedMetadata?.revision == first.revision) {
+                catalogDao.saveMetadata(cachedMetadata.copy(checkedAtEpochMillis = System.currentTimeMillis()))
+                return
             }
-            throw CatalogRevisionChangedException()
+
+            val allItems = first.items.toMutableList()
+            var revisionChanged = false
+            for (pageNumber in 2..first.totalPages) {
+                val next = api.getCatalogPage(page = pageNumber, pageSize = PAGE_SIZE)
+                if (next.revision != first.revision || next.schemaVersion != first.schemaVersion) {
+                    revisionChanged = true
+                    break
+                }
+                require(next.page == pageNumber) { "API каталога вернул неверный номер страницы." }
+                require(next.pageSize == first.pageSize) { "Размер страницы изменился во время загрузки каталога." }
+                require(next.items.size <= next.pageSize) { "API каталога превысил размер страницы." }
+                val remainingItems = first.total - allItems.size
+                require(next.items.size >= minOf(remainingItems, next.pageSize)) {
+                    "API каталога вернул неполную страницу."
+                }
+                require(next.items.none { it.id.isBlank() }) { "Каталог содержит пустой ID." }
+                require(next.items.map { it.id }.toSet().size == next.items.size) { "Каталог содержит повторяющиеся ID." }
+                allItems += next.items
+            }
+            if (revisionChanged) return@repeat
+
+            val uniqueItems = allItems.distinctBy { it.id }
+            require(uniqueItems.size == first.total) { "Каталог содержит повторяющиеся или отсутствующие ID." }
+            val entities = uniqueItems.mapIndexed { index, item ->
+                require(item.id.isNotBlank()) { "Каталог содержит пустой ID." }
+                CatalogAnimeEntity(
+                    animeId = item.id,
+                    title = item.title,
+                    originalTitle = item.original,
+                    year = item.year,
+                    status = item.status,
+                    genresJson = json.encodeToString(item.genres),
+                    payloadJson = json.encodeToString(item),
+                    position = index
+                )
+            }
+            catalogDao.replaceSnapshot(
+                items = entities,
+                metadata = CatalogMetadataEntity(
+                    revision = first.revision,
+                    updatedAt = first.updatedAt,
+                    checkedAtEpochMillis = System.currentTimeMillis()
+                )
+            )
+            return
         }
+        throw CatalogRevisionChangedException()
     }
 
     suspend fun markCheckDeferred() {
@@ -138,16 +143,15 @@ class RemoteCatalogRepository @Inject constructor(
             if (metadata != null && metadata.checkedAtEpochMillis > 0L &&
                 now >= metadata.checkedAtEpochMillis &&
                 now - metadata.checkedAtEpochMillis < minIntervalMillis
-            ) {
-                return@withLock
-            }
+            ) return@withLock
+
             val latest = api.getCatalogPage(page = 1, pageSize = PAGE_SIZE)
             validateFirstPage(latest)
             if (metadata?.revision == latest.revision) {
                 catalogDao.saveMetadata(metadata.copy(checkedAtEpochMillis = now))
-                return@withLock
+            } else {
+                refreshMutex.withLock { downloadAndStoreSnapshot() }
             }
-            refresh()
         }
     }
 
