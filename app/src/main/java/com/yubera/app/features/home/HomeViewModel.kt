@@ -100,7 +100,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-        val selectedRecommendations = selectedIds.mapNotNull(byId::get)
+        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
@@ -146,7 +146,7 @@ class HomeViewModel @Inject constructor(
             refreshState.value = true
             errorState.value = null
             try {
-                catalogRepository.refresh()
+                catalogRepository.refreshIfStale()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
