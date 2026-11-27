@@ -230,10 +230,58 @@ class NativeAuthRepositoryTest {
         assertEquals("account-b", activeAccountStore.currentAccountId())
     }
 
+
+    @Test
+    fun pendingAuthCleanupFailureDoesNotUndoSuccessfulLogin() = runTest {
+        val store = FakeTokenStore().apply {
+            pending = PendingNativeAuth("expected-state", "V".repeat(43), "login")
+            failPendingClear = true
+        }
+        val activeAccountStore = FakeActiveAccountStore(store)
+
+        NativeAuthRepository(FakeApi(), store, activeAccountStore)
+            .completeCallback("C".repeat(43), "expected-state")
+
+        assertEquals("A".repeat(43), store.token)
+        assertEquals("user-1", store.storedAccountId)
+        assertEquals("user-1", activeAccountStore.currentAccountId())
+    }
+
+    @Test
+    fun logoutClearsLocalSessionAndPendingStateEvenWhenRemoteLogoutFails() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+            pending = PendingNativeAuth("state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val api = FakeApi().apply { failLogoutRequest = true }
+
+        runCatching { NativeAuthRepository(api, store, activeAccountStore).logout() }
+
+        assertNull(store.token)
+        assertNull(store.storedAccountId)
+        assertNull(store.pending)
+        assertNull(activeAccountStore.currentAccountId())
+    }
+
+    @Test
+    fun logoutAttemptsPendingStateCleanupWhenActiveAccountClearThrows() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+            pending = PendingNativeAuth("state", "V".repeat(43), "login")
+        }
+        val activeAccountStore = FailingClearActiveAccountStore(store)
+        runCatching { NativeAuthRepository(FakeApi(), store, activeAccountStore).logout() }
+        assertNull(store.pending)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
         var pending: PendingNativeAuth? = null
+        var failPendingClear = false
         override fun saveAccessToken(token: String) { this.token = token }
         override fun getAccessToken(): String? = token
         override fun clearAccessToken() { token = null }
@@ -248,7 +296,7 @@ class NativeAuthRepositoryTest {
         override fun getAccountId(): String? = storedAccountId
         override fun savePendingAuth(auth: PendingNativeAuth) { pending = auth }
         override fun getPendingAuth(): PendingNativeAuth? = pending
-        override fun clearPendingAuth() { pending = null }
+        override fun clearPendingAuth() { if (failPendingClear) error("pending clear failed"); pending = null }
     }
 
     private class FakeActiveAccountStore(
@@ -274,10 +322,27 @@ class NativeAuthRepositoryTest {
         }
     }
 
+
+    private class FailingClearActiveAccountStore(
+        private val tokenStore: FakeTokenStore
+    ) : ActiveAccountStore {
+        override val activeAccountId = MutableStateFlow<String?>("user-1")
+        override fun currentAccountId(): String? = activeAccountId.value
+        override suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean) {
+            tokenStore.saveAuthenticatedSession(accessToken, accountId)
+            activeAccountId.value = accountId
+        }
+        override suspend fun clearActiveAccount() {
+            tokenStore.clearAuthenticatedSession()
+            error("active account store cleanup failed")
+        }
+    }
+
     private class FakeApi : TelegramSessionApi {
         var exchangeCalled = false
         var sessionRequested = false
         var failSessionRequest = false
+        var failLogoutRequest = false
         var onSessionRequest: (() -> Unit)? = null
         var sessionResponse = TelegramSessionResponse(
             authenticated = true,
@@ -303,6 +368,9 @@ class NativeAuthRepositoryTest {
             if (failSessionRequest) error("network unavailable")
             return sessionResponse
         }
-        override suspend fun logout(authorization: String) = TelegramSessionResponse(authenticated = false)
+        override suspend fun logout(authorization: String): TelegramSessionResponse {
+            if (failLogoutRequest) error("remote logout failed")
+            return TelegramSessionResponse(authenticated = false)
+        }
     }
 }
