@@ -22,4 +22,4 @@ fun HomeSimpleDestination(title:String,description:String,onBack:()->Unit) {
         Text(description,color=YuberaMuted,fontSize=14.sp)
     }
 }
-private fun Modifier.clickableForBack(onBack:()->Unit)=androidx.compose.foundation.clickable(onClick=onBack)
+private fun Modifier.clickableForBack(onBack:()->Unit)=clickable(onClick=onBack)
