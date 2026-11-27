@@ -67,16 +67,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class PendingEpisodeRoute(
+data class PendingAnimeRoute(
     val animeId: String,
-    val episodeNumber: Int
+    val episodeNumber: Int? = null
 )
 
-private fun Intent.toPendingEpisodeRoute(): PendingEpisodeRoute? {
+private fun Intent.toPendingAnimeRoute(): PendingAnimeRoute? {
     if (action != MainActivity.ACTION_OPEN_EPISODE) return null
     val animeId = getStringExtra(MainActivity.EXTRA_ANIME_ID)?.takeIf { it.isNotBlank() } ?: return null
     if (!animeId.matches(Regex("\\d{1,12}")) || animeId.toLongOrNull()?.let { it > 0 } != true) return null
-    val episode = getIntExtra(MainActivity.EXTRA_EPISODE_NUMBER, -1)
-    if (episode <= 0) return null
-    return PendingEpisodeRoute(animeId, episode)
+    val episode = getIntExtra(MainActivity.EXTRA_EPISODE_NUMBER, -1).takeIf { it > 0 }
+    return PendingAnimeRoute(animeId, episode)
 }
