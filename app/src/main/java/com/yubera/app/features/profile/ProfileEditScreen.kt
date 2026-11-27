@@ -26,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
@@ -89,7 +90,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Box(Modifier.size(84.dp), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(72.dp))
+                            if (!state.profile.photoUrl.isNullOrBlank()) AsyncImage(model = state.profile.photoUrl, contentDescription = "Аватар пользователя", modifier = Modifier.size(72.dp).clip(CircleShape)) else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(72.dp))
                             state.selectedFrame?.let { selected ->
                                 val frame = (supportFrames + plusFrames + adminFrames).firstOrNull { it.id == selected }
                                 frame?.resource?.let { Image(painterResource(it), contentDescription = "Выбранная рамка", modifier = Modifier.fillMaxSize()) }
