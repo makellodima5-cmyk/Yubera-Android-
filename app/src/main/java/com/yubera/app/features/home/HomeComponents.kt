@@ -18,6 +18,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +66,7 @@ fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
                 Text(anime.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
                 Text(progress.episodeNumber?.let { "Сезон ${progress.seasonNumber ?: 1} · Серия $it" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
+                if(progress.positionMillis>0L) Text(formatPlaybackTime(progress.positionMillis),color=YuberaMuted,style=MaterialTheme.typography.labelSmall)
                 Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(YuberaMuted.copy(.22f))) {
                     Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(CircleShape).background(YuberaPrimary))
                 }
