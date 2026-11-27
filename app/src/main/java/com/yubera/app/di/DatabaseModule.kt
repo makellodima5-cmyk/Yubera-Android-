@@ -5,6 +5,10 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.yubera.app.core.database.YuberaDatabase
+import com.yubera.app.core.database.dao.AnimeLibraryDao
+import com.yubera.app.core.database.dao.AnimeProgressDao
+import com.yubera.app.core.database.dao.AnimeSubscriptionDao
+import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
 import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
 import com.yubera.app.core.database.dao.AnimeLibraryDao
 import com.yubera.app.core.database.dao.AnimeProgressDao
@@ -30,6 +34,9 @@ object DatabaseModule {
             .build()
 
     @Provides fun provideAnimeEpisodeNotificationDao(database: YuberaDatabase): AnimeEpisodeNotificationDao = database.animeEpisodeNotificationDao()
+    @Provides fun provideAnimeLibraryDao(database: YuberaDatabase): AnimeLibraryDao = database.animeLibraryDao()
+    @Provides fun provideAnimeProgressDao(database: YuberaDatabase): AnimeProgressDao = database.animeProgressDao()
+    @Provides fun provideAnimeSubscriptionDao(database: YuberaDatabase): AnimeSubscriptionDao = database.animeSubscriptionDao()
     @Provides fun provideAnimeLibraryDao(database: YuberaDatabase): AnimeLibraryDao = database.animeLibraryDao()
     @Provides fun provideAnimeProgressDao(database: YuberaDatabase): AnimeProgressDao = database.animeProgressDao()
     @Provides fun provideAnimeSubscriptionDao(database: YuberaDatabase): AnimeSubscriptionDao = database.animeSubscriptionDao()
