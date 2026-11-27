@@ -52,7 +52,7 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
 @Composable
 fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick:()->Unit) {
     val fraction=if(progress.durationMillis>0L)(progress.positionMillis.toFloat()/progress.durationMillis.toFloat()).coerceIn(0f,1f) else 0f
-    Card(onClick=onClick,colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {
+    Card(onClick=onClick,modifier=Modifier.width(292.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {
         Row(Modifier.fillMaxWidth().padding(10.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
             Box(Modifier.size(width=104.dp,height=76.dp).clip(RoundedCornerShape(10.dp))) {
                 AnimeImage(anime,Modifier.fillMaxWidth().height(76.dp))
