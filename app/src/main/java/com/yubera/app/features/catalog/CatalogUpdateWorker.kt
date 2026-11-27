@@ -1,0 +1,31 @@
+package com.yubera.app.features.catalog
+
+import android.content.Context
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import com.yubera.app.core.catalog.CatalogRepository
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface CatalogUpdateWorkerEntryPoint {
+    fun catalogRepository(): CatalogRepository
+}
+
+class CatalogUpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val entry = EntryPointAccessors.fromApplication(applicationContext, CatalogUpdateWorkerEntryPoint::class.java)
+        return try {
+            entry.catalogRepository().refresh()
+            Result.success()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            Result.retry()
+        }
+    }
+}
