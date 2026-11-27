@@ -35,6 +35,19 @@ class EpisodeCompletionPolicyTest {
     }
 
     @Test
+    fun doesNotInferCompletionWhenExternalPlayerProvidesNoDuration() {
+        val openedEpisode = AnimeProgressEntity(
+            animeId = "anime-1", seasonNumber = null, episodeNumber = 3,
+            positionMillis = 0L, durationMillis = 0L, updatedAtEpochMillis = 123L
+        )
+
+        val result = EpisodeCompletionPolicy.merge(openedEpisode, null)
+
+        assertNull(result.completedEpisodeNumber)
+        assertNull(result.completedAtEpochMillis)
+    }
+
+    @Test
     fun preservesTitleCompletionWhenCurrentEpisodeChanges() {
         val previous = AnimeProgressEntity(
             animeId = "anime-1", seasonNumber = null, episodeNumber = 3,
