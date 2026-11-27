@@ -184,6 +184,8 @@ class RemoteCatalogRepositoryTest {
     private class FakeCatalogApi(private val responses: List<CatalogPageDto>) : CatalogApi {
         val requestedPages = mutableListOf<Int>()
         private var index = 0
+        override suspend fun getVersionManifest(): AppUpdateManifestDto = error("Not used in catalogue tests")
+
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto {
             requestedPages += page
             return responses[index++]
