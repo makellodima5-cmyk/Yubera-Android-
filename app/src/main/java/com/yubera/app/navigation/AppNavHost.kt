@@ -28,6 +28,8 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 import com.yubera.app.features.anime.AnimeDetailScreen
 import com.yubera.app.features.catalog.CatalogScreen
 import com.yubera.app.features.home.HomeScreen
+import com.yubera.app.features.home.HomeCategoryScreen
+import com.yubera.app.features.home.HomeSimpleDestination
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
 import com.yubera.app.features.news.NewsDetailScreen
@@ -103,8 +105,29 @@ fun AppNavHost(
                         val route = "player/${Uri.encode(id)}" + (episode?.let { "?episode=$it" } ?: "")
                         navController.navigate(route)
                     },
-                    onCollectionsClick = { navController.navigate(AppDestination.My.route) }
+                    onCollectionsClick = { navController.navigate("collections") },\n                    onNotificationsClick = { navController.navigate("notifications") },\n                    onViewAll = { category -> navController.navigate("home-list/${Uri.encode(category)}") }
                 )
+            }
+            composable(
+                route = "home-list/{category}",
+                arguments = listOf(navArgument("category") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category").orEmpty()
+                HomeCategoryScreen(
+                    category = category,
+                    onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
+                    onContinueClick = { id, episode ->
+                        val route = "player/${Uri.encode(id)}" + (episode?.let { "?episode=$it" } ?: "")
+                        navController.navigate(route)
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("collections") {
+                HomeSimpleDestination("Подборки", "Тематические коллекции будут оформлены отдельным техническим заданием.", { navController.popBackStack() })
+            }
+            composable("notifications") {
+                HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
             }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") })
