@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [main, stage2-completion]
+    branches: [main, stage2-completion, stage3-background-updates]
   pull_request:
     branches: [main]
   workflow_dispatch:
