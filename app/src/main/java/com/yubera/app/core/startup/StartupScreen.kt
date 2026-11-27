@@ -106,18 +106,22 @@ private fun SplashWaves(phase:Float) {
         )
         paths.forEachIndexed { index,path ->
             drawPath(path,Color(0xFF8E351D).copy(.48f),style=Stroke(1.4.dp.toPx(),cap=StrokeCap.Round))
-            val center=((phase+index*.37f)%1f)*w
-            val points=21
-            for(step in 0 until points) {
-                val position=step/(points-1f)
-                val sample=center-w*.22f+position*w*.44f
-                val strength=(1f-abs(position-.5f)*2f).coerceAtLeast(0f)
-                val pathGradient=Brush.horizontalGradient(
-                    colors=listOf(Color.Transparent,Color(0xFFFF5A1F).copy(alpha=.05f),Color(0xFFFFA04E).copy(alpha=.7f*strength),Color(0xFFFFC06A).copy(alpha=.92f*strength),Color.Transparent),
-                    startX=sample-w*.035f,endX=sample+w*.035f
-                )
-                drawPath(path,pathGradient,style=Stroke(width=(1.4f+2.2f*strength).dp.toPx(),cap=StrokeCap.Round))
-            }
+            val center=((phase+index*.31f)%1f)*w
+            val halfWidth=w*.20f
+            val shine=Brush.horizontalGradient(
+                colors=listOf(
+                    Color.Transparent,
+                    Color(0xFFFF5A1F).copy(.18f),
+                    Color(0xFFFFA04E).copy(.75f),
+                    Color(0xFFFFC06A).copy(.96f),
+                    Color(0xFFFFA04E).copy(.75f),
+                    Color(0xFFFF5A1F).copy(.18f),
+                    Color.Transparent
+                ),
+                startX=center-halfWidth,
+                endX=center+halfWidth
+            )
+            drawPath(path,shine,style=Stroke(width=2.2.dp.toPx(),cap=StrokeCap.Round))
         }
     }
 }
