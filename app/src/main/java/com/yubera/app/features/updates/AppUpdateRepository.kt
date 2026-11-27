@@ -24,7 +24,7 @@ class AppUpdateRepository @Inject constructor(
         return try {
             val manifest = catalogApi.getVersionManifest()
             require(manifest.schemaVersion == SUPPORTED_SCHEMA_VERSION)
-            require(manifest.versionCode > currentCode)
+            require(manifest.versionCode > 0)
             require(manifest.versionName.isNotBlank() && manifest.versionName.length <= 40)
             require(manifest.minimumSupportedVersionCode > 0 && manifest.minimumSupportedVersionCode <= manifest.versionCode)
             require(manifest.apkSha256.matches(Regex("(?i)[0-9a-f]{64}")))
