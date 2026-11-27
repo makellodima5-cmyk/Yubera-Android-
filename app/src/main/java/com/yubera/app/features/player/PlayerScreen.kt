@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -121,12 +122,14 @@ fun PlayerScreen(
             }
             val playerUrl = state.selectedEpisodeUrl
             if (playerUrl != null && KodikLinkPolicy.isTrustedHttpsUrl(playerUrl)) {
-                PlayerWebView(
-                    url = playerUrl,
-                    retryNonce = retryNonce,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    onFullscreenChanged = { isFullscreen = it }
-                )
+                key(playerUrl, retryNonce) {
+                    PlayerWebView(
+                        url = playerUrl,
+                        retryNonce = retryNonce,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        onFullscreenChanged = { isFullscreen = it }
+                    )
+                }
                 if (!isFullscreen) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
@@ -215,13 +218,13 @@ private fun PlayerWebView(
                             }
                         }
                     }
-                    tag = "$url#$retryNonce"
+                    tag = url
                     if (KodikLinkPolicy.isTrustedHttpsUrl(url)) loadUrl(url)
                 }
             },
             update = { webView ->
-                if (webView.tag != "$url#$retryNonce" && KodikLinkPolicy.isTrustedHttpsUrl(url)) {
-                    webView.tag = "$url#$retryNonce"
+                if (webView.tag != url && KodikLinkPolicy.isTrustedHttpsUrl(url)) {
+                    webView.tag = url
                     loading = true
                     loadError = null
                     webView.stopLoading()
