@@ -40,58 +40,117 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
-fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()->Unit={},resetKey:Int=0,viewModel:CatalogViewModel=hiltViewModel()) {
- val state by viewModel.uiState.collectAsState()
- var panel by rememberSaveable { mutableStateOf(false) }
- var page by rememberSaveable { mutableIntStateOf(0) }
- val grid=rememberLazyGridState()
- val count=maxOf(1,(state.items.size+49)/50)
- LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}
- LaunchedEffect(page){grid.scrollToItem(0)}
- LaunchedEffect(resetKey) {
-  if (resetKey > 0) {
-   page = 0
-   panel = false
-   viewModel.resetCatalog()
-   grid.scrollToItem(0)
-  }
- }
- Column(Modifier.fillMaxSize()){
-  Box(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),contentAlignment=Alignment.Center){ YuberaLogo(width=124.dp); IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)){Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)} }
-  Text("Каталог",Modifier.padding(start=16.dp),color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
-  Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){
-   OutlinedTextField(state.query,viewModel::onQueryChange,Modifier.weight(1f),placeholder={Text("Название аниме")},singleLine=true)
-   IconButton(onClick={panel=!panel},modifier=Modifier.padding(start=6.dp).background(YuberaSurface,RoundedCornerShape(12.dp))){Icon(Icons.Default.FilterList,"Фильтры",tint=YuberaPrimary)}
-  }
-  Row(Modifier.fillMaxWidth().padding(horizontal=8.dp),horizontalArrangement=Arrangement.spacedBy(2.dp)){CatalogSortOrder.entries.forEach{FilterChip(state.sortOrder==it,{viewModel.onSortOrderSelected(it);page=0},label={Text(it.title,maxLines=1)})}}
-  Box(Modifier.weight(1f).fillMaxWidth()){
-   if(state.items.isEmpty()) Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(if(state.errorMessage!=null)"Каталог пока недоступен" else "Ничего не найдено",color=YuberaMuted)}
-   else LazyVerticalGrid(GridCells.Fixed(2),state=grid,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
-    items(state.items.drop(page*50).take(50),key=AnimeCatalogItem::id){anime->PosterCard(anime){onAnimeClick(anime)}}
-   }
-   Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-      AnimatedVisibility(
-       visible = panel,
-       modifier = Modifier,
-       enter = fadeIn() + scaleIn(initialScale = .94f),
-       exit = fadeOut() + scaleOut(targetScale = .94f)
-      ) {
-       FilterPanel(
-        state,
-        viewModel::updateDraft,
-        viewModel::resetDraft,
-        { viewModel.applyFilters(); panel = false; page = 0 },
-        { panel = false }
-       )
-      }
+fun CatalogScreen(
+    onAnimeClick: (AnimeCatalogItem) -> Unit,
+    onNotificationsClick: () -> Unit = {},
+    resetKey: Int = 0,
+    viewModel: CatalogViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
+    var panel by rememberSaveable { mutableStateOf(false) }
+    var page by rememberSaveable { mutableIntStateOf(0) }
+    val grid = rememberLazyGridState()
+    val count = maxOf(1, (state.items.size + 49) / 50)
+
+    LaunchedEffect(state.query, state.filters) {
+        page = 0
+        grid.scrollToItem(0)
     }
-  }
-  if(state.items.isNotEmpty()) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
-   TextButton(onClick={page=(page-1).coerceAtLeast(0)},enabled=page>0){Text("‹")}
-   PaginationNumbers(page,count){page=it}
-   TextButton(onClick={page=(page+1).coerceAtMost(count-1)},enabled=page<count-1){Text("›")}
-  }
- }
+    LaunchedEffect(page) { grid.scrollToItem(0) }
+    LaunchedEffect(resetKey) {
+        if (resetKey > 0) {
+            page = 0
+            panel = false
+            viewModel.resetCatalog()
+            grid.scrollToItem(0)
+        }
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Box(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            YuberaLogo(width = 124.dp)
+            IconButton(onClick = onNotificationsClick, modifier = Modifier.align(Alignment.CenterEnd)) {
+                Icon(Icons.Default.Notifications, contentDescription = "Уведомления", tint = YuberaOnBackground)
+            }
+        }
+        Text(
+            "Каталог",
+            Modifier.padding(start = 16.dp),
+            color = YuberaOnBackground,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                state.query,
+                viewModel::onQueryChange,
+                Modifier.weight(1f),
+                placeholder = { Text("Название аниме") },
+                singleLine = true
+            )
+            IconButton(
+                onClick = { panel = !panel },
+                modifier = Modifier.padding(start = 6.dp).background(YuberaSurface, RoundedCornerShape(12.dp))
+            ) {
+                Icon(Icons.Default.FilterList, "Фильтры", tint = YuberaPrimary)
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            CatalogSortOrder.entries.forEach {
+                FilterChip(state.sortOrder == it, { viewModel.onSortOrderSelected(it); page = 0 }, label = { Text(it.title, maxLines = 1) })
+            }
+        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            if (state.items.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(if (state.errorMessage != null) "Каталог пока недоступен" else "Ничего не найдено", color = YuberaMuted)
+                }
+            } else {
+                LazyVerticalGrid(
+                    GridCells.Fixed(2),
+                    state = grid,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(state.items.drop(page * 50).take(50), key = AnimeCatalogItem::id) { anime ->
+                        PosterCard(anime) { onAnimeClick(anime) }
+                    }
+                }
+            }
+            Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                Column {
+                    AnimatedVisibility(
+                        visible = panel,
+                        enter = fadeIn() + scaleIn(initialScale = .94f),
+                        exit = fadeOut() + scaleOut(targetScale = .94f)
+                    ) {
+                        FilterPanel(
+                            state,
+                            viewModel::updateDraft,
+                            viewModel::resetDraft,
+                            { viewModel.applyFilters(); panel = false; page = 0 },
+                            { panel = false }
+                        )
+                    }
+                }
+            }
+        }
+        if (state.items.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { page = (page - 1).coerceAtLeast(0) }, enabled = page > 0) { Text("‹") }
+                PaginationNumbers(page, count) { page = it }
+                TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1) }, enabled = page < count - 1) { Text("›") }
+            }
+        }
+    }
 }
 
 @Composable private fun PosterCard(anime:AnimeCatalogItem,onClick:()->Unit){
@@ -108,32 +167,57 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
  }
 }
 
-@Composable private fun FilterPanel(state:CatalogUiState,onDraft:(CatalogFilters)->Unit,onReset:()->Unit,onApply:()->Unit,onClose:()->Unit,modifier:Modifier=Modifier){
- val f=state.draftFilters
- var from by remember(f.yearFrom){mutableStateOf(f.yearFrom?.toString().orEmpty())}
- var to by remember(f.yearTo){mutableStateOf(f.yearTo?.toString().orEmpty())}
- var error by remember{mutableStateOf<String?>(null)}
- Surface(modifier.widthIn(max=350.dp).fillMaxWidth(),color=YuberaSurface,shape=RoundedCornerShape(20.dp),border=androidx.compose.foundation.BorderStroke(1.dp,YuberaPrimary.copy(.45f)),shadowElevation=12.dp){
- Column(Modifier.padding(12.dp).heightIn(max=560.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
- Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Default.FilterList,contentDescription=null,tint=YuberaPrimary);Text("Фильтры",Modifier.weight(1f).padding(start=8.dp),color=YuberaOnBackground,fontWeight=FontWeight.Bold);IconButton(onClick=onClose){Icon(Icons.Default.Close,contentDescription="Закрыть фильтры",tint=YuberaOnBackground)}}
- Column(Modifier.weight(1f,fill=false).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
- SelectFilter("Статус",f.status,state.statuses){onDraft(f.copy(status=it))}
- SelectFilter("Тип",f.kind,state.kinds){onDraft(f.copy(kind=it))}
- SelectFilter("Возраст",f.ageRating,state.ageRatings){onDraft(f.copy(ageRating=it))}
- Text("Жанры",color=YuberaMuted)
- state.genres.forEach{g->FilterChip(g in f.genres,{onDraft(f.copy(genres=if(g in f.genres)f.genres-g else f.genres+g))},label={Text(g)})}
- Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){OutlinedTextField(from,{from=it.filter(Char::isDigit);onDraft(f.copy(yearFrom=from.toIntOrNull()))},Modifier.weight(1f),label={Text("Год от")},singleLine=true);OutlinedTextField(to,{to=it.filter(Char::isDigit);onDraft(f.copy(yearTo=to.toIntOrNull()))},Modifier.weight(1f),label={Text("Год до")},singleLine=true)}
- Text("Минимальная оценка: "+String.format("%.1f",f.minRating),color=YuberaOnBackground)
- Slider(f.minRating.toFloat(),{onDraft(f.copy(minRating=it.toDouble()))},valueRange=0f..10f,steps=19)
- error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
- }
- Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
- OutlinedButton(onClick={onReset();from="";to="";error=null},Modifier.weight(1f)){Text("Сброс")}
- Button(onClick={error=f.validate((state.years.maxOrNull()?:2026)+1);if(error==null)onApply()},Modifier.weight(1f)){Text("Применить")}
- }
- }
- }
- }
+@Composable
+private fun FilterPanel(
+    state: CatalogUiState,
+    onDraft: (CatalogFilters) -> Unit,
+    onReset: () -> Unit,
+    onApply: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val f = state.draftFilters
+    var from by remember(f.yearFrom) { mutableStateOf(f.yearFrom?.toString().orEmpty()) }
+    var to by remember(f.yearTo) { mutableStateOf(f.yearTo?.toString().orEmpty()) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    Surface(
+        modifier.widthIn(max = 350.dp).fillMaxWidth(),
+        color = YuberaSurface,
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, YuberaPrimary.copy(.45f)),
+        shadowElevation = 12.dp
+    ) {
+        Column(Modifier.padding(12.dp).heightIn(max = 560.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.FilterList, contentDescription = null, tint = YuberaPrimary)
+                Text("Фильтры", Modifier.weight(1f).padding(start = 8.dp), color = YuberaOnBackground, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Default.Close, contentDescription = "Закрыть фильтры", tint = YuberaOnBackground)
+                }
+            }
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SelectFilter("Статус", f.status, state.statuses) { onDraft(f.copy(status = it)) }
+                SelectFilter("Тип", f.kind, state.kinds) { onDraft(f.copy(kind = it)) }
+                SelectFilter("Возраст", f.ageRating, state.ageRatings) { onDraft(f.copy(ageRating = it)) }
+                Text("Жанры", color = YuberaMuted)
+                state.genres.forEach { g ->
+                    FilterChip(g in f.genres, { onDraft(f.copy(genres = if (g in f.genres) f.genres - g else f.genres + g)) }, label = { Text(g) })
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(from, { from = it.filter(Char::isDigit); onDraft(f.copy(yearFrom = from.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год от") }, singleLine = true)
+                    OutlinedTextField(to, { to = it.filter(Char::isDigit); onDraft(f.copy(yearTo = to.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год до") }, singleLine = true)
+                }
+                Text("Минимальная оценка: " + String.format("%.1f", f.minRating), color = YuberaOnBackground)
+                Slider(f.minRating.toFloat(), { onDraft(f.copy(minRating = it.toDouble())) }, valueRange = 0f..10f, steps = 19)
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedButton(onClick = { onReset(); from = ""; to = ""; error = null }, Modifier.weight(1f)) { Text("Сброс") }
+                Button(onClick = { error = f.validate((state.years.maxOrNull() ?: 2026) + 1); if (error == null) onApply() }, Modifier.weight(1f)) { Text("Применить") }
+            }
+        }
+    }
 }
 
 @Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
