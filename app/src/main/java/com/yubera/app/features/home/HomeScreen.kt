@@ -1,6 +1,6 @@
 package com.yubera.app.features.home
 
-import androidx.compose.foundation.background
+import android.provider.Settings\nimport androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -36,7 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext\nimport androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -61,7 +61,7 @@ fun HomeScreen(
     onViewAll:(String)->Unit={},
     viewModel:HomeViewModel=hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val motionAllowed=rememberHomeMotionAllowed()\n    val state by viewModel.uiState.collectAsState()
     Column(Modifier.fillMaxSize()) {
         androidx.compose.foundation.layout.Box(
             Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(horizontal=18.dp,vertical=8.dp)
@@ -98,7 +98,7 @@ fun HomeScreen(
                         ) {
                             items(state.recommended,key=AnimeCatalogItem::id) { anime ->
                                 val targetScale=if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f
-                                val scale by animateFloatAsState(targetScale,tween(220),label="recommendationScale")
+                                val scale by animateFloatAsState(targetScale,tween(if(motionAllowed) 220 else 0),label="recommendationScale")
                                 RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(scale))
                             }
                         }
@@ -179,5 +179,14 @@ fun HomeCategoryScreen(category:String,onAnimeClick:(String)->Unit,onContinueCli
             if(category=="continue") items(state.continueWatching,key={it.anime.id}) { row -> HomeProgressCard(row.anime,row.progress){onContinueClick(row.anime.id,row.progress.episodeNumber)} }
             else items(items,key=AnimeCatalogItem::id) { anime -> HomeAnimeTile(anime,onClick={onAnimeClick(anime.id)}) }
         }
+    }
+}
+
+@Composable
+private fun rememberHomeMotionAllowed():Boolean {
+    val context=LocalContext.current
+    return remember {
+        runCatching { Settings.Global.getFloat(context.contentResolver,Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f }
+            .getOrDefault(true)
     }
 }
