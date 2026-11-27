@@ -92,26 +92,32 @@ private fun WelcomeScreen(onSignIn: () -> Unit, onRegister: () -> Unit) {
                 )
             )
         )
-        YuberaLogo(modifier = Modifier.align(Alignment.TopStart).padding(start = 26.dp, top = 34.dp), width = 142.dp)
+        Column(
+            modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 24.dp).offset(y = 52.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            YuberaLogo(width = 174.dp)
+            Text("YUBERA", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
+            Text("Твой мир аниме в одном приложении", color = YuberaMuted, fontSize = 15.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+        }
         Column(
             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
-            Text("Добро пожаловать", color = MaterialTheme.colorScheme.onBackground, fontSize = 32.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text("Твой мир аниме начинается здесь.", color = YuberaMuted, fontSize = 17.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp, bottom = 24.dp))
+            Spacer(Modifier.height(8.dp))
             Button(
                 onClick = onSignIn,
                 modifier = Modifier.fillMaxWidth().height(58.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = YuberaPrimary)
-            ) { Text("Войти", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
+            ) { Text("↪  Войти", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
             OutlinedButton(
                 onClick = onRegister,
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(58.dp),
                 shape = RoundedCornerShape(18.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, YuberaMuted)
-            ) { Text("Создать аккаунт", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
+            ) { Text("♙  Регистрация", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
         }
     }
 }

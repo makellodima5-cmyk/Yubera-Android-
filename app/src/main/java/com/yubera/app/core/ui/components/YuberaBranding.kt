@@ -2,14 +2,7 @@ package com.yubera.app.core.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,10 +25,7 @@ import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
-fun YuberaLogo(
-    modifier: Modifier = Modifier,
-    width: Dp = 132.dp
-) {
+fun YuberaLogo(modifier: Modifier = Modifier, width: Dp = 132.dp) {
     Image(
         painter = painterResource(R.drawable.yubera_logo_transparent),
         contentDescription = "YUBERA",
@@ -48,87 +38,80 @@ fun YuberaLogo(
 fun SectionBannerHeader(
     title: String,
     subtitle: String,
-    showBanner: Boolean = true,
-    modifier: Modifier = Modifier
+    showBanner: Boolean = false,
+    modifier: Modifier = Modifier,
+    onNotificationsClick: (() -> Unit)? = null,
+    showBack: Boolean = false,
+    onBackClick: (() -> Unit)? = null
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(if (showBanner) 184.dp else 142.dp)
-            .background(YuberaBackground)
-    ) {
+    Column(modifier.fillMaxWidth().background(YuberaBackground)) {
+        Row(
+            Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (showBack && onBackClick != null) {
+                androidx.compose.material3.IconButton(onClick = onBackClick) {
+                    androidx.compose.material3.Icon(
+                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Назад",
+                        tint = YuberaOnBackground
+                    )
+                }
+            } else {
+                Spacer(Modifier.width(48.dp))
+            }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                YuberaLogo(width = 132.dp)
+            }
+            if (onNotificationsClick != null) {
+                androidx.compose.material3.IconButton(onClick = onNotificationsClick) {
+                    androidx.compose.material3.Icon(
+                        androidx.compose.material.icons.Icons.Default.NotificationsNone,
+                        contentDescription = "Уведомления",
+                        tint = YuberaOnBackground
+                    )
+                }
+            } else {
+                Spacer(Modifier.width(48.dp))
+            }
+        }
         if (showBanner) {
-            Image(
-                painter = painterResource(R.drawable.yubera_about_project_banner),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.CenterEnd
-            )
-            Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            YuberaBackground.copy(alpha = 0.96f),
-                            YuberaBackground.copy(alpha = 0.68f),
-                            YuberaBackground.copy(alpha = 0.08f)
+            Box(Modifier.fillMaxWidth().height(110.dp)) {
+                Image(
+                    painter = painterResource(R.drawable.yubera_about_project_banner),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.CenterEnd
+                )
+                Box(
+                    Modifier.fillMaxSize().background(
+                        Brush.horizontalGradient(
+                            listOf(YuberaBackground.copy(alpha = .96f), YuberaBackground.copy(alpha = .45f), Color.Transparent)
                         )
                     )
                 )
-            )
-            Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, YuberaBackground.copy(alpha = 0.58f))
-                    )
-                )
-            )
+            }
         }
-
-        Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            YuberaLogo(width = 126.dp)
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = title,
-                color = YuberaOnBackground,
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = subtitle,
-                color = YuberaMuted,
-                fontSize = 14.sp
-            )
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+            Text(title, color = YuberaOnBackground, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            if (subtitle.isNotBlank()) {
+                Text(subtitle, color = YuberaMuted, fontSize = 14.sp)
+            }
         }
     }
 }
 
 @Composable
-fun FeaturePlaceholder(
-    title: String,
-    description: String,
-    modifier: Modifier = Modifier
-) {
+fun FeaturePlaceholder(title: String, description: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = YuberaSurface,
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = title,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp
-            )
-            Text(
-                text = description,
-                color = YuberaMuted,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 6.dp)
-            )
+        Column(Modifier.padding(18.dp)) {
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+            Text(description, color = YuberaMuted, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }

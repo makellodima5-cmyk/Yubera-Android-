@@ -10,13 +10,13 @@ import androidx.compose.ui.graphics.Color
 import com.yubera.app.data.settings.ThemeMode
 
 private val DarkPalette = YuberaPalette(
-    background = Color(0xFF101116),
-    surface = Color(0xFF1A1B22),
-    surfaceElevated = Color(0xFF22232B),
-    primary = Color(0xFFFF5A3D),
-    accent = Color(0xFFFF764F),
-    onBackground = Color(0xFFF6F4F5),
-    muted = Color(0xFFA4A1AA)
+    background = Color(0xFF121212),
+    surface = Color(0xFF1B1B1B),
+    surfaceElevated = Color(0xFF242424),
+    primary = Color(0xFFFF6A2B),
+    accent = Color(0xFFFF8A45),
+    onBackground = Color(0xFFF5F5F5),
+    muted = Color(0xFF9A9A9A)
 )
 
 private val LightPalette = YuberaPalette(
