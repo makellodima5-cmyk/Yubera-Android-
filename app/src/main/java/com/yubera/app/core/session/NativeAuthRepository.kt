@@ -99,12 +99,14 @@ class NativeAuthRepository @Inject constructor(
                 activeAccountStore.clearActiveAccount()
                 false
             } else {
-                activeAccountStore.activateAccount(
-                    serverAccountId,
-                    token,
+                activeAccountStore.activateAccountIfCurrent(
+                    expectedToken = token,
+                    expectedStoredAccountId = storedAccountId,
+                    expectedActiveAccountId = initialAccountId,
+                    accountId = serverAccountId,
+                    accessToken = token,
                     claimLegacyRows = legacyAccountPending
                 )
-                true
             }
         } catch (error: HttpException) {
             if (!sessionSnapshotIsCurrent(token, storedAccountId, initialAccountId)) {
