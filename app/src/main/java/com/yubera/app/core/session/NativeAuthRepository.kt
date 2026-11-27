@@ -25,9 +25,6 @@ class NativeAuthRepository @Inject constructor(
         termsAccepted: Boolean = false
     ): String {
         require(flow == FLOW_LOGIN || flow == FLOW_REGISTER) { "Неизвестный тип авторизации." }
-        require(flow != FLOW_REGISTER || (privacyConsent && termsAccepted)) {
-            "Для регистрации необходимо принять условия и политику конфиденциальности."
-        }
         val verifier = randomToken()
         val state = randomToken()
         val challenge = hex(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(StandardCharsets.US_ASCII)))
