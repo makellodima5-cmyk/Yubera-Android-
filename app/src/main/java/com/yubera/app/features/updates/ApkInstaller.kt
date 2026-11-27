@@ -13,6 +13,7 @@ import java.security.MessageDigest
 class ApkInstaller(private val context: Context) {
     fun createInstallIntent(apk: File, expectedSha256: String): Intent? {
         if (!apk.isFile || apk.length() <= 0L || !expectedSha256.matches(Regex("(?i)[0-9a-f]{64}"))) return null
+        if (apk.canonicalFile.parentFile != File(context.cacheDir, "updates").canonicalFile) return null
         val actual = FileInputStream(apk).use { input ->
             val digest = MessageDigest.getInstance("SHA-256")
             val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
