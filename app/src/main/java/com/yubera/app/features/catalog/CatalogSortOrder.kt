@@ -46,3 +46,23 @@ fun CatalogFilters.validate(maxYear: Int): String? {
     if (yearFrom != null && yearTo != null && yearFrom > yearTo) return "Год «От» не может быть больше года «До»."
     return null
 }
+
+private fun searchVariants(value: String): Set<String> {
+    val raw=value.trim().lowercase().replace(Regex("[^\\p{L}\\p{N}]"),"")
+    if(raw.isEmpty()) return setOf("")
+    val latinToCyrillic=mapOf('q' to 'й','w' to 'ц','e' to 'у','r' to 'к','t' to 'е','y' to 'н','u' to 'г','i' to 'ш','o' to 'щ','p' to 'з','[' to 'х',']' to 'ъ','a' to 'ф','s' to 'ы','d' to 'в','f' to 'а','g' to 'п','h' to 'р','j' to 'о','k' to 'л','l' to 'д',';' to 'ж','z' to 'я','x' to 'ч','c' to 'с','v' to 'м','b' to 'и','n' to 'т','m' to 'ь')
+    val cyrillicToLatin=mapOf('й' to 'q','ц' to 'w','у' to 'e','к' to 'r','е' to 't','н' to 'y','г' to 'u','ш' to 'i','щ' to 'o','з' to 'p','х' to '[','ъ' to ']','ф' to 'a','ы' to 's','в' to 'd','а' to 'f','п' to 'g','р' to 'h','о' to 'j','л' to 'k','д' to 'l','ж' to ';','я' to 'z','ч' to 'x','с' to 'c','м' to 'v','и' to 'b','т' to 'n','ь' to 'm')
+    val visuallySimilar=mapOf('а' to 'a','в' to 'b','е' to 'e','к' to 'k','м' to 'm','н' to 'h','о' to 'o','р' to 'p','с' to 'c','т' to 't','у' to 'y','х' to 'x')
+    val keyboardCyr=raw.map{latinToCyrillic[it] ?: it}.joinToString("")
+    val keyboardLat=raw.map{cyrillicToLatin[it] ?: it}.joinToString("")
+    val visualLat=raw.map{visuallySimilar[it] ?: it}.joinToString("")
+    val visualCyr=visualLat.map{latinToCyrillic[it] ?: it}.joinToString("")
+    return setOf(raw,keyboardCyr,keyboardLat,visualLat,visualCyr)
+}
+private fun fuzzyPrefixMatch(title:String, query:String):Boolean {
+    if(query.length<3 || query.length>title.length) return false
+    val prefix=title.take(query.length+2)
+    var qi=0
+    for(ch in prefix) if(qi<query.length && ch==query[qi]) qi++
+    return qi>=query.length-1
+}
