@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,8 +13,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +41,7 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 @Composable
 fun HomeScreen(
     onAnimeClick:(String)->Unit,
+    onContinueClick:(String,Int?)->Unit={id,_->onAnimeClick(id)},
     onNotificationsClick:()->Unit={},
     onCollectionsClick:()->Unit={},
     viewModel:HomeViewModel=hiltViewModel()
@@ -62,10 +70,10 @@ fun HomeScreen(
             }
             item {
                 Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    HomeSectionHeader("Продолжить просмотр")
+                    HomeSectionHeader("Продолжить просмотр",onAction=onCollectionsClick)
                     if(state.continueWatching.isEmpty()) Text("Здесь появятся тайтлы, просмотр которых не завершён.",color=YuberaMuted,modifier=Modifier.padding(horizontal=18.dp))
                     else LazyRow(contentPadding=PaddingValues(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                        items(state.continueWatching,key={it.anime.id}) { item -> HomeProgressCard(item.anime,item.progress){onAnimeClick(item.anime.id)} }
+                        items(state.continueWatching,key={it.anime.id}) { item -> HomeProgressCard(item.anime,item.progress){onContinueClick(item.anime.id,item.progress.episodeNumber)} }
                     }
                 }
             }
@@ -75,15 +83,17 @@ fun HomeScreen(
             if(state.ongoing.isNotEmpty()) item { AnimeStrip("Онгоинги",state.ongoing,onAnimeClick) }
             item {
                 Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    androidx.compose.material3.Card(onClick={state.randomPick?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f)) {
+                    Card(onClick={state.randomPick?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=com.yubera.app.core.ui.theme.YuberaSurface)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                            Text("⚄ Случайное аниме",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
+                            Icon(Icons.Default.Casino,contentDescription=null,tint=YuberaPrimary)
+                            Text("Случайное аниме",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
                             Text("Подобрать тайтл",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
                         }
                     }
-                    androidx.compose.material3.Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f)) {
+                    Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=com.yubera.app.core.ui.theme.YuberaSurface)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                            Text("♧ Подборки",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
+                            Icon(Icons.Default.Bookmarks,contentDescription=null,tint=YuberaPrimary)
+                            Text("Подборки",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
                             Text("Тематические коллекции",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
                         }
                     }
