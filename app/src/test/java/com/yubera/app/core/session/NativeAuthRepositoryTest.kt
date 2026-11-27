@@ -308,6 +308,29 @@ class NativeAuthRepositoryTest {
         assertFalse(api.exchangeCalled)
     }
 
+
+    @Test
+    fun currentProfileRejectsDelayedResponseAfterActiveAccountSwitch() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "user-1"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "user-1")
+        val api = FakeApi().apply {
+            sessionResponse = TelegramSessionResponse(
+                authenticated = true,
+                user = TelegramSessionUser(id = "user-1", firstName = "Старый аккаунт")
+            )
+            onSessionRequest = { activeAccountStore.forceAccount("user-2") }
+        }
+
+        val profile = NativeAuthRepository(api, store, activeAccountStore).getCurrentProfile()
+
+        assertNull(profile)
+        assertEquals("user-2", activeAccountStore.currentAccountId())
+        assertEquals("user-1", store.storedAccountId)
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
