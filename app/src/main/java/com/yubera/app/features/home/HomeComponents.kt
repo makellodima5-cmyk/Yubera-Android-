@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,8 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
@@ -34,109 +37,78 @@ import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier.width(116.dp).clickable(onClick = onClick),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        if (!anime.posterUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = anime.posterUrl,
-                contentDescription = "Постер: ${anime.title}",
-                modifier = Modifier.size(width = 116.dp, height = 164.dp).clip(RoundedCornerShape(14.dp)),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier.size(width = 116.dp, height = 164.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(YuberaPrimary.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(anime.title.take(1), color = YuberaPrimary, style = MaterialTheme.typography.displayMedium)
-            }
+    Box(Modifier.width(142.dp).height(218.dp).clip(RoundedCornerShape(16.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
+        AnimeImage(anime,Modifier.fillMaxWidth().height(218.dp))
+        Box(Modifier.fillMaxWidth().height(86.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xEE100D17)))))
+        Row(Modifier.fillMaxWidth().padding(8.dp).align(Alignment.TopStart),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+            anime.rating?.let { Pill("★ ${"%.1f".format(it)}") }
+            anime.ageRating?.takeIf(String::isNotBlank)?.let { Pill(it) }
         }
-        Text(anime.title, color = YuberaOnBackground, fontWeight = FontWeight.SemiBold, maxLines = 2)
-        anime.rating?.let {
-            Text("★ ${"%.1f".format(it)}", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+        Text(anime.title,color=Color.White,fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis,modifier=Modifier.align(Alignment.BottomStart).padding(10.dp))
+    }
+}
+
+@Composable
+fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick:()->Unit) {
+    val fraction=if(progress.durationMillis>0L)(progress.positionMillis.toFloat()/progress.durationMillis.toFloat()).coerceIn(0f,1f) else 0f
+    Card(onClick=onClick,colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(10.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
+            Box(Modifier.size(width=104.dp,height=76.dp).clip(RoundedCornerShape(10.dp))) {
+                AnimeImage(anime,Modifier.fillMaxWidth().height(76.dp))
+                Box(Modifier.align(Alignment.Center).size(34.dp).background(Color.Black.copy(.68f),CircleShape),contentAlignment=Alignment.Center){Text("▶",color=Color.White)}
+            }
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+                Text(anime.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
+                Text(progress.episodeNumber?.let { "Серия $it" } ?: "Продолжить просмотр",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(YuberaMuted.copy(.22f))) {
+                    Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(CircleShape).background(YuberaPrimary))
+                }
+                if(progress.positionMillis>0L) Text(formatPlaybackTime(progress.positionMillis),color=YuberaMuted,style=MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }
 
 @Composable
-fun HomeProgressCard(
-    anime: AnimeCatalogItem,
-    progress: AnimeProgressEntity,
-    onClick: () -> Unit
-) {
-    val fraction = if (progress.durationMillis > 0L) {
-        (progress.positionMillis.toFloat() / progress.durationMillis.toFloat()).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = YuberaSurface),
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!anime.posterUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = anime.posterUrl,
-                    contentDescription = "Постер: ${anime.title}",
-                    modifier = Modifier.size(width = 56.dp, height = 76.dp).clip(RoundedCornerShape(9.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier.size(width = 56.dp, height = 76.dp)
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(YuberaPrimary.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(anime.title.take(1), color = YuberaPrimary, style = MaterialTheme.typography.headlineMedium)
-                }
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(anime.title, color = YuberaOnBackground, fontWeight = FontWeight.SemiBold, maxLines = 2)
-                val episodeLabel = progress.episodeNumber?.let { episode ->
-                    buildString {
-                        progress.seasonNumber?.let { append("Сезон $it · ") }
-                        append("Серия $episode")
-                    }
-                } ?: "Продолжить просмотр"
-                Text(episodeLabel, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(4.dp)
-                        .clip(RoundedCornerShape(50)).background(YuberaMuted.copy(alpha = 0.22f))
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(fraction).height(4.dp)
-                            .clip(RoundedCornerShape(50)).background(YuberaPrimary)
-                    )
-                }
-                Text(
-                    "${formatPlaybackTime(progress.positionMillis)} / ${formatPlaybackTime(progress.durationMillis)}",
-                    color = YuberaMuted,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-            Text("›", color = YuberaPrimary, style = MaterialTheme.typography.headlineMedium)
+fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
+    Box(Modifier.width(310.dp).height(204.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick=onClick)) {
+        AnimeImage(anime,Modifier.fillMaxWidth().height(204.dp),preferBanner=true)
+        Box(Modifier.fillMaxWidth().height(204.dp).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
+        Column(Modifier.align(Alignment.BottomStart).padding(14.dp).fillMaxWidth(.84f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+            Pill("Рекомендуем")
+            Text(anime.title,color=Color.White,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
+            Text(anime.genres.take(3).joinToString(" · "),color=Color(0xFFD7D1DA),style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)
         }
+        Box(Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp).background(YuberaPrimary,CircleShape),contentAlignment=Alignment.Center){Text("▶",color=Color.White)}
     }
 }
 
-private fun formatPlaybackTime(millis: Long): String {
-    val totalSeconds = (millis.coerceAtLeast(0L) / 1_000L)
-    val hours = totalSeconds / 3_600L
-    val minutes = (totalSeconds % 3_600L) / 60L
-    val seconds = totalSeconds % 60L
-    return if (hours > 0L) {
-        "%d:%02d:%02d".format(hours, minutes, seconds)
-    } else {
-        "%d:%02d".format(minutes, seconds)
+@Composable
+fun HomeSectionHeader(title:String,actionLabel:String="Смотреть все",onAction:(()->Unit)?=null) {
+    Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+        Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
+        if(onAction!=null) Text("$actionLabel  ›",color=YuberaMuted,modifier=Modifier.clickable(onClick=onAction).padding(6.dp))
     }
+}
+
+@Composable
+private fun AnimeImage(anime:AnimeCatalogItem,modifier:Modifier,preferBanner:Boolean=false) {
+    val image=if(preferBanner) anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
+    if(!image.isNullOrBlank()) {
+        AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=modifier,contentScale=ContentScale.Crop)
+    } else {
+        Box(modifier.background(YuberaPrimary.copy(.14f)),contentAlignment=Alignment.Center){Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)}
+    }
+}
+
+@Composable
+private fun Pill(text:String) {
+    Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xB5100E17)).padding(horizontal=8.dp,vertical=4.dp)) {
+        Text(text,color=Color.White,style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.SemiBold)
+    }
+}
+
+private fun formatPlaybackTime(millis:Long):String {
+    val total=(millis.coerceAtLeast(0L)/1_000L); val h=total/3_600L; val m=(total%3_600L)/60L; val s=total%60L
+    return if(h>0L) "%d:%02d:%02d".format(h,m,s) else "%d:%02d".format(m,s)
 }
