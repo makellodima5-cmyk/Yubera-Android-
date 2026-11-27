@@ -16,7 +16,7 @@ object EpisodeNotificationScheduler {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .setRequiresBatteryNotLow(true)
             .build()
-        val request = PeriodicWorkRequestBuilder<EpisodeNotificationWorker>(6, TimeUnit.HOURS)
+        val request = PeriodicWorkRequestBuilder<EpisodeNotificationWorker>(8, TimeUnit.HOURS)
             .setConstraints(constraints)
             .addTag(UNIQUE_WORK_NAME)
             .build()
