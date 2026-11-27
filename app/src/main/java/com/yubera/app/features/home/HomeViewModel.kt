@@ -6,6 +6,7 @@ import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
 import com.yubera.app.data.settings.UserSettingsRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -58,21 +59,16 @@ class HomeViewModel @Inject constructor(
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        // A title leaves recommendations once the user has completed at least one episode.
-        // This is deliberately distinct from title completion (all episodes watched).
-        val titlesWithCompletedEpisode = progress.asSequence()
-            .filter { row ->
-                row.episodeNumber != null && row.durationMillis > 0L &&
-                    row.positionMillis >= (row.durationMillis * 0.90).toLong()
-            }
+        // Completion markers survive when the one-row-per-title progress record moves
+        // to another episode. The external Kodik WebView does not expose playback
+        // telemetry, so recommendations use markers only when progress snapshots exist.
+        val completedProgress = progress.filter { row ->
+            row.completedEpisodeNumber != null || EpisodeCompletionPolicy.isEpisodeCompleted(row)
+        }
+        val titlesWithCompletedEpisode = completedProgress
             .mapTo(mutableSetOf()) { it.animeId }
-        val watchedGenres = progress.filter { row ->
-            val anime = byId[row.animeId] ?: return@filter false
-            val episode = row.episodeNumber ?: return@filter false
-            val aired = anime.episodesAired ?: anime.episodes
-            aired > 0 && episode <= aired && row.durationMillis > 0L &&
-                row.positionMillis >= (row.durationMillis * 0.90).toLong()
-        }.flatMap { byId[it.animeId]?.genres.orEmpty() }
+        val watchedGenres = completedProgress
+            .flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
         val eligible = catalog.filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
         val recommendationPool = if (watchedGenres.isEmpty()) {
