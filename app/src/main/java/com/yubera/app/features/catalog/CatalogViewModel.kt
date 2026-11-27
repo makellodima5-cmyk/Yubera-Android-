@@ -3,7 +3,7 @@ package com.yubera.app.features.catalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
-import com.yubera.app.core.catalog.CatalogRepository
+import com.yubera.app.data.catalog.RemoteCatalogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -29,7 +29,7 @@ data class CatalogUiState(
 
 @HiltViewModel
 class CatalogViewModel @Inject constructor(
-    private val repository: CatalogRepository
+    private val repository: RemoteCatalogRepository
 ) : ViewModel() {
     private val query = MutableStateFlow("")
     private val selectedGenre = MutableStateFlow<String?>(null)
