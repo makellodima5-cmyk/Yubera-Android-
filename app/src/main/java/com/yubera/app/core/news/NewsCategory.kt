@@ -7,4 +7,4 @@ enum class NewsCategory(val title:String){ALL("Все"),ANNOUNCEMENTS("Анон�
  listOf("фестивал","выстав","преми","наград","конвент","festival","award","convention","event","мероприят").any(text::contains)->EVENTS
  listOf("студия","производств","режиссёр","режиссер","сценарист","анимац","industry","production","staff","кадров").any(text::contains)->INDUSTRY
  else->ALL
-}}}
+}}}}
