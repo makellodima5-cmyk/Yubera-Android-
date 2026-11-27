@@ -153,6 +153,7 @@ fun AppNavHost(
             ) { backStackEntry ->
                 AnimeDetailScreen(
                     onBack = { navController.popBackStack() },
+                    onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") },
                     onWatchClick = {
                         val id = backStackEntry.arguments?.getString("animeId").orEmpty()
                         navController.navigate("player/${Uri.encode(id)}")
