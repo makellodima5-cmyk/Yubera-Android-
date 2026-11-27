@@ -54,6 +54,20 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/yubera-release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/yubera-release.jks" >> "$GITHUB_ENV"
+      - name: Validate version inputs
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          MINIMUM_VERSION_CODE: ${{ inputs.minimum_supported_version_code }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          version = os.environ["VERSION_NAME"]
+          code = int(os.environ["VERSION_CODE"])
+          minimum = int(os.environ["MINIMUM_VERSION_CODE"])
+          assert re.fullmatch(r"^\\d+\\.\\d+\\.\\d+$", version), "version_name must be X.Y.Z"
+          assert code > 0 and minimum > 0 and minimum <= code
+          PY
       - name: Build signed APK
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
