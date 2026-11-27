@@ -56,9 +56,13 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 @Composable
 fun PlayerScreen(
     onBack: () -> Unit,
+    requestedEpisode: Int? = null,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(requestedEpisode, state.sources) {
+        requestedEpisode?.let(viewModel::selectEpisode)
+    }
     var isFullscreen by remember { mutableStateOf(false) }
     var retryNonce by remember { mutableStateOf(0) }
 
