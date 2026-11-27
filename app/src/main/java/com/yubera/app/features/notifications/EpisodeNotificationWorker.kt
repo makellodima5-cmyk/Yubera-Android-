@@ -59,14 +59,11 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             val settingsRepository = entry.userSettingsRepository()
             val settings = settingsRepository.settings.first()
             val infoNotificationsEnabled = settings.notificationsEnabled && settings.animeInfoNotificationsEnabled
+            val episodeNotificationsEnabled = settings.notificationsEnabled && settings.newEpisodeNotificationsEnabled
             val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             createChannel(manager)
-            if (!EpisodeNotificationPolicy.shouldDeliverNotification(
-                    notificationsEnabled = settings.notificationsEnabled,
-                    newEpisodeNotificationsEnabled = settings.newEpisodeNotificationsEnabled,
-                    subscriptionNotificationsEnabled = true,
-                    systemNotificationsEnabled = hasPermission() && notificationsAvailable(manager)
-                )
+            if ((!infoNotificationsEnabled && !episodeNotificationsEnabled) ||
+                !hasPermission() || !notificationsAvailable(manager)
             ) return Result.success()
 
             val subscriptionDao = entry.animeSubscriptionDao()
@@ -74,7 +71,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             if (subscriptions.isEmpty()) return Result.success()
 
             val catalogDao = entry.catalogDao()
-            val titles = catalogDao.getAll().associate { it.animeId to it.title }
+            val titles = catalogDao.getAll().associate { it.animeId to it.title }.toMutableMap()
             val notificationDao = entry.animeEpisodeNotificationDao()
             val api = entry.shikimoriEpisodeUpdatesApi()
             val batches = subscriptions.chunked(MAX_IDS_PER_QUERY)
@@ -138,10 +135,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                                     val title = titles[subscription.animeId]
                                         ?: update.displayName.ifBlank { "Аниме " + subscription.animeId }
                                     val notificationId = stableId(accountId, subscription.animeId, episode)
-                                    if (!showNotification(notificationId, title, subscription.animeId, episode)) {
-                                        throw IllegalStateException("Notification permission became unavailable during delivery")
+                                    if (episodeNotificationsEnabled) {
+                                        if (!showNotification(notificationId, title, subscription.animeId, episode)) {
+                                            throw IllegalStateException("Notification permission became unavailable during delivery")
+                                        }
+                                        notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
                                     }
-                                    notificationDao.markDelivered(accountId, subscription.animeId, episode, System.currentTimeMillis())
                                 }
                             }
                         }
