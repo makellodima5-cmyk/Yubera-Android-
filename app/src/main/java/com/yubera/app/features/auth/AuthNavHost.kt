@@ -51,12 +51,12 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-in"; const val Register="register" }
 
 @Composable fun AuthNavHost() {
-    val nav=rememberNavController(); val vm:AuthViewModel=hiltViewModel()
+    val nav=rememberNavController(); val vm:AuthViewModel=hiltViewModel(); val motionAllowed=rememberMotionAllowed()
     NavHost(navController=nav,startDestination=AuthRoute.Welcome,modifier=Modifier.fillMaxSize(),
-        enterTransition={fadeIn(tween(220))+slideInHorizontally(tween(220)){it/12}},
-        exitTransition={fadeOut(tween(180))+slideOutHorizontally(tween(180)){-it/24}},
-        popEnterTransition={fadeIn(tween(220))+slideInHorizontally(tween(220)){-it/12}},
-        popExitTransition={fadeOut(tween(180))+slideOutHorizontally(tween(180)){it/24}}) {
+        enterTransition={if(motionAllowed) fadeIn(tween(220))+slideInHorizontally(tween(220)){it/12} else fadeIn(tween(100))},
+        exitTransition={if(motionAllowed) fadeOut(tween(180))+slideOutHorizontally(tween(180)){-it/24} else fadeOut(tween(100))},
+        popEnterTransition={if(motionAllowed) fadeIn(tween(220))+slideInHorizontally(tween(220)){-it/12} else fadeIn(tween(100))},
+        popExitTransition={if(motionAllowed) fadeOut(tween(180))+slideOutHorizontally(tween(180)){it/24} else fadeOut(tween(100))}) {
         composable(AuthRoute.Welcome){WelcomeScreen({nav.navigate(AuthRoute.SignIn){launchSingleTop=true}},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
         composable(AuthRoute.SignIn){AuthSignInScreen(vm,{nav.popBackStack()},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
         composable(AuthRoute.Register){RegistrationScreen(vm){nav.navigate(AuthRoute.SignIn){launchSingleTop=true}}}
