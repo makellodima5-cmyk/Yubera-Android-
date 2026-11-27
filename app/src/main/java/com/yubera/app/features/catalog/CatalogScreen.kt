@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FilterList\nimport androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
-import com.yubera.app.core.ui.components.SectionBannerHeader
+import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
 
 @Composable
-fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,viewModel:CatalogViewModel=hiltViewModel()) {
+fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()->Unit={},viewModel:CatalogViewModel=hiltViewModel()) {
  val state by viewModel.uiState.collectAsState()
  var panel by rememberSaveable { mutableStateOf(false) }
  var page by rememberSaveable { mutableIntStateOf(0) }
@@ -39,7 +39,7 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,viewModel:CatalogViewMod
  val count=maxOf(1,(state.items.size+49)/50)
  LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}\n LaunchedEffect(page){grid.scrollToItem(0)}
  Column(Modifier.fillMaxSize()){
-  SectionBannerHeader(title="Каталог",subtitle="Аниме, которое стоит открыть")
+  Box(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),contentAlignment=Alignment.Center){ YuberaLogo(width=124.dp); IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)){Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)} }\n  Text("Каталог",Modifier.padding(start=16.dp),color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
   Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){
    OutlinedTextField(state.query,viewModel::onQueryChange,Modifier.weight(1f),placeholder={Text("Название аниме")},singleLine=true)
    IconButton(onClick={panel=!panel},modifier=Modifier.padding(start=6.dp).background(YuberaSurface,RoundedCornerShape(12.dp))){Icon(Icons.Default.FilterList,"Фильтры",tint=YuberaPrimary)}
