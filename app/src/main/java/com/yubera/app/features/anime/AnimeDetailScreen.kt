@@ -67,6 +67,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.AnimeScreenshot
 import com.yubera.app.core.player.KodikLinkPolicy
+import com.yubera.app.features.player.KodikEmbedWebView
 import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
