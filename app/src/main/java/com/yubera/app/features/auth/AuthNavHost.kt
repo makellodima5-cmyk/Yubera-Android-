@@ -2,6 +2,7 @@ package com.yubera.app.features.auth
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import android.content.ActivityNotFoundException
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,6 +31,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -115,7 +118,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if(pressed).975f else 1f,tween(if(pressed)150 else 190),label="telegramActionPress")
     Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(Color(0xFF229ED9),RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,enabled=enabled,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        TelegramPlane(Modifier.size(22.dp))
+        TelegramPlane(Modifier.size(22.dp).semantics { contentDescription = "Telegram" })
         Spacer(Modifier.width(11.dp))
         Text(text,color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
     }
@@ -158,5 +161,15 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
             RegistrationLink(onSignIn,Modifier.padding(top=10.dp),prefix="Или ",linkText="войти")
             Spacer(Modifier.weight(1f,fill=true))
         }
+    }
+}
+
+
+@Composable
+private fun rememberMotionAllowed():Boolean {
+    val context=LocalContext.current
+    return remember {
+        runCatching { Settings.Global.getFloat(context.contentResolver,Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f }
+            .getOrDefault(true)
     }
 }
