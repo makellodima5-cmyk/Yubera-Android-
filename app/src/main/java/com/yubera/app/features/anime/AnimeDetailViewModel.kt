@@ -15,6 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,6 +42,15 @@ class AnimeDetailViewModel @Inject constructor(
     private val animeId: String = savedStateHandle.get<String>("animeId").orEmpty()
     private val sourcesState = MutableStateFlow<List<KodikSource>>(emptyList())
     private val sourcesLoadingState = MutableStateFlow(false)
+
+    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog()) { current, all ->
+        current?.let { selected ->
+            all.filter { candidate ->
+                candidate.id != selected.id && candidate.genres.any(selected.genres::contains)
+            }.sortedByDescending { candidate -> candidate.genres.count(selected.genres::contains) }
+                .take(12)
+        }.orEmpty()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val uiState = combine(
         catalogRepository.observeAnime(animeId),
