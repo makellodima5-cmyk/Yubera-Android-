@@ -193,6 +193,7 @@ class RemoteCatalogRepositoryTest {
     }
 
     private class FailingCatalogApi : CatalogApi {
+        override suspend fun getVersionManifest(): AppVersionManifestDto = error("Not used in catalogue tests")
         override suspend fun getCatalogPage(page: Int, pageSize: Int): CatalogPageDto = error("offline")
     }
 
