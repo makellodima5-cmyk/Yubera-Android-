@@ -37,6 +37,7 @@ import com.yubera.app.features.news.NewsScreen
 import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
+import com.yubera.app.features.support.SupportScreen
 
 @Composable
 fun AppNavHost(
@@ -56,7 +57,7 @@ fun AppNavHost(
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute == "support"
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -109,7 +110,8 @@ fun AppNavHost(
                     },
                     onCollectionsClick = { navController.navigate("collections") },
                     onNotificationsClick = { navController.navigate("notifications") },
-                    onViewAll = { category -> navController.navigate("home-list/${Uri.encode(category)}") }
+                    onViewAll = { category -> navController.navigate("home-list/${Uri.encode(category)}") },
+                    onSupportClick = { navController.navigate("support") }
                 )
             }
             composable(
@@ -147,6 +149,7 @@ fun AppNavHost(
             }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.Profile.route) { ProfileScreen() }
+            composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
                 arguments = listOf(navArgument("animeId") { type = NavType.StringType })
