@@ -20,8 +20,13 @@ class CatalogUpdateWorker(context: Context, params: WorkerParameters) : Coroutin
     override suspend fun doWork(): Result {
         val entry = EntryPointAccessors.fromApplication(applicationContext, CatalogUpdateWorkerEntryPoint::class.java)
         return try {
-            entry.remoteCatalogRepository().refreshIfStale()
-            Result.success()
+            try {
+                entry.remoteCatalogRepository().refreshIfStale()
+                Result.success()
+            } catch (error: Exception) {
+                entry.remoteCatalogRepository().markCheckDeferred()
+                throw error
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
