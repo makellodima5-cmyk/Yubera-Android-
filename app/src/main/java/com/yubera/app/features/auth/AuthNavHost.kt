@@ -117,7 +117,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     }
 }
 @Composable private fun RegistrationLink(onClick:()->Unit,modifier:Modifier=Modifier) {
-    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Link,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("зарегистрироваться",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
@@ -145,7 +145,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     }
 }
 @Composable private fun RegistrationSignInLink(onClick:()->Unit,modifier:Modifier=Modifier) {
-    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Link,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("войти",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
