@@ -12,9 +12,29 @@ class KodikRepositoryTest {
     fun acceptsOnlyTrustedHttpsPlayerHosts() {
         assertTrue(KodikLinkPolicy.isTrustedHttpsUrl("https://kodik.info/embed/123"))
         assertTrue(KodikLinkPolicy.isTrustedHttpsUrl("https://sub.kodikplayer.com/123"))
+        assertTrue(KodikLinkPolicy.isTrustedHttpsUrl("https://kodikres.com/seria/123"))
         assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("http://kodik.info/embed/123"))
         assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("https://kodik.info.evil.example/embed/123"))
+        assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("https://kodikplayer.com.attacker.example/123"))
+        assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("https://user@kodikplayer.com/123"))
+        assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("https://kodikplayer.com:444/123"))
         assertFalse(KodikLinkPolicy.isTrustedHttpsUrl("https://example.com/embed/123"))
+    }
+
+    @Test
+    fun sameHostPolicyAcceptsNavigationWithinOneTrustedProvider() {
+        assertTrue(KodikLinkPolicy.isSameTrustedHost(
+            "https://kodikplayer.com/seria/1",
+            "https://kodikplayer.com/assets/player.js"
+        ))
+        assertFalse(KodikLinkPolicy.isSameTrustedHost(
+            "https://kodikplayer.com/seria/1",
+            "https://kodik.info/seria/1"
+        ))
+        assertFalse(KodikLinkPolicy.isSameTrustedHost(
+            "https://kodikplayer.com/seria/1",
+            "https://evil.example/seria/1"
+        ))
     }
 
     @Test
