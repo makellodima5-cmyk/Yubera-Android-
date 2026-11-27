@@ -4,7 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.expandOut
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -94,7 +97,7 @@ fun CatalogScreen(
             )
             IconButton(
                 onClick = { panel = !panel },
-                modifier = Modifier.padding(start = 6.dp).background(YuberaSurface, RoundedCornerShape(12.dp))
+                modifier = Modifier.padding(start = 6.dp).background(if (panel) YuberaPrimary.copy(alpha = 0.18f) else YuberaSurface, RoundedCornerShape(12.dp))
             ) {
                 Icon(Icons.Default.FilterList, "Фильтры", tint = YuberaPrimary)
             }
@@ -126,12 +129,19 @@ fun CatalogScreen(
                     }
                 }
             }
+            if (panel) {
+                Box(
+                    Modifier.fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .clickable { panel = false }
+                )
+            }
             Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
                 Column {
                     AnimatedVisibility(
                         visible = panel,
-                        enter = fadeIn() + scaleIn(initialScale = .94f),
-                        exit = fadeOut() + scaleOut(targetScale = .94f)
+                        enter = fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f),
+                        exit = fadeOut() + expandOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f)
                     ) {
                         FilterPanel(
                             state,
