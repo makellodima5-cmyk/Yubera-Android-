@@ -12,8 +12,8 @@ android {
         applicationId = "com.yubera.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = providers.gradleProperty("YUBERA_VERSION_CODE").orNull?.toIntOrNull() ?: 2
-        versionName = providers.gradleProperty("YUBERA_VERSION_NAME").orNull ?: "0.2.0"
+        versionCode = providers.gradleProperty("YUBERA_VERSION_CODE").orNull?.toIntOrNull() ?: 3
+        versionName = providers.gradleProperty("YUBERA_VERSION_NAME").orNull ?: "0.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
