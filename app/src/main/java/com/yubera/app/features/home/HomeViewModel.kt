@@ -75,15 +75,19 @@ class HomeViewModel @Inject constructor(
         }.flatMap { byId[it.animeId]?.genres.orEmpty() }
             .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
         val eligible = catalog.filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
-        val computedRecommendations = if (watchedGenres.isEmpty()) {
-            eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(5)
+        val recommendationPool = if (watchedGenres.isEmpty()) {
+            eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(20)
         } else {
             eligible.sortedWith(
                 compareByDescending<AnimeCatalogItem> { anime ->
                     anime.genres.sumOf { watchedGenres[it.lowercase(Locale.ROOT)] ?: 0 } * 10.0 + (anime.rating ?: 0.0)
                 }.thenBy { it.title }
-            ).take(5)
+            ).take(20)
         }
+        val dailySeed = LocalDate.now().toEpochDay()
+        val rotation = if (recommendationPool.isEmpty()) 0 else Math.floorMod(dailySeed, recommendationPool.size.toLong()).toInt()
+        val rotatedPool = recommendationPool.drop(rotation) + recommendationPool.take(rotation)
+        val computedRecommendations = rotatedPool.take(5)
 
         val hasFreshRecommendationSnapshot = settings.homeRecommendationIds.isNotEmpty() &&
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
