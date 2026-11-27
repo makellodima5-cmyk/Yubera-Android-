@@ -55,7 +55,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         popExitTransition={fadeOut(tween(180))+slideOutHorizontally(tween(180)){it/24}}) {
         composable(AuthRoute.Welcome){WelcomeScreen({nav.navigate(AuthRoute.SignIn){launchSingleTop=true}},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
         composable(AuthRoute.SignIn){AuthSignInScreen(vm,{nav.popBackStack()},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
-        composable(AuthRoute.Register){AuthRegisterPendingScreen{nav.popBackStack()}}
+        composable(AuthRoute.Register){RegistrationScreen{nav.navigate(AuthRoute.SignIn){launchSingleTop=true}}}
     }
 }
 
@@ -121,13 +121,31 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("зарегистрироваться",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
-@Composable private fun AuthRegisterPendingScreen(onBack:()->Unit) {
+@Composable private fun RegistrationScreen(onSignIn:()->Unit) {
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
-        Column(Modifier.fillMaxSize().padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
-            YuberaLogo(width=142.dp)
-            Text("Регистрация временно недоступна",color=MaterialTheme.colorScheme.onBackground,fontSize=25.sp,fontWeight=FontWeight.Bold,textAlign=TextAlign.Center,modifier=Modifier.padding(top=28.dp))
-            Text("Сначала нужно опубликовать и утвердить юридические документы YUBERA, чтобы регистрация показывала пользователю реальные условия и политику конфиденциальности.",color=YuberaMuted,textAlign=TextAlign.Center,modifier=Modifier.padding(top=12.dp))
-            Button(onBack,Modifier.fillMaxWidth().padding(top=28.dp).height(54.dp),shape=RoundedCornerShape(16.dp),colors=ButtonDefaults.buttonColors(containerColor=YuberaPrimary)){Text("Назад")}
+        Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.56f),.78f to YuberaBackground.copy(.90f),1f to YuberaBackground))))
+        Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(10.dp))
+            Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(154.dp),contentScale=ContentScale.Fit)
+            Spacer(Modifier.weight(1f))
+            Text("Регистрация",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center)
+            Spacer(Modifier.height(26.dp))
+            RegistrationTelegramButton()
+            Text("Регистрация пока недоступна: сначала должны быть опубликованы юридические документы проекта.",color=YuberaMuted,fontSize=13.sp,lineHeight=18.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(top=14.dp))
+            RegistrationSignInLink(onSignIn,Modifier.padding(top=12.dp))
+            Spacer(Modifier.weight(1f,fill=true))
         }
+    }
+}
+@Composable private fun RegistrationTelegramButton() {
+    val shape=RoundedCornerShape(18.dp)
+    Row(Modifier.fillMaxWidth().height(58.dp).background(Color(0xFF229ED9),shape).border(1.dp,Color(0xFF6BC8F1).copy(alpha=.35f),shape).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+        TelegramPlane(Modifier.size(22.dp)); Spacer(Modifier.width(11.dp)); Text("Зарегистрироваться",color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
+    }
+}
+@Composable private fun RegistrationSignInLink(onClick:()->Unit,modifier:Modifier=Modifier) {
+    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Link,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+        Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("войти",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
