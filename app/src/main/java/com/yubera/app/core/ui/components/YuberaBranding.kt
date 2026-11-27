@@ -85,22 +85,27 @@ fun SectionBannerHeader(
             )
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            YuberaLogo(width = 126.dp)
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                YuberaLogo(width = 126.dp)
+            }
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = title,
-                color = YuberaOnBackground,
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = subtitle,
-                color = YuberaMuted,
-                fontSize = 14.sp
-            )
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+                Text(
+                    text = title,
+                    color = YuberaOnBackground,
+                    fontSize = 27.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = subtitle,
+                    color = YuberaMuted,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
