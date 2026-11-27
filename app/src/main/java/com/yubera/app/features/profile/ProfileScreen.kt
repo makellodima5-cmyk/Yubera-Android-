@@ -216,7 +216,7 @@ fun ProfileScreen(
                         onCheckedChange = { enabled -> viewModel.setAnimeInfo(enabled) }
                     )
                     Text(
-                        "Push через Firebase пока не подключён. Сейчас приложение проверяет ваши подписки в фоновом режиме примерно раз в 6 часов; Android может переносить запуск для экономии батареи.",
+                        "Push через Firebase пока не подключён. Сейчас приложение проверяет ваши подписки в фоновом режиме примерно раз в 8 часов; Android может переносить запуск для экономии батареи.",
                         color = YuberaMuted,
                         style = MaterialTheme.typography.bodySmall
                     )
