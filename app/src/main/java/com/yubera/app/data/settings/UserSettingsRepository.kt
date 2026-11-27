@@ -9,4 +9,5 @@ interface UserSettingsRepository {
     suspend fun setNewEpisodeNotificationsEnabled(enabled: Boolean)
     suspend fun setAnimeInfoNotificationsEnabled(enabled: Boolean)
     suspend fun setPushNotificationsEnabled(enabled: Boolean)
+    suspend fun saveHomeRecommendations(ids: List<String>, updatedAtEpochMillis: Long)
 }
