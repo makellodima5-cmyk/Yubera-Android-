@@ -16,6 +16,7 @@ import com.yubera.app.MainActivity
 import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
 import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.CatalogDao
+import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.entity.AnimeEpisodeNotificationEntity
 import com.yubera.app.core.session.ActiveAccountStore
 import com.yubera.app.core.session.SecureTokenStore
@@ -73,7 +74,8 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
             val subscriptions = subscriptionDao.getNotificationSubscriptions(accountId)
             if (subscriptions.isEmpty()) return Result.success()
 
-            val titles = entry.catalogDao().getAll().associate { it.animeId to it.title }
+            val catalogDao = entry.catalogDao()
+            val titles = catalogDao.getAll().associate { it.animeId to it.title }
             val notificationDao = entry.animeEpisodeNotificationDao()
             val api = entry.shikimoriEpisodeUpdatesApi()
             val batches = subscriptions.chunked(MAX_IDS_PER_QUERY)
@@ -99,7 +101,12 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                             val currentTitle = titles[subscription.animeId]
                             val latestTitle = update.displayName
                             if (!currentTitle.isNullOrBlank() && latestTitle.isNotBlank() && currentTitle != latestTitle) {
-                                showInfoNotification(stableInfoId(accountId, subscription.animeId), latestTitle, subscription.animeId)
+                                if (showInfoNotification(stableInfoId(accountId, subscription.animeId), latestTitle, subscription.animeId)) {
+                                    catalogDao.getAll().firstOrNull { it.animeId == subscription.animeId }?.let { current ->
+                                        catalogDao.upsert(current.copy(title = latestTitle))
+                                    }
+                                    titles[subscription.animeId] = latestTitle
+                                }
                             }
                         }
 
