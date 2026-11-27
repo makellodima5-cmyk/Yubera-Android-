@@ -128,7 +128,7 @@ fun PlayerScreen(
             val playerUrl = state.selectedEpisodeUrl
             if (playerUrl != null && KodikLinkPolicy.isTrustedHttpsUrl(playerUrl)) {
                 key(playerUrl, retryNonce) {
-                    PlayerWebView(
+                    KodikEmbedWebView(
                         url = playerUrl,
                         retryNonce = retryNonce,
                         modifier = Modifier.fillMaxWidth().weight(1f),
@@ -156,7 +156,7 @@ fun PlayerScreen(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun PlayerWebView(
+internal fun KodikEmbedWebView(
     url: String,
     retryNonce: Int,
     modifier: Modifier = Modifier,
