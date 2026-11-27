@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +22,9 @@ class DataStoreUserSettingsRepository @Inject constructor(
             notificationsEnabled = preferences[Keys.notificationsEnabled] ?: false,
             newEpisodeNotificationsEnabled = preferences[Keys.newEpisodeNotificationsEnabled] ?: false,
             animeInfoNotificationsEnabled = preferences[Keys.animeInfoNotificationsEnabled] ?: false,
-            pushNotificationsEnabled = preferences[Keys.pushNotificationsEnabled] ?: false
+            pushNotificationsEnabled = preferences[Keys.pushNotificationsEnabled] ?: false,
+            homeRecommendationIds = preferences[Keys.homeRecommendationIds]?.split('|')?.filter(String::isNotBlank).orEmpty(),
+            homeRecommendationsUpdatedAtEpochMillis = preferences[Keys.homeRecommendationsUpdatedAt] ?: 0L
         )
     }
 
@@ -45,11 +48,20 @@ class DataStoreUserSettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.pushNotificationsEnabled] = enabled }
     }
 
+    override suspend fun saveHomeRecommendations(ids: List<String>, updatedAtEpochMillis: Long) {
+        dataStore.edit {
+            it[Keys.homeRecommendationIds] = ids.joinToString("|")
+            it[Keys.homeRecommendationsUpdatedAt] = updatedAtEpochMillis
+        }
+    }
+
     private object Keys {
         val themeMode = stringPreferencesKey("theme_mode")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val newEpisodeNotificationsEnabled = booleanPreferencesKey("new_episode_notifications_enabled")
         val animeInfoNotificationsEnabled = booleanPreferencesKey("anime_info_notifications_enabled")
         val pushNotificationsEnabled = booleanPreferencesKey("push_notifications_enabled")
+        val homeRecommendationIds = stringPreferencesKey("home_recommendation_ids")
+        val homeRecommendationsUpdatedAt = longPreferencesKey("home_recommendations_updated_at")
     }
 }
