@@ -196,6 +196,17 @@ fun ProfileScreen(
                         }
                     )
                     SettingSwitch(
+                        title = "Push-уведомления",
+                        checked = settings.pushNotificationsEnabled,
+                        enabled = settings.notificationsEnabled,
+                        onCheckedChange = { enabled ->
+                            viewModel.setPushNotifications(enabled)
+                            if (enabled && Build.VERSION.SDK_INT >= 33) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        }
+                    )
+                    SettingSwitch(
                         title = "Новые серии",
                         checked = settings.newEpisodeNotificationsEnabled,
                         enabled = settings.notificationsEnabled,
