@@ -1,6 +1,6 @@
 package com.yubera.app.features.home
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable\nimport androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
