@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [main, stage2-completion, stage3-background-updates]
+    branches: [main, stage1-technical-foundation, stage2-completion, stage3-background-updates]
   pull_request:
-    branches: [main]
+    branches: [main, stage1-technical-foundation, stage2-completion, stage3-background-updates]
   workflow_dispatch:
 
 permissions:
@@ -48,6 +48,15 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon clean :app:processDebugResources :app:lintDebug :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest
+
+      - name: Upload release APK (unsigned unless signing secrets are configured)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yubera-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload debug APK
         if: success()
