@@ -1,6 +1,7 @@
 package com.yubera.app.features.home
 
-import androidx.compose.foundation.clickable\nimport androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,11 +16,10 @@ import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
 
 @Composable
-fun HomeSimpleDestination(title:String,description:String,onBack:()->Unit) {
+fun HomeSimpleDestination(title: String, description: String, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-        Text("‹  Назад",color=YuberaPrimary,fontSize=18.sp,modifier=Modifier.padding(bottom=4.dp).clickableForBack(onBack))
+        Text("‹  Назад",color=YuberaPrimary,fontSize=18.sp,modifier=Modifier.padding(bottom=4.dp).clickable(onClick=onBack))
         Text(title,color=YuberaOnBackground,fontSize=26.sp,fontWeight=FontWeight.Bold)
         Text(description,color=YuberaMuted,fontSize=14.sp)
     }
 }
-private fun Modifier.clickableForBack(onBack:()->Unit)=clickable(onClick=onBack)
