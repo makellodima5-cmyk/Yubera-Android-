@@ -102,7 +102,7 @@ class EpisodeNotificationWorker(context: Context, params: WorkerParameters) : Co
                             val latestTitle = update.displayName
                             if (!currentTitle.isNullOrBlank() && latestTitle.isNotBlank() && currentTitle != latestTitle) {
                                 if (showInfoNotification(stableInfoId(accountId, subscription.animeId), latestTitle, subscription.animeId)) {
-                                    catalogDao.getAll().firstOrNull { it.animeId == subscription.animeId }?.let { current ->
+                                    catalogDao.getById(subscription.animeId)?.let { current ->
                                         catalogDao.upsert(current.copy(title = latestTitle))
                                     }
                                     titles[subscription.animeId] = latestTitle
