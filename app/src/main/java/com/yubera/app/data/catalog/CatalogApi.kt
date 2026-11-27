@@ -27,6 +27,9 @@ data class CatalogPageDto(
 )
 
 @Serializable
+@Serializable
+data class AnimeScreenshotDto(val originalUrl: String = "", val previewUrl: String = "")
+
 data class AnimeCatalogDto(
     val id: String,
     val title: String,
@@ -40,6 +43,7 @@ data class AnimeCatalogDto(
     val description: String = "",
     val posterUrl: String? = null,
     val bannerUrl: String? = null,
+    val screenshots: List<AnimeScreenshotDto> = emptyList(),
     val kind: String? = null,
     val ageRating: String? = null,
     val nextEpisodeAt: String? = null,
@@ -51,7 +55,7 @@ data class AnimeCatalogDto(
 ) {
     fun toDomain() = com.yubera.app.core.catalog.AnimeCatalogItem(
         id, title, englishTitle, original, year, episodes, rating, genres, status,
-        description, posterUrl, bannerUrl, kind, ageRating, nextEpisodeAt,
+        description, posterUrl, bannerUrl, screenshots.map { com.yubera.app.core.catalog.AnimeScreenshot(it.originalUrl, it.previewUrl) }, kind, ageRating, nextEpisodeAt,
         episodesAired, airedOn, studios, youtubeTrailerId, kodikAvailable
     )
 }

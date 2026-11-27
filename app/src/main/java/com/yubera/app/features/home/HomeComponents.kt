@@ -126,7 +126,7 @@ fun HomeSectionHeader(title: String, actionLabel: String = "Смотреть в�
 
 @Composable
 private fun AnimeImage(anime: AnimeCatalogItem, modifier: Modifier, preferBanner: Boolean = false) {
-    val image=if(preferBanner) anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
+    val image=if(preferBanner) anime.screenshots.firstOrNull()?.originalUrl?.takeIf(String::isNotBlank) ?: anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
     Box(modifier.background(YuberaSurface),contentAlignment=Alignment.Center) {
         Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)
         if(!image.isNullOrBlank()) AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
