@@ -63,11 +63,13 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal=18.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
-            Spacer(Modifier.weight(1f))
-            YuberaLogo(width=124.dp)
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick=onNotificationsClick) { Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground) }
+        androidx.compose.foundation.layout.Box(
+            Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(horizontal=18.dp,vertical=8.dp)
+        ) {
+            YuberaLogo(modifier=Modifier.align(Alignment.Center),width=124.dp)
+            IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)) {
+                Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)
+            }
         }
         LazyColumn(
             modifier=Modifier.fillMaxSize(),
