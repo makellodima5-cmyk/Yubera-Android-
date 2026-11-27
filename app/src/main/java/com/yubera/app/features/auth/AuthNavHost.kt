@@ -131,3 +131,24 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         Text("зарегистрироваться",color=if(pressed) Color(0xFFFFB16E) else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
+
+@Composable private fun RegistrationScreen(vm:AuthViewModel,onSignIn:()->Unit) {
+    val context=LocalContext.current
+    Box(Modifier.fillMaxSize().background(YuberaBackground)) {
+        Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.38f to Color.Transparent,.58f to YuberaBackground.copy(.46f),.78f to YuberaBackground.copy(.88f),1f to YuberaBackground.copy(.92f)))))
+        Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(10.dp))
+            YuberaLogo(width=154.dp)
+            Spacer(Modifier.weight(1f))
+            Text("Регистрация",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center)
+            Spacer(Modifier.height(28.dp))
+            TelegramActionButton(text="Зарегистрироваться") {
+                try { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(vm.createAuthorizationUrl("register")))) }
+                catch (_:Exception) { /* Existing auth flow handles callback errors; avoid adding a new registration error UI. */ }
+            }
+            RegistrationLink(onSignIn,Modifier.padding(top=10.dp))
+            Spacer(Modifier.weight(1f,fill=true))
+        }
+    }
+}
