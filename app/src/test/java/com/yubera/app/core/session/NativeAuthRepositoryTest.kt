@@ -183,6 +183,53 @@ class NativeAuthRepositoryTest {
         assertNull(profile)
     }
 
+
+    @Test
+    fun unboundSessionWithoutExplicitLegacyMarkerCannotClaimLocalData() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store)
+        val api = FakeApi().apply { sessionResponse = TelegramSessionResponse(authenticated = true, user = TelegramSessionUser(id = "server-user")) }
+
+        val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertNull(store.token)
+        assertNull(activeAccountStore.currentAccountId())
+        assertFalse(activeAccountStore.claimedLegacyRows)
+        assertFalse(api.sessionRequested)
+    }
+
+    @Test
+    fun offlineSessionRestoreRequiresPreviouslyBoundIdentity() = runTest {
+        val store = FakeTokenStore().apply { token = "A".repeat(43) }
+        val activeAccountStore = FakeActiveAccountStore(store, "legacy-unassigned")
+        val api = FakeApi().apply { failSessionRequest = true }
+
+        val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertFalse(activeAccountStore.claimedLegacyRows)
+    }
+
+    @Test
+    fun delayedSessionResponseAfterAccountSwitchCannotRestoreOldIdentity() = runTest {
+        val store = FakeTokenStore().apply {
+            token = "A".repeat(43)
+            storedAccountId = "account-a"
+        }
+        val activeAccountStore = FakeActiveAccountStore(store, "account-a")
+        val api = FakeApi().apply {
+            onSessionRequest = { activeAccountStore.forceAccount("account-b") }
+        }
+
+        val restored = NativeAuthRepository(api, store, activeAccountStore).hasRestorableSession()
+
+        assertFalse(restored)
+        assertEquals("A".repeat(43), store.token)
+        assertEquals("account-a", store.storedAccountId)
+        assertEquals("account-b", activeAccountStore.currentAccountId())
+    }
+
     private class FakeTokenStore : SecureTokenStore {
         var token: String? = null
         var storedAccountId: String? = null
@@ -211,6 +258,7 @@ class NativeAuthRepositoryTest {
         private val mutableAccountId = MutableStateFlow(initialAccountId)
         override val activeAccountId: StateFlow<String?> = mutableAccountId
         var claimedLegacyRows = false
+        fun forceAccount(accountId: String) { mutableAccountId.value = accountId }
 
         override fun currentAccountId(): String? = mutableAccountId.value
 
@@ -228,6 +276,9 @@ class NativeAuthRepositoryTest {
 
     private class FakeApi : TelegramSessionApi {
         var exchangeCalled = false
+        var sessionRequested = false
+        var failSessionRequest = false
+        var onSessionRequest: (() -> Unit)? = null
         var sessionResponse = TelegramSessionResponse(
             authenticated = true,
             user = TelegramSessionUser(id = "user-1")
@@ -246,7 +297,12 @@ class NativeAuthRepositoryTest {
             )
         }
 
-        override suspend fun getSession(authorization: String) = sessionResponse
+        override suspend fun getSession(authorization: String): TelegramSessionResponse {
+            sessionRequested = true
+            onSessionRequest?.invoke()
+            if (failSessionRequest) error("network unavailable")
+            return sessionResponse
+        }
         override suspend fun logout(authorization: String) = TelegramSessionResponse(authenticated = false)
     }
 }
