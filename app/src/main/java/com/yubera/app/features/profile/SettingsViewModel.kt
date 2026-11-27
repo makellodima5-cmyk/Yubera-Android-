@@ -15,6 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 data class AccountProfileUiState(val user:TelegramSessionUser?=null,val isLoading:Boolean=false,val errorMessage:String?=null)
 data class AppUpdateUiState(val isChecking:Boolean=false,val checkResult:AppUpdateCheckResult?=null,val availableUpdate:AppUpdateInfo?=null,val isMandatory:Boolean=false,val downloadWorkInfo:WorkInfo?=null)
