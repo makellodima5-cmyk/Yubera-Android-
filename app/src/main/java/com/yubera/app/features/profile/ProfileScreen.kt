@@ -65,7 +65,6 @@ fun ProfileScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.refreshAccountProfile()
-        viewModel.checkForUpdates()
     }
 
     if (confirmLogout) {
