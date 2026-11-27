@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -106,7 +107,7 @@ private fun AnimeImage(anime:AnimeCatalogItem,modifier:Modifier,preferBanner:Boo
     val image=if(preferBanner) anime.bannerUrl?.takeIf(String::isNotBlank) ?: anime.posterUrl else anime.posterUrl
     Box(modifier.background(YuberaSurface),contentAlignment=Alignment.Center) {
         Text(anime.title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.displayMedium)
-        if(!image.isNullOrBlank()) AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=Modifier.fillMaxWidth().heightIn(min=1.dp),contentScale=ContentScale.Crop)
+        if(!image.isNullOrBlank()) AsyncImage(model=image,contentDescription="Изображение: ${anime.title}",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
     }
 }
 
