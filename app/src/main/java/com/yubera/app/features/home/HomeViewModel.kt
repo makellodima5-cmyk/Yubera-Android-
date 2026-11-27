@@ -8,6 +8,9 @@ import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.domain.library.PersonalLibraryRepository
 import com.yubera.app.data.settings.UserSettingsRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -27,6 +30,7 @@ data class HomeUiState(
     val announcements: List<AnimeCatalogItem> = emptyList(),
     val ongoing: List<AnimeCatalogItem> = emptyList(),
     val randomPick: AnimeCatalogItem? = null,
+    val catalogue: List<AnimeCatalogItem> = emptyList(),
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 )
@@ -55,21 +59,28 @@ class HomeViewModel @Inject constructor(
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        val completedIds = progress.mapNotNull { row ->
-            val anime = byId[row.animeId] ?: return@mapNotNull null
-            val isLastEpisode = anime.episodes > 0 && row.episodeNumber != null && row.episodeNumber >= anime.episodes
-            anime.id.takeIf { isLastEpisode && row.durationMillis > 0L && row.positionMillis >= row.durationMillis * 0.90 }
-        }.toSet()
-        val watchedGenres = progress.filter { it.episodeNumber != null && it.durationMillis > 0L && it.positionMillis >= it.durationMillis * 0.90 }
-            .flatMap { byId[it.animeId]?.genres.orEmpty() }
-            .groupingBy { it.lowercase() }.eachCount()
-        val eligible = catalog.filter { it.id !in completedIds }
+        val completedEpisodeIds = progress.filter { row ->
+            val anime = byId[row.animeId] ?: return@filter false
+            val episode = row.episodeNumber ?: return@filter false
+            val aired = anime.episodesAired ?: anime.episodes
+            aired > 0 && episode >= aired && row.durationMillis > 0L &&
+                row.positionMillis >= (row.durationMillis * 0.90).toLong()
+        }.mapTo(mutableSetOf()) { it.animeId }
+        val watchedGenres = progress.filter { row ->
+            val anime = byId[row.animeId] ?: return@filter false
+            val episode = row.episodeNumber ?: return@filter false
+            val aired = anime.episodesAired ?: anime.episodes
+            aired > 0 && episode <= aired && row.durationMillis > 0L &&
+                row.positionMillis >= (row.durationMillis * 0.90).toLong()
+        }.flatMap { byId[it.animeId]?.genres.orEmpty() }
+            .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
+        val eligible = catalog.filter { it.id !in completedEpisodeIds && it.kodikAvailable != false }
         val computedRecommendations = if (watchedGenres.isEmpty()) {
             eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(5)
         } else {
             eligible.sortedWith(
                 compareByDescending<AnimeCatalogItem> { anime ->
-                    anime.genres.sumOf { watchedGenres[it.lowercase()] ?: 0 } * 10.0 + (anime.rating ?: 0.0)
+                    anime.genres.sumOf { watchedGenres[it.lowercase(Locale.ROOT)] ?: 0 } * 10.0 + (anime.rating ?: 0.0)
                 }.thenBy { it.title }
             ).take(5)
         }
@@ -78,11 +89,7 @@ class HomeViewModel @Inject constructor(
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
             now >= settings.homeRecommendationsUpdatedAtEpochMillis &&
             now - settings.homeRecommendationsUpdatedAtEpochMillis < RECOMMENDATION_REFRESH_MILLIS
-        val selectedIds = if (hasFreshRecommendationSnapshot) {
-            settings.homeRecommendationIds
-        } else {
-            computedRecommendations.map { it.id }
-        }
+        val selectedIds = if (hasFreshRecommendationSnapshot) settings.homeRecommendationIds else computedRecommendations.map { it.id }
         if (!hasFreshRecommendationSnapshot && !recommendationWriteInFlight) {
             recommendationWriteInFlight = true
             viewModelScope.launch {
@@ -122,6 +129,7 @@ class HomeViewModel @Inject constructor(
             announcements = announcements,
             ongoing = ongoing,
             randomPick = randomPool.randomOrNull(),
+            catalogue = catalog,
             isRefreshing = refreshing,
             errorMessage = error
         )
