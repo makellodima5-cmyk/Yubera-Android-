@@ -47,6 +47,14 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
  val count=maxOf(1,(state.items.size+49)/50)
  LaunchedEffect(state.query,state.filters){page=0;grid.scrollToItem(0)}
  LaunchedEffect(page){grid.scrollToItem(0)}
+ LaunchedEffect(resetKey) {
+  if (resetKey > 0) {
+   page = 0
+   panel = false
+   viewModel.resetCatalog()
+   grid.scrollToItem(0)
+  }
+ }
  Column(Modifier.fillMaxSize()){
   Box(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),contentAlignment=Alignment.Center){ YuberaLogo(width=124.dp); IconButton(onClick=onNotificationsClick,modifier=Modifier.align(Alignment.CenterEnd)){Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)} }
   Text("Каталог",Modifier.padding(start=16.dp),color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)

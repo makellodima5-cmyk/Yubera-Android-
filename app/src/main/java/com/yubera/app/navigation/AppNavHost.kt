@@ -3,6 +3,7 @@ package com.yubera.app.navigation
 import android.net.Uri
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -56,7 +57,7 @@ fun AppNavHost(
     }
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
-    var catalogResetNonce by remember { mutableStateOf(0) }
+    var catalogResetNonce by remember { mutableIntStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
         currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true
 
@@ -69,12 +70,18 @@ fun AppNavHost(
                         NavigationBarItem(
                             selected = currentRoute == destination.route || (currentRoute == "support" && destination.route == AppDestination.Home.route),
                             onClick = {
-                                navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (currentRoute == destination.route) {
+                                    if (destination.route == AppDestination.Catalog.route) {
+                                        catalogResetNonce++
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                } else {
+                                    navController.navigate(destination.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             },
                             icon = {
