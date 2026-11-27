@@ -9,10 +9,6 @@ import com.yubera.app.core.database.dao.AnimeLibraryDao
 import com.yubera.app.core.database.dao.AnimeProgressDao
 import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
-import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
-import com.yubera.app.core.database.dao.AnimeLibraryDao
-import com.yubera.app.core.database.dao.AnimeProgressDao
-import com.yubera.app.core.database.dao.AnimeSubscriptionDao
 import com.yubera.app.core.database.dao.CatalogDao
 import com.yubera.app.core.database.dao.NewsDao
 import com.yubera.app.core.database.dao.NewsBookmarkDao
