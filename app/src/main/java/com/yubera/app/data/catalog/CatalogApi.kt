@@ -11,12 +11,7 @@ interface CatalogApi {
     suspend fun getCatalogPage(
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int
-    ): CatalogPageDto
-
-    @Headers("Cache-Control: no-cache")
-    @GET("api/mobile/version")
-    suspend fun getVersionManifest(): AppVersionManifestDto = AppVersionManifestDto.UNAVAILABLE
-}
+    ): CatalogPageDto}
 
 @Serializable
 data class CatalogPageDto(
