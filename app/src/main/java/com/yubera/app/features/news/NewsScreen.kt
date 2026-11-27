@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,34 +22,23 @@ import com.yubera.app.core.ui.theme.*
 @Composable
 fun NewsScreen(
     onArticleClick: (Long) -> Unit,
+    onBookmarksClick: () -> Unit = {},
     viewModel: NewsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
     Column(Modifier.fillMaxSize()) {
-        SectionBannerHeader(title = "Новости", subtitle = "Публикации новостного форума Shikimori")
+        SectionBannerHeader(title = "Новости", subtitle = "Последние публикации об аниме", onNotificationsClick = onBookmarksClick)
 
         Row(
-            Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(bottom = 8.dp),
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(12.dp))
             NewsCategory.entries.forEach { category ->
-                FilterChip(
-                    selected = state.selectedCategory == category,
-                    onClick = { viewModel.selectCategory(category) },
-                    label = { Text(category.title) }
-                )
+                FilterChip(selected = state.selectedCategory == category, onClick = { viewModel.selectCategory(category) }, label = { Text(category.title) })
             }
-            FilterChip(
-                selected = state.showBookmarkedOnly,
-                onClick = { viewModel.showBookmarkedOnly(!state.showBookmarkedOnly) },
-                label = { Text("Закладки") }
-            )
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(12.dp))
         }
 
         OutlinedTextField(
