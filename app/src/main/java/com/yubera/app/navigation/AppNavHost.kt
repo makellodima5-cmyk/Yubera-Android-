@@ -105,7 +105,9 @@ fun AppNavHost(
                         val route = "player/${Uri.encode(id)}" + (episode?.let { "?episode=$it" } ?: "")
                         navController.navigate(route)
                     },
-                    onCollectionsClick = { navController.navigate("collections") },\n                    onNotificationsClick = { navController.navigate("notifications") },\n                    onViewAll = { category -> navController.navigate("home-list/${Uri.encode(category)}") }
+                    onCollectionsClick = { navController.navigate("collections") },
+                    onNotificationsClick = { navController.navigate("notifications") },
+                    onViewAll = { category -> navController.navigate("home-list/${Uri.encode(category)}") }
                 )
             }
             composable(
