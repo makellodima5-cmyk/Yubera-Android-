@@ -2,6 +2,7 @@ package com.yubera.app.features.auth
 
 import android.content.Intent
 import android.net.Uri
+import android.content.ActivityNotFoundException
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -55,7 +56,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         popExitTransition={fadeOut(tween(180))+slideOutHorizontally(tween(180)){it/24}}) {
         composable(AuthRoute.Welcome){WelcomeScreen({nav.navigate(AuthRoute.SignIn){launchSingleTop=true}},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
         composable(AuthRoute.SignIn){AuthSignInScreen(vm,{nav.popBackStack()},{nav.navigate(AuthRoute.Register){launchSingleTop=true}})}
-        composable(AuthRoute.Register){RegistrationScreen{nav.navigate(AuthRoute.SignIn){launchSingleTop=true}}}
+        composable(AuthRoute.Register){RegistrationScreen(vm){nav.navigate(AuthRoute.SignIn){launchSingleTop=true}}}
     }
 }
 
@@ -67,7 +68,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
             Spacer(Modifier.height(2.dp))
             Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(156.dp),contentScale=ContentScale.Fit)
             Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
-                Text("Твой мир аниме в одном приложении",color=Color(0xFFD0CDD4),fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(bottom=22.dp))
+                Text("Твой мир аниме\nв одном приложении",color=Color(0xFFD0CDD4),fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(bottom=22.dp))
                 WelcomeButton("Войти",Icons.Default.Login,true,onSignIn)
                 WelcomeButton("Регистрация",Icons.Default.PersonAdd,false,onRegister,Modifier.padding(top=12.dp))
             }
@@ -102,10 +103,16 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     }
 }
 @Composable private fun TelegramSignInButton(onClick:()->Unit) {
-    val interaction=remember{MutableInteractionSource()}; val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if(pressed).975f else 1f,tween(if(pressed)150 else 190),label="telegramPress")
-    Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(Color(0xFF229ED9),RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        TelegramPlane(Modifier.size(22.dp)); Spacer(Modifier.width(11.dp)); Text("Войти через Telegram",color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
+    TelegramActionButton(text="Войти через Telegram",onClick=onClick)
+}
+@Composable private fun TelegramActionButton(text:String,enabled:Boolean=true,onClick:()->Unit) {
+    val interaction=remember{MutableInteractionSource()}
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if(pressed).975f else 1f,tween(if(pressed)150 else 190),label="telegramActionPress")
+    Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(Color(0xFF229ED9),RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,enabled=enabled,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+        TelegramPlane(Modifier.size(22.dp))
+        Spacer(Modifier.width(11.dp))
+        Text(text,color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
     }
 }
 @Composable private fun TelegramPlane(modifier:Modifier=Modifier) {
@@ -117,35 +124,10 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     }
 }
 @Composable private fun RegistrationLink(onClick:()->Unit,modifier:Modifier=Modifier) {
-    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("зарегистрироваться",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
-    }
-}
-@Composable private fun RegistrationScreen(onSignIn:()->Unit) {
-    Box(Modifier.fillMaxSize().background(YuberaBackground)) {
-        Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.56f),.78f to YuberaBackground.copy(.90f),1f to YuberaBackground))))
-        Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-            Spacer(Modifier.height(10.dp))
-            Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(154.dp),contentScale=ContentScale.Fit)
-            Spacer(Modifier.weight(1f))
-            Text("Регистрация",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center)
-            Spacer(Modifier.height(26.dp))
-            RegistrationTelegramButton()
-            Text("Регистрация пока недоступна: сначала должны быть опубликованы юридические документы проекта.",color=YuberaMuted,fontSize=13.sp,lineHeight=18.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(top=14.dp))
-            RegistrationSignInLink(onSignIn,Modifier.padding(top=12.dp))
-            Spacer(Modifier.weight(1f,fill=true))
-        }
-    }
-}
-@Composable private fun RegistrationTelegramButton() {
-    val shape=RoundedCornerShape(18.dp)
-    Row(Modifier.fillMaxWidth().height(58.dp).background(Color(0xFF229ED9),shape).border(1.dp,Color(0xFF6BC8F1).copy(alpha=.35f),shape).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        TelegramPlane(Modifier.size(22.dp)); Spacer(Modifier.width(11.dp)); Text("Зарегистрироваться",color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
-    }
-}
-@Composable private fun RegistrationSignInLink(onClick:()->Unit,modifier:Modifier=Modifier) {
-    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        Text("Или ",color=YuberaMuted,fontSize=15.sp); Text("войти",color=Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
+    val interaction=remember{MutableInteractionSource()}
+    val pressed by interaction.collectIsPressedAsState()
+    Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+        Text("Или ",color=YuberaMuted,fontSize=15.sp)
+        Text("зарегистрироваться",color=if(pressed) Color(0xFFFFB16E) else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
