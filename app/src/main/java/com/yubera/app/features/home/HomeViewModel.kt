@@ -88,11 +88,14 @@ class HomeViewModel @Inject constructor(
         val rotatedPool = recommendationPool.drop(rotation) + recommendationPool.take(rotation)
         val computedRecommendations = rotatedPool.take(5)
 
-        val hasFreshRecommendationSnapshot = settings.homeRecommendationIds.isNotEmpty() &&
+        val storedRecommendationIds = settings.homeRecommendationIds.filter { id ->
+            byId[id] != null && id !in completedEpisodeIds && byId[id]?.kodikAvailable != false
+        }
+        val hasFreshRecommendationSnapshot = storedRecommendationIds.isNotEmpty() &&
             settings.homeRecommendationsUpdatedAtEpochMillis > 0L &&
             now >= settings.homeRecommendationsUpdatedAtEpochMillis &&
             now - settings.homeRecommendationsUpdatedAtEpochMillis < RECOMMENDATION_REFRESH_MILLIS
-        val selectedIds = if (hasFreshRecommendationSnapshot) settings.homeRecommendationIds else computedRecommendations.map { it.id }
+        val selectedIds = if (hasFreshRecommendationSnapshot) storedRecommendationIds else computedRecommendations.map { it.id }
         if (!hasFreshRecommendationSnapshot && !recommendationWriteInFlight) {
             recommendationWriteInFlight = true
             viewModelScope.launch {
