@@ -85,20 +85,25 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
 }
 
 @Composable private fun AuthSignInScreen(vm:AuthViewModel,onBack:()->Unit,onRegister:()->Unit) {
-    val context=LocalContext.current; var error by remember{mutableStateOf<String?>(null)}
+    val context=LocalContext.current
+    var launching by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.56f),.78f to YuberaBackground.copy(.90f),1f to YuberaBackground))))
         Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-            Spacer(Modifier.height(10.dp)); YuberaLogo(width=154.dp); Spacer(Modifier.weight(1f))
-            Text("Вход",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center); Spacer(Modifier.height(28.dp))
-            TelegramSignInButton {
-                error=null
-                try { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(vm.createAuthorizationUrl("login")))) }
-                catch(e:Exception){error=e.message?: "Не удалось открыть Telegram для входа."}
+            Spacer(Modifier.height(10.dp))
+            Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(140.dp),contentScale=ContentScale.Fit)
+            Spacer(Modifier.weight(1f))
+            Text("Вход",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center)
+            Spacer(Modifier.height(28.dp))
+            TelegramActionButton(text="Войти через Telegram",enabled=!launching) {
+                if(launching) return@TelegramActionButton
+                launching=true
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(vm.createAuthorizationUrl("login")))) }
+                    .onFailure { launching=false }
             }
-            error?.let{Text(it,color=MaterialTheme.colorScheme.error,textAlign=TextAlign.Center,modifier=Modifier.padding(top=12.dp))}
-            RegistrationLink(onRegister,Modifier.padding(top=10.dp)); Spacer(Modifier.weight(1f,fill=true))
+            RegistrationLink(onRegister,Modifier.padding(top=10.dp))
+            Spacer(Modifier.weight(1f,fill=true))
         }
     }
 }
@@ -123,31 +128,34 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         drawPath(fold,Color(0xFFB9E6FA))
     }
 }
-@Composable private fun RegistrationLink(onClick:()->Unit,modifier:Modifier=Modifier) {
+@Composable private fun RegistrationLink(onClick:()->Unit,modifier:Modifier=Modifier,prefix:String="Или ",linkText:String="зарегистрироваться") {
     val interaction=remember{MutableInteractionSource()}
     val pressed by interaction.collectIsPressedAsState()
     Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        Text("Или ",color=YuberaMuted,fontSize=15.sp)
-        Text("зарегистрироваться",color=if(pressed) Color(0xFFFFB16E) else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
+        Text(prefix,color=YuberaMuted,fontSize=15.sp)
+        Text(linkText,color=if(pressed) Color(0xFFFFB16E) else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
 
 @Composable private fun RegistrationScreen(vm:AuthViewModel,onSignIn:()->Unit) {
     val context=LocalContext.current
+    var launching by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.38f to Color.Transparent,.58f to YuberaBackground.copy(.46f),.78f to YuberaBackground.copy(.88f),1f to YuberaBackground.copy(.92f)))))
         Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
             Spacer(Modifier.height(10.dp))
-            YuberaLogo(width=154.dp)
+            Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(140.dp),contentScale=ContentScale.Fit)
             Spacer(Modifier.weight(1f))
             Text("Регистрация",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center)
             Spacer(Modifier.height(28.dp))
-            TelegramActionButton(text="Зарегистрироваться") {
-                try { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(vm.createAuthorizationUrl("register")))) }
-                catch (_:Exception) { /* Existing auth flow handles callback errors; avoid adding a new registration error UI. */ }
+            TelegramActionButton(text="Зарегистрироваться",enabled=!launching) {
+                if(launching) return@TelegramActionButton
+                launching=true
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(vm.createAuthorizationUrl("register")))) }
+                    .onFailure { launching=false }
             }
-            RegistrationLink(onSignIn,Modifier.padding(top=10.dp))
+            RegistrationLink(onSignIn,Modifier.padding(top=10.dp),prefix="Или ",linkText="войти")
             Spacer(Modifier.weight(1f,fill=true))
         }
     }
