@@ -13,9 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.PersonAdd
@@ -90,8 +88,8 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     Box(Modifier.fillMaxSize().background(YuberaBackground)) {
         Image(painterResource(R.drawable.yubera_login_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops=arrayOf(0f to Color.Transparent,.36f to Color.Transparent,.58f to YuberaBackground.copy(.56f),.78f to YuberaBackground.copy(.90f),1f to YuberaBackground))))
-        Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp).verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally) {
-            Spacer(Modifier.height(10.dp)); YuberaLogo(width=154.dp); Spacer(Modifier.weight(1f,fill=true))
+        Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).padding(horizontal=24.dp,vertical=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(10.dp)); YuberaLogo(width=154.dp); Spacer(Modifier.weight(1f))
             Text("Вход",color=Color.White,fontSize=30.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.Center); Spacer(Modifier.height(28.dp))
             TelegramSignInButton {
                 error=null
