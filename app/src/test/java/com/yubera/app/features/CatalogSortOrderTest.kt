@@ -4,6 +4,7 @@ import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.features.catalog.CatalogSortOrder
 import com.yubera.app.features.catalog.filterForCatalog
 import com.yubera.app.features.catalog.sortedForCatalog
+import com.yubera.app.features.catalog.searchPriority
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -45,6 +46,13 @@ class CatalogSortOrderTest {
             listOf("c"),
             items.filterForCatalog(query = "gamma", genre = null, year = 2025, status = "Онгоинг").map { it.id }
         )
+    }
+
+    @Test
+    fun exactTitleSearchGetsHigherPriorityThanUnmatchedTitles() {
+        val query = "Alpha"
+        assertEquals(0, searchPriority(items.first { it.title == query }, query))
+        assertEquals(3, searchPriority(items.first { it.title == "Beta" }, query))
     }
 
     @Test

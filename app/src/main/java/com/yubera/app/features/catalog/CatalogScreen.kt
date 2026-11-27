@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.expandIn
-import androidx.compose.animation.expandOut
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
@@ -141,7 +140,7 @@ fun CatalogScreen(
                     AnimatedVisibility(
                         visible = panel,
                         enter = fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f),
-                        exit = fadeOut() + expandOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f)
+                        exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f)
                     ) {
                         FilterPanel(
                             state,
@@ -191,6 +190,13 @@ private fun FilterPanel(
     var from by remember(f.yearFrom) { mutableStateOf(f.yearFrom?.toString().orEmpty()) }
     var to by remember(f.yearTo) { mutableStateOf(f.yearTo?.toString().orEmpty()) }
     var error by remember { mutableStateOf<String?>(null) }
+    var expandedFilter by remember { mutableStateOf<String?>(null) }
+    val maxYear = (state.years.maxOrNull() ?: 2026) + 1
+    val fromYear = from.toIntOrNull()
+    val toYear = to.toIntOrNull()
+    val fromError = fromYear?.takeIf { it !in 1900..maxYear }?.let { "Год должен быть от 1900 до $maxYear." }
+    val toError = toYear?.takeIf { it !in 1900..maxYear }?.let { "Год должен быть от 1900 до $maxYear." }
+    val rangeError = if (fromYear != null && toYear != null && fromYear > toYear) "Год «От» не может быть больше года «До»." else null
 
     Surface(
         modifier.widthIn(max = 350.dp).fillMaxWidth(),
@@ -208,65 +214,71 @@ private fun FilterPanel(
                 }
             }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SelectFilter("Статус", f.status, state.statuses) { onDraft(f.copy(status = it)) }
-                SelectFilter("Тип", f.kind, state.kinds) { onDraft(f.copy(kind = it)) }
-                SelectFilter("Возраст", f.ageRating, state.ageRatings) { onDraft(f.copy(ageRating = it)) }
-                GenreFilter(state.genres, f.genres) { selected -> onDraft(f.copy(genres = selected)) }
+                SelectFilter("Статус", "status", f.status, state.statuses, expandedFilter, { expandedFilter = it }) { onDraft(f.copy(status = it)) }
+                SelectFilter("Тип", "kind", f.kind, state.kinds, expandedFilter, { expandedFilter = it }) { onDraft(f.copy(kind = it)) }
+                SelectFilter("Возраст", "age", f.ageRating, state.ageRatings, expandedFilter, { expandedFilter = it }) { onDraft(f.copy(ageRating = it)) }
+                GenreFilter(state.genres, f.genres, expandedFilter, { expandedFilter = it }) { selected -> onDraft(f.copy(genres = selected)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedTextField(from, { from = it.filter(Char::isDigit); onDraft(f.copy(yearFrom = from.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год от") }, singleLine = true)
-                    OutlinedTextField(to, { to = it.filter(Char::isDigit); onDraft(f.copy(yearTo = to.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год до") }, singleLine = true)
+                    OutlinedTextField(from, { from = it.filter(Char::isDigit); onDraft(f.copy(yearFrom = from.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год от") }, singleLine = true, isError = fromError != null)
+                    OutlinedTextField(to, { to = it.filter(Char::isDigit); onDraft(f.copy(yearTo = to.toIntOrNull())) }, Modifier.weight(1f), label = { Text("Год до") }, singleLine = true, isError = toError != null)
                 }
+                fromError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                toError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                rangeError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 Text("Минимальная оценка: " + String.format("%.1f", f.minRating), color = YuberaOnBackground)
                 Slider(f.minRating.toFloat(), { onDraft(f.copy(minRating = it.toDouble())) }, valueRange = 0f..10f, steps = 19)
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OutlinedButton(onClick = { onReset(); from = ""; to = ""; error = null }, Modifier.weight(1f)) { Text("Сброс") }
-                Button(onClick = { error = f.validate((state.years.maxOrNull() ?: 2026) + 1); if (error == null) onApply() }, Modifier.weight(1f)) { Text("Применить") }
+                Button(onClick = { error = f.validate(maxYear) ?: fromError ?: toError ?: rangeError; if (error == null) onApply() }, Modifier.weight(1f)) { Text("Применить") }
             }
         }
     }
 }
 
 @Composable
-private fun GenreFilter(options: List<String>, selected: Set<String>, onChange: (Set<String>) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
+private fun GenreFilter(options: List<String>, selected: Set<String>, expandedFilter: String?, setExpandedFilter: (String?) -> Unit, onChange: (Set<String>) -> Unit) {
+    val expanded = expandedFilter == "genres"
     Box {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else "genres") }, modifier = Modifier.fillMaxWidth()) {
             Text(if (selected.isEmpty()) "Жанры: не выбрано" else "Жанры: ${selected.size}", Modifier.weight(1f), maxLines = 1)
             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 300.dp)) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { setExpandedFilter(null) }, modifier = Modifier.heightIn(max = 300.dp)) {
             options.forEach { genre ->
                 DropdownMenuItem(
                     text = { Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(genre in selected, onCheckedChange = null); Text(genre) } },
                     onClick = { onChange(if (genre in selected) selected - genre else selected + genre) }
                 )
             }
-            DropdownMenuItem(text = { Text("Готово") }, onClick = { expanded = false })
+            DropdownMenuItem(text = { Text("Готово") }, onClick = { setExpandedFilter(null) })
         }
     }
 }
 
-@Composable private fun SelectFilter(title:String,value:String?,options:List<String>,onSelect:(String?)->Unit){
- var expanded by remember{mutableStateOf(false)}
- Box{OutlinedButton(onClick={expanded=true},Modifier.fillMaxWidth()){Text(title+": "+(value?: "Не выбрано"),Modifier.weight(1f),maxLines=1);Text("⌄")}
- DropdownMenu(expanded,onDismissRequest={expanded=false},modifier=Modifier.heightIn(max=260.dp)){
- DropdownMenuItem(text={Text("Не выбрано")},onClick={onSelect(null);expanded=false})
- options.forEach{DropdownMenuItem(text={Text(it)},onClick={onSelect(it);expanded=false})}
- }}
+@Composable
+private fun SelectFilter(
+    title: String,
+    key: String,
+    value: String?,
+    options: List<String>,
+    expandedFilter: String?,
+    setExpandedFilter: (String?) -> Unit,
+    onSelect: (String?) -> Unit
+) {
+    val expanded = expandedFilter == key
+    Box {
+        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else key) }, Modifier.fillMaxWidth()) {
+            Text("$title: ${value ?: "Не выбрано"}", Modifier.weight(1f), maxLines = 1)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+        }
+        DropdownMenu(expanded, onDismissRequest = { setExpandedFilter(null) }, modifier = Modifier.heightIn(max = 260.dp)) {
+            DropdownMenuItem(text = { Text("Не выбрано") }, onClick = { onSelect(null); setExpandedFilter(null) })
+            options.forEach { option ->
+                DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); setExpandedFilter(null) })
+            }
+        }
+    }
 }
 
-@Composable
-private fun PaginationNumbers(page:Int,pageCount:Int,onPage:(Int)->Unit) {
- val numbers=when {
-  pageCount<=5 -> (0 until pageCount).toList()
-  page<=1 -> listOf(0,1,2,pageCount-1).distinct()
-  page>=pageCount-2 -> listOf(0,pageCount-3,pageCount-2,pageCount-1).distinct()
-  else -> listOf(0,page-1,page,page+1,pageCount-1).distinct()
- }
- numbers.forEachIndexed { index,number ->
-  if(index>0 && number-numbers[index-1]>1) Text("…",color=YuberaMuted)
-  TextButton(onClick={onPage(number)}) { Text((number+1).toString(),color=if(number==page)YuberaPrimary else YuberaMuted,fontWeight=if(number==page)FontWeight.Bold else FontWeight.Normal) }
- }
-}
