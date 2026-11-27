@@ -15,7 +15,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -43,30 +42,33 @@ class AnimeDetailViewModel @Inject constructor(
     private val sourcesState = MutableStateFlow<List<KodikSource>>(emptyList())
     private val sourcesLoadingState = MutableStateFlow(false)
 
-    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog()) { current, all ->
-        current?.let { selected ->
-            all.filter { candidate ->
-                candidate.id != selected.id && candidate.genres.any(selected.genres::contains)
-            }.sortedByDescending { candidate -> candidate.genres.count(selected.genres::contains) }
-                .take(12)
-        }.orEmpty()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val uiState = combine(
-        catalogRepository.observeAnime(animeId),
+    private val libraryState = combine(
         libraryRepository.favorites,
         libraryRepository.watchLater,
-        libraryRepository.subscriptions,
+        libraryRepository.subscriptions
+    ) { favorites, watchLater, subscriptions ->
+        Triple(favorites, watchLater, subscriptions)
+    }
+
+    private val feedbackState = combine(
         titleLocalRepository.observeRating(animeId),
-        titleLocalRepository.observeComments(animeId),
-        combine(sourcesState, sourcesLoadingState) { sources, loading -> sources to loading }
-    ) { anime: AnimeCatalogItem?,
-        favorites: List<AnimeLibraryEntity>,
-        watchLater: List<AnimeLibraryEntity>,
-        subscriptions: List<AnimeSubscriptionEntity>,
-        rating: Int?,
-        comments: List<LocalTitleComment>,
-        sourcePair: Pair<List<KodikSource>, Boolean> ->
+        titleLocalRepository.observeComments(animeId)
+    ) { rating, comments -> rating to comments }
+
+    private val sourceState = combine(sourcesState, sourcesLoadingState) { sources, loading -> sources to loading }
+
+    private val detailExtras = combine(feedbackState, sourceState) { feedback, sources ->
+        feedback to sources
+    }
+
+    private val detailState = combine(libraryState, detailExtras) { library, extras ->
+        library to extras
+    }
+
+    val uiState = combine(catalogRepository.observeAnime(animeId), detailState) { anime, detail ->
+        val (favorites, watchLater, subscriptions) = detail.first
+        val (feedback, sources) = detail.second
+        val (rating, comments) = feedback
         AnimeDetailUiState(
             anime = anime,
             isFavorite = favorites.any { it.animeId == animeId && it.isFavorite },
@@ -75,10 +77,18 @@ class AnimeDetailViewModel @Inject constructor(
             isLoading = false,
             localRating = rating,
             localComments = comments,
-            availableSources = sourcePair.first,
-            sourcesLoading = sourcePair.second
+            availableSources = sources.first,
+            sourcesLoading = sources.second
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnimeDetailUiState())
+
+    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog()) { current, all ->
+        current?.let { selected ->
+            all.filter { candidate -> candidate.id != selected.id && candidate.genres.any(selected.genres::contains) }
+                .sortedByDescending { candidate -> candidate.genres.count(selected.genres::contains) }
+                .take(12)
+        }.orEmpty()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun toggleFavorite(enabled: Boolean) {
         viewModelScope.launch { libraryRepository.setFavorite(animeId, enabled, System.currentTimeMillis()) }
