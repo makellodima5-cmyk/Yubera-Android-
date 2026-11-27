@@ -120,3 +120,17 @@ fun CatalogScreen(onAnimeClick:(AnimeCatalogItem)->Unit,onNotificationsClick:()-
  options.forEach{DropdownMenuItem(text={Text(it)},onClick={onSelect(it);expanded=false})}
  }}
 }
+
+@Composable
+private fun PaginationNumbers(page:Int,pageCount:Int,onPage:(Int)->Unit) {
+ val numbers=when {
+  pageCount<=5 -> (0 until pageCount).toList()
+  page<=1 -> listOf(0,1,2,pageCount-1).distinct()
+  page>=pageCount-2 -> listOf(0,pageCount-3,pageCount-2,pageCount-1).distinct()
+  else -> listOf(0,page-1,page,page+1,pageCount-1).distinct()
+ }
+ numbers.forEachIndexed { index,number ->
+  if(index>0 && number-numbers[index-1]>1) Text("…",color=YuberaMuted)
+  TextButton(onClick={onPage(number)}) { Text((number+1).toString(),color=if(number==page)YuberaPrimary else YuberaMuted,fontWeight=if(number==page)FontWeight.Bold else FontWeight.Normal) }
+ }
+}
