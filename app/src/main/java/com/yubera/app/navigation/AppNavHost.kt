@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import com.yubera.app.PendingEpisodeRoute
+import com.yubera.app.PendingAnimeRoute
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -36,8 +36,8 @@ import com.yubera.app.features.profile.ProfileScreen
 
 @Composable
 fun AppNavHost(
-    pendingEpisodeRoute: PendingEpisodeRoute? = null,
-    onEpisodeRouteHandled: () -> Unit = {}
+    pendingAnimeRoute: PendingAnimeRoute? = null,
+    onAnimeRouteHandled: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     LaunchedEffect(pendingEpisodeRoute) {
