@@ -44,8 +44,8 @@ class MainActivity : ComponentActivity() {
                         when (state.destination) {
                             StartupDestination.SignIn -> AuthNavHost()
                             StartupDestination.Home -> AppNavHost(
-                                pendingEpisodeRoute = pendingEpisodeRoute,
-                                onEpisodeRouteHandled = { pendingAnimeRoute = null }
+                                pendingAnimeRoute = pendingAnimeRoute,
+                                onAnimeRouteHandled = { pendingAnimeRoute = null }
                             )
                         }
                     }
