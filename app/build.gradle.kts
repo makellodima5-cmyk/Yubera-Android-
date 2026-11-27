@@ -12,8 +12,8 @@ android {
         applicationId = "com.yubera.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = providers.gradleProperty("YUBERA_VERSION_CODE").orNull?.toIntOrNull() ?: 2
+        versionName = providers.gradleProperty("YUBERA_VERSION_NAME").orNull ?: "0.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -22,7 +22,26 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
-    buildTypes { release { isMinifyEnabled = false } }
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            val storePass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val aliasValue = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPass = System.getenv("ANDROID_KEY_PASSWORD")
+            if (!keystorePath.isNullOrBlank() && !storePass.isNullOrBlank() && !aliasValue.isNullOrBlank() && !keyPass.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                storePassword = storePass
+                keyAlias = aliasValue
+                keyPassword = keyPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            if (!System.getenv("ANDROID_KEYSTORE_PATH").isNullOrBlank()) signingConfig = signingConfigs.getByName("release")
+        }
+    }
 }
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
