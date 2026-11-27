@@ -66,7 +66,7 @@ fun StartupScreen(state:StartupUiState,onRetry:()->Unit,onReady:()->Unit) {
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,YuberaBackground.copy(.12f),YuberaBackground.copy(.28f),Color.Transparent))))
         if(!reduceMotion) SplashWaves(wave)
         Column(
-            Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(top=heightFraction(.49f)),
+            Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(top=heightFraction(.36f)),
             horizontalAlignment=Alignment.CenterHorizontally
         ) {
             Image(painterResource(R.drawable.yubera_logo_vertical),"YUBERA",Modifier.width(190.dp),contentScale=ContentScale.Fit)
