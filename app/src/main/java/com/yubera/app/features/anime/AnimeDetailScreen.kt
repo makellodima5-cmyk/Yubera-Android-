@@ -46,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -65,6 +66,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.AnimeScreenshot
+import com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
@@ -90,6 +92,8 @@ fun AnimeDetailScreen(
     var commentDraft by remember { mutableStateOf("") }
     var trailerMode by remember { mutableStateOf(false) }
     var selectedVoiceId by remember { mutableStateOf<String?>(null) }
+    var playerVoiceId by remember { mutableStateOf<String?>(null) }
+    var playerEpisodeNumber by remember { mutableIntStateOf(1) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -155,6 +159,17 @@ fun AnimeDetailScreen(
                 }
 
                 val hasTrailer = !anime.youtubeTrailerId.isNullOrBlank()
+                LaunchedEffect(anime.id, anime.kodikAvailable) {
+                    if (anime.kodikAvailable == true) viewModel.loadSubscriptionSources()
+                }
+                LaunchedEffect(state.availableSources) {
+                    if (playerVoiceId == null) {
+                        state.availableSources.firstOrNull()?.let { source ->
+                            playerVoiceId = source.id
+                            playerEpisodeNumber = source.episodes.firstOrNull()?.number ?: 1
+                        }
+                    }
+                }
                 if (anime.kodikAvailable == true || hasTrailer) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         SectionTitle("Видео")
@@ -164,18 +179,61 @@ fun AnimeDetailScreen(
                                 FilterChip(selected = trailerMode, onClick = { trailerMode = true }, label = { Text("Трейлер") })
                             }
                         }
-                        if (trailerMode && hasTrailer) YoutubeTrailer(anime.youtubeTrailerId.orEmpty())
-                        else if (anime.kodikAvailable == true) {
-                            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)) {
-                                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text("Доступные озвучки", color = YuberaOnBackground, fontWeight = FontWeight.SemiBold)
-                                    if (state.sourcesLoading) CircularProgressIndicator(color = YuberaPrimary, modifier = Modifier.size(24.dp))
-                                    else if (state.availableSources.isEmpty()) Text("Список озвучек доступен в плеере или при настройке подписки.", color = YuberaMuted)
-                                    else state.availableSources.take(6).forEach { Text(it.title, color = YuberaMuted) }
-                                    Button(onClick = onWatchClick, modifier = Modifier.fillMaxWidth()) { Text("Смотреть аниме") }
+                        if (trailerMode && hasTrailer) {
+                            YoutubeTrailer(anime.youtubeTrailerId.orEmpty())
+                        } else if (anime.kodikAvailable == true) {
+                            val selectedSource = state.availableSources.firstOrNull { it.id == playerVoiceId }
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Озвучка", color = YuberaMuted, style = MaterialTheme.typography.labelMedium)
+                                if (state.sourcesLoading && state.availableSources.isEmpty()) {
+                                    Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(color = YuberaPrimary, modifier = Modifier.size(24.dp))
+                                    }
+                                } else {
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 4.dp)) {
+                                        items(state.availableSources, key = { it.id }) { source ->
+                                            FilterChip(
+                                                selected = playerVoiceId == source.id,
+                                                onClick = {
+                                                    playerVoiceId = source.id
+                                                    playerEpisodeNumber = source.episodes.firstOrNull()?.number ?: 1
+                                                },
+                                                label = { Text(source.title, maxLines = 1) }
+                                            )
+                                        }
+                                    }
+                                }
+                                Text("Серия", color = YuberaMuted, style = MaterialTheme.typography.labelMedium)
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 4.dp)) {
+                                    items(selectedSource?.episodes.orEmpty(), key = { it.number }) { episode ->
+                                        FilterChip(
+                                            selected = playerEpisodeNumber == episode.number,
+                                            onClick = { playerEpisodeNumber = episode.number },
+                                            label = { Text(episode.number.toString()) }
+                                        )
+                                    }
+                                }
+                                val selectedEpisode = selectedSource?.episodes?.firstOrNull { it.number == playerEpisodeNumber }
+                                if (selectedEpisode != null && KodikLinkPolicy.isTrustedHttpsUrl(selectedEpisode.link)) {
+                                    KodikEmbedWebView(
+                                        url = selectedEpisode.link,
+                                        retryNonce = 0,
+                                        modifier = Modifier.fillMaxWidth().height(250.dp),
+                                        onFullscreenChanged = {}
+                                    )
+                                } else {
+                                    Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+                                        Text(
+                                            if (state.sourcesLoading) "Загружаем доступные озвучки и серии…" else "Для выбранной озвучки нет доступных серий.",
+                                            color = YuberaMuted,
+                                            modifier = Modifier.fillMaxWidth().padding(18.dp)
+                                        )
+                                    }
                                 }
                             }
-                        } else if (hasTrailer) YoutubeTrailer(anime.youtubeTrailerId.orEmpty())
+                        } else if (hasTrailer) {
+                            YoutubeTrailer(anime.youtubeTrailerId.orEmpty())
+                        }
                     }
                 }
 
