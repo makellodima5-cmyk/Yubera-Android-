@@ -6,6 +6,14 @@ interface ActiveAccountStore {
     val activeAccountId: StateFlow<String?>
     fun currentAccountId(): String?
     suspend fun activateAccount(accountId: String, accessToken: String, claimLegacyRows: Boolean)
+    suspend fun activateAccountIfCurrent(
+        expectedToken: String,
+        expectedStoredAccountId: String?,
+        expectedActiveAccountId: String?,
+        accountId: String,
+        accessToken: String,
+        claimLegacyRows: Boolean
+    ): Boolean
     suspend fun clearActiveAccount()
 
     companion object {
