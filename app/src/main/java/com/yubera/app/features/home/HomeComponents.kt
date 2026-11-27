@@ -77,7 +77,7 @@ fun HomeProgressCard(anime:AnimeCatalogItem,progress:AnimeProgressEntity,onClick
 }
 
 @Composable
-fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit) {
+fun RecommendedCard(anime:AnimeCatalogItem,onClick:()->Unit,modifier:Modifier=Modifier) {
     Box(modifier.width(270.dp).height(218.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick=onClick)) {
         AnimeImage(anime,Modifier.fillMaxWidth().height(218.dp),preferBanner=true)
         Box(Modifier.fillMaxWidth().height(218.dp).background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
