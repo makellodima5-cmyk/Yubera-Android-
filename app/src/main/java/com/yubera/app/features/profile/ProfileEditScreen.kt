@@ -77,13 +77,14 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
         onDismissRequest = { confirmDiscard = false },
         title = { Text("Несохранённые изменения") },
         text = { Text("Выйти без сохранения изменений?") },
-        confirmButton = { TextButton(onClick = { confirmDiscard = false; onBack() }) { Text("Выйти") } },
-        dismissButton = { TextButton(onClick = { confirmDiscard = false }) { Text("Продолжить") } }
+        confirmButton = { val discardInteraction=rememberYuberaPressInteractionSource(); TextButton(onClick = { confirmDiscard = false; onBack() },modifier=Modifier.yuberaPressScale(discardInteraction),interactionSource=discardInteraction) { Text("Выйти") } },
+        dismissButton = { val continueInteraction=rememberYuberaPressInteractionSource(); TextButton(onClick = { confirmDiscard = false },modifier=Modifier.yuberaPressScale(continueInteraction),interactionSource=continueInteraction) { Text("Продолжить") } }
     )
 
     Column(Modifier.fillMaxSize().background(YuberaBackground)) {
         Row(Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).clickable { leave() }, contentAlignment = Alignment.Center) {
+            val backEditInteraction=rememberYuberaPressInteractionSource()
+            Box(Modifier.size(48.dp).yuberaPressScale(backEditInteraction).clickable(interactionSource=backEditInteraction,indication=androidx.compose.foundation.LocalIndication.current,onClick={ leave() }), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.ArrowBack, "Назад", tint = YuberaOnBackground, modifier = Modifier.size(24.dp))
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.yubera_logo_transparent), "YUBERA", Modifier.height(32.dp), contentScale = ContentScale.Fit) }

@@ -81,7 +81,8 @@ fun HomeScreen(
         ) {
             YuberaLogo(modifier=Modifier.align(Alignment.Center),width=124.dp)
             Box(Modifier.align(Alignment.CenterEnd)) {
-                IconButton(onClick=onNotificationsClick) {
+                val homeNotificationInteraction = rememberYuberaPressInteractionSource()
+                IconButton(onClick=onNotificationsClick, modifier=Modifier.yuberaPressScale(homeNotificationInteraction), interactionSource=homeNotificationInteraction) {
                     Icon(Icons.Default.Notifications,contentDescription="Уведомления",tint=YuberaOnBackground)
                 }
                 if (state.unreadNotificationCount > 0) {
@@ -200,7 +201,7 @@ fun HomeCategoryScreen(category:String,onAnimeClick:(String)->Unit,onContinueCli
     }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically) {
-            Text("‹",fontSize=30.sp,color=YuberaPrimary,modifier=Modifier.clickable(onClick=onBack).padding(end=14.dp))
+            val categoryBackInteraction=rememberYuberaPressInteractionSource();Text("‹",fontSize=30.sp,color=YuberaPrimary,modifier=Modifier.yuberaPressScale(categoryBackInteraction).clickable(interactionSource=categoryBackInteraction,indication=androidx.compose.foundation.LocalIndication.current,onClick=onBack).padding(end=14.dp))
             Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
         }
         if(items.isEmpty()) Text("Здесь пока нет тайтлов.",color=YuberaMuted,modifier=Modifier.padding(18.dp))

@@ -65,7 +65,8 @@ fun MyScreen(
         Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             YuberaLogo(Modifier.weight(1f), 124.dp)
             Box {
-                IconButton(onNotificationsClick) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
+                val myNotificationsInteraction = rememberYuberaPressInteractionSource()
+    IconButton(onNotificationsClick, modifier = Modifier.yuberaPressScale(myNotificationsInteraction), interactionSource = myNotificationsInteraction) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
                 if (s.unreadNotificationCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 6.dp).size(8.dp).background(YuberaRed, CircleShape))
             }
         }
