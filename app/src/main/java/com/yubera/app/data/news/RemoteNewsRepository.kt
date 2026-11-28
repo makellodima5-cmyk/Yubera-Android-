@@ -19,8 +19,8 @@ class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi
  override fun observeBookmarkedIds(): Flow<List<Long>> = bookmarkDao.observeBookmarkedIds()
  override fun observeNewsArticle(articleId: Long): Flow<NewsArticleEntity?> = newsDao.observeAll().map { it.firstOrNull { row -> row.id == articleId } }
  override suspend fun setBookmarked(articleId: Long, bookmarked: Boolean) = withContext(Dispatchers.IO) { if (bookmarked) bookmarkDao.save(NewsBookmarkEntity(articleId, System.currentTimeMillis())) else bookmarkDao.remove(articleId) }
- override suspend fun refresh() = withContext(Dispatchers.IO) {
-  val last = newsDao.getLastFetchTime() ?: 0L; val now = System.currentTimeMillis(); if (now - last < FEED_TTL) return@withContext
+ override suspend fun refresh(force: Boolean) = withContext(Dispatchers.IO) {
+  val last = newsDao.getLastFetchTime() ?: 0L; val now = System.currentTimeMillis(); if (!force && now - last < FEED_TTL) return@withContext
   val found = linkedMapOf<Long, ShikimoriTopicDto>()
   for (page in 1..MAX_PAGES) { val items = api.getNews(page = page, limit = PAGE_SIZE); items.filter { it.id > 0 && it.topicTitle.isNotBlank() }.forEach { found[it.id] = it }; if (items.size < PAGE_SIZE) break }
   if (found.isEmpty()) return@withContext
