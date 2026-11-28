@@ -62,45 +62,38 @@ import com.yubera.app.data.settings.ThemeMode
 @Composable
 fun ProfileScreen(
     onEditProfile: () -> Unit = {},
+    onNotifications: () -> Unit = {},
+    onFriends: () -> Unit = {},
+    onLegal: () -> Unit = {},
+    onAbout: () -> Unit = {},
+    onAllCollections: () -> Unit = {},
+    onCollection: (String) -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
-    val accountProfile by viewModel.accountProfile.collectAsState()
-    val communityProfile by viewModel.communityProfile.collectAsState()
-    val appUpdate by viewModel.appUpdate.collectAsState()
+    val account by viewModel.accountProfile.collectAsState()
+    val response by viewModel.communityData.collectAsState()
+    val community = response?.profile
+    val collections = response?.collections.orEmpty()
     val context = LocalContext.current
-    val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-    var confirmLogout by remember { mutableStateOf(false) }
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    var showSettings by remember { mutableStateOf(false) }
+    var showBio by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.refreshAccountProfile()
-    }
+    LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
 
-    if (confirmLogout) {
+    if (showBio && !community?.bio.isNullOrBlank()) {
         AlertDialog(
-            onDismissRequest = { confirmLogout = false },
-            title = { Text("Выйти из аккаунта?") },
-            text = { Text("Сессия будет удалена с устройства. Личная библиотека сохранится отдельно для каждого аккаунта.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmLogout = false
-                    viewModel.logout {
-                        context.startActivity(
-                            Intent(context, MainActivity::class.java)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        )
-                    }
-                }) { Text("Выйти") }
-            },
-            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Отмена") } }
+            onDismissRequest = { showBio = false },
+            title = { Text("Описание профиля") },
+            text = { Text(community?.bio.orEmpty()) },
+            confirmButton = { TextButton(onClick = { showBio = false }) { Text("Закрыть") } }
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        SectionBannerHeader(title = "Профиль", subtitle = "Настройки YUBERA")
+    Column(Modifier.fillMaxSize()) {
+        SectionBannerHeader(title = "Профиль", subtitle = "")
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 14.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -109,165 +102,182 @@ fun ProfileScreen(
                 colors = CardDefaults.cardColors(containerColor = YuberaSurface),
                 shape = RoundedCornerShape(18.dp)
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
-                            val photo = accountProfile.user?.photoUrl
-                            if (!photo.isNullOrBlank()) AsyncImage(model = photo, contentDescription = "Аватар профиля", modifier = Modifier.size(52.dp).clip(androidx.compose.foundation.shape.CircleShape))
-                            else Icon(Icons.Default.AccountCircle, contentDescription = "Аватар профиля", tint = YuberaMuted, modifier = Modifier.size(52.dp))
-                            communityProfile?.avatarFrame?.let { frame -> profileFrameResource(frame)?.let { Image(painterResource(it), contentDescription = "Рамка аватара", modifier = Modifier.fillMaxSize()) } }
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(84.dp), contentAlignment = Alignment.Center) {
+                            val photo = community?.photoUrl ?: account.user?.photoUrl
+                            if (!photo.isNullOrBlank()) AsyncImage(
+                                model = photo, contentDescription = "Аватар профиля",
+                                modifier = Modifier.size(72.dp).clip(CircleShape)
+                            ) else Icon(Icons.Default.AccountCircle, "Аватар профиля", tint = YuberaMuted, modifier = Modifier.size(72.dp))
+                            community?.avatarFrame?.let { frame ->
+                                profileFrameResource(frame)?.let { Image(painterResource(it), "Рамка аватара", Modifier.fillMaxSize()) }
+                            }
                         }
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("Аккаунт YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                            communityProfile?.let { p -> if (p.isPlus) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelMedium); if (p.bio.isNotBlank()) Text(p.bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3); p.xp?.let { Text("Уровень ${it.level} · ${it.title}", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }; p.support?.let { Text("Поддержка: ${it.title}", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) } } ?: Text("Профиль и рамки синхронизируются с Website", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    community?.displayName ?: account.user?.let { listOfNotNull(it.firstName, it.lastName).joinToString(" ").ifBlank { "Пользователь YUBERA" } } ?: "Пользователь YUBERA",
+                                    color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge
+                                )
+                                if (community?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelMedium)
+                            }
+                            community?.username?.takeIf { it.isNotBlank() }?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
+                            val bio = community?.bio.orEmpty()
+                            if (bio.isNotBlank()) {
+                                Text(bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3)
+                                if (bio.length > 110) TextButton(onClick = { showBio = true }, contentPadding = PaddingValues(0.dp)) { Text("Читать полностью", color = YuberaPrimary) }
+                            }
+                        }
+                        TextButton(onClick = onEditProfile) {
+                            Icon(androidx.compose.material.icons.Icons.Default.Edit, "Редактировать профиль")
                         }
                     }
-                    when {
-                        accountProfile.isLoading -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                CircularProgressIndicator()
-                                Text("Загружаем данные Telegram…", color = YuberaMuted)
-                            }
-                        }
-                        accountProfile.user != null -> {
-                            val user = accountProfile.user!!
-                            val displayName = listOfNotNull(
-                                user.firstName?.takeIf(String::isNotBlank),
-                                user.lastName?.takeIf(String::isNotBlank)
-                            ).joinToString(" ").ifBlank { user.username?.let { "@$it" } ?: "Пользователь YUBERA" }
-                            Text(displayName, color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge)
-                            user.username?.takeIf(String::isNotBlank)?.let {
-                                Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodyMedium)
-                            }
-                            formatRegistrationDate(user.createdAt)?.let { date ->
-                                Text("Дата регистрации: $date", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text(
-                                "Вход выполнен через Telegram. Сессия хранится в зашифрованном виде с использованием Android Keystore.",
-                                color = YuberaMuted,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        else -> {
-                            Text(
-                                accountProfile.errorMessage ?: "Данные аккаунта пока не загружены.",
-                                color = YuberaMuted,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Button(onClick = viewModel::refreshAccountProfile) { Text("Повторить") }
+                    if (account.isLoading || (community == null && account.errorMessage == null)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = YuberaPrimary)
+                            Text("Загружаем профиль…", color = YuberaMuted)
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { TextButton(onClick = onEditProfile) { Text("Редактировать профиль") }; TextButton(onClick = { confirmLogout = true }) { Text("Выйти из аккаунта") } }
+                    if (community == null && !account.isLoading) {
+                        Text(account.errorMessage ?: "Не удалось загрузить данные профиля.", color = YuberaMuted)
+                        TextButton(onClick = viewModel::refreshAccountProfile) { Text("Повторить") }
+                    }
                 }
             }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = YuberaSurface),
-                shape = RoundedCornerShape(18.dp)
-            ) {
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Оформление", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ThemeMode.entries.forEach { mode ->
-                            FilterChip(
-                                selected = settings.themeMode == mode,
-                                onClick = { viewModel.setTheme(mode) },
-                                label = {
-                                    Text(
-                                        when (mode) {
-                                            ThemeMode.SYSTEM -> "Системная"
-                                            ThemeMode.LIGHT -> "Светлая"
-                                            ThemeMode.DARK -> "Тёмная"
-                                        }
-                                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("◈", color = YuberaPrimary)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Уровень ${community?.xp?.level ?: "—"}", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                            }
+                            Text(community?.xp?.title ?: "Уровень не загружен", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        androidx.compose.material3.HorizontalDivider(Modifier.height(52.dp).width(1.dp), color = YuberaMuted.copy(alpha = .35f))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("♛", color = YuberaPrimary)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Поддержка проекта", color = YuberaOnBackground, style = MaterialTheme.typography.titleSmall)
+                            }
+                            Text(community?.support?.title ?: "Без статуса", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    val xp = community?.xp
+                    val progress = (xp?.progress ?: 0f).coerceIn(0f, 100f)
+                    LinearProgressIndicator(
+                        progress = { progress / 100f },
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                        color = YuberaPrimary,
+                        trackColor = YuberaMuted.copy(alpha = .22f)
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("${xp?.total ?: 0} XP", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            if (xp?.nextLevel != null) "До ${xp.nextLevel} уровня: ${xp.remaining} XP" else if (xp != null) "Максимальный уровень" else "—",
+                            color = YuberaMuted, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProfileCounter("Подборки", response?.profile?.personalCollections ?: community?.publicCollections ?: 0, Modifier.weight(1f))
+                ProfileCounter("Тайтлы", response?.profile?.personalTitles ?: community?.publicTitles ?: 0, Modifier.weight(1f))
+                ProfileCounter("Лайки", response?.profile?.personalCollectionLikes ?: community?.collectionLikes ?: 0, Modifier.weight(1f))
+            }
+
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Мои подборки", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge)
+                TextButton(onClick = onAllCollections) { Text("Все подборки", color = YuberaPrimary) }
+            }
+            if (collections.isEmpty()) {
+                Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)) {
+                    Text("У вас пока нет подборок.", color = YuberaMuted, modifier = Modifier.padding(16.dp))
+                }
+            } else {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    collections.forEach { collection ->
+                        Card(
+                            modifier = Modifier.width(190.dp).height(220.dp).clickable { onCollection(collection.id) },
+                            colors = CardDefaults.cardColors(containerColor = YuberaSurface),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Text(collection.title, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium, maxLines = 3)
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(if (collection.is_public == 1) "◎ Публичная" else "▣ Приватная", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("${collection.title_count} тайтлов", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+                                        Text("♡ ${collection.like_count}", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall)
+                                    }
                                 }
-                            )
+                            }
                         }
                     }
                 }
             }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = YuberaSurface),
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    SettingSwitch(
-                        title = "Все уведомления",
-                        checked = settings.notificationsEnabled,
-                        onCheckedChange = { enabled ->
-                            viewModel.setNotifications(enabled)
-                            if (enabled && Build.VERSION.SDK_INT >= 33) notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            ProfileDestinationRow("Друзья", "Подписки, подписчики и поиск", onClick = onFriends)
+            ProfileDestinationRow("Правовая информация", "Пользовательское соглашение и политика конфиденциальности", onClick = onLegal)
+            ProfileDestinationRow("О проекте", "Версия ${context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()}", onClick = onAbout)
+
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    TextButton(onClick = { showSettings = !showSettings }) {
+                        Text(if (showSettings) "Скрыть настройки приложения" else "Настройки приложения", color = YuberaOnBackground)
+                    }
+                    if (showSettings) {
+                        Text("Оформление", color = YuberaOnBackground)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ThemeMode.entries.forEach { mode ->
+                                FilterChip(selected = settings.themeMode == mode, onClick = { viewModel.setTheme(mode) }, label = {
+                                    Text(when (mode) { ThemeMode.SYSTEM -> "Системная"; ThemeMode.LIGHT -> "Светлая"; ThemeMode.DARK -> "Тёмная" })
+                                })
+                            }
                         }
-                    )
-                    SettingSwitch(
-                        title = "Push-уведомления (не подключены)",
-                        checked = false,
-                        enabled = false,
-                        onCheckedChange = { }
-                    )
-                    SettingSwitch(
-                        title = "Новые серии",
-                        checked = settings.newEpisodeNotificationsEnabled,
-                        enabled = settings.notificationsEnabled,
-                        onCheckedChange = { enabled -> viewModel.setNewEpisodes(enabled) }
-                    )
-                    SettingSwitch(
-                        title = "Изменения отслеживаемых тайтлов",
-                        checked = settings.animeInfoNotificationsEnabled,
-                        enabled = settings.notificationsEnabled,
-                        onCheckedChange = { enabled -> viewModel.setAnimeInfo(enabled) }
-                    )
-                    Text(
-                        "Push через Firebase пока не подключён. Сейчас приложение проверяет ваши подписки в фоновом режиме примерно раз в 8 часов; Android может переносить запуск для экономии батареи.",
-                        color = YuberaMuted,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                        SettingSwitch("Все уведомления", settings.notificationsEnabled, onCheckedChange = viewModel::setNotifications)
+                        SettingSwitch("Новые серии", settings.newEpisodeNotificationsEnabled, onCheckedChange = viewModel::setNewEpisodes)
+                        SettingSwitch("Изменения тайтлов", settings.animeInfoNotificationsEnabled, onCheckedChange = viewModel::setAnimeInfo)
+                        TextButton(onClick = { showSettings = false; onNotifications() }) { Text("Уведомления", color = YuberaPrimary) }
+                    }
                 }
             }
 
-            Card(modifier=Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(18.dp)){
-                Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
-                    Text("Обновления YUBERA",color=YuberaOnBackground,style=MaterialTheme.typography.titleMedium)
-                    when(val result=appUpdate.checkResult){
-                        is com.yubera.app.features.updates.AppUpdateCheckResult.Available->{Text("Доступна версия ${result.update.versionName} (код ${result.update.versionCode}).",color=YuberaOnBackground);if(result.isMandatory)Text("Это обязательное обновление.",color=YuberaOnBackground);result.update.releaseNotes.takeIf{it.isNotBlank()}?.let{Text(it,color=YuberaMuted,style=MaterialTheme.typography.bodySmall)}}
-                        com.yubera.app.features.updates.AppUpdateCheckResult.UpToDate->Text("Установлена актуальная версия.",color=YuberaMuted)
-                        is com.yubera.app.features.updates.AppUpdateCheckResult.Failed->Text(result.reason,color=YuberaMuted)
-                        null->appUpdate.availableUpdate?.let{Text("Доступна версия ${it.versionName} (код ${it.versionCode}).",color=YuberaOnBackground)}?:Text("Проверка обновлений ещё не выполнена.",color=YuberaMuted)
-                    }
-                    when(appUpdate.downloadWorkInfo?.state){
-                        androidx.work.WorkInfo.State.ENQUEUED->Text("Загрузка ожидает подключения к сети.",color=YuberaMuted)
-                        androidx.work.WorkInfo.State.RUNNING->{val progress=appUpdate.downloadWorkInfo?.progress?.getInt("progress",-1)?:-1;Text(if(progress>=0)"Скачивание: $progress%" else "Скачивание APK…",color=YuberaMuted)}
-                        androidx.work.WorkInfo.State.SUCCEEDED->Text("APK скачан и проверен. Установка требует подтверждения Android.",color=YuberaMuted)
-                        androidx.work.WorkInfo.State.FAILED->Text("Не удалось скачать или проверить APK.",color=YuberaMuted)
-                        androidx.work.WorkInfo.State.CANCELLED->Text("Загрузка отменена.",color=YuberaMuted)
-                        else->Unit
-                    }
-                    Button(onClick=viewModel::checkForUpdates,enabled=!appUpdate.isChecking){Text(if(appUpdate.isChecking)"Проверяем…" else "Проверить обновления")}
-                    if(appUpdate.availableUpdate!=null&&appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick=viewModel::downloadUpdate,enabled=appUpdate.downloadWorkInfo?.state!=androidx.work.WorkInfo.State.RUNNING){Text(if(appUpdate.isMandatory)"Скачать обязательное обновление" else "Скачать обновление")}
-                    if(appUpdate.availableUpdate!=null&&appUpdate.downloadWorkInfo?.state==androidx.work.WorkInfo.State.SUCCEEDED)Button(onClick={val install=viewModel.createInstallIntent();if(install!=null)runCatching{context.startActivity(install)}}){Text("Установить / разрешить установку")}
-                }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { viewModel.logout { } }) { Text("Выйти из аккаунта", color = YuberaMuted) }
             }
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = YuberaSurface),
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("О приложении", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("YUBERA Android ${versionName}", color = YuberaOnBackground)
-                    Text("Язык интерфейса: русский", color = YuberaMuted)
-                    Text("Пользовательское соглашение · скоро", color = YuberaMuted)
-                    Text("Политика конфиденциальности · скоро", color = YuberaMuted)
-                }
+        }
+    }
+}
+
+@Composable
+private fun ProfileCounter(label: String, value: Int, modifier: Modifier = Modifier) {
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+        Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value.toString(), color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge)
+            Text(label, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun ProfileDestinationRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = YuberaSurface),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             }
-            Spacer(Modifier.height(8.dp))
+            Text("›", color = YuberaPrimary, style = MaterialTheme.typography.titleLarge)
         }
     }
 }
