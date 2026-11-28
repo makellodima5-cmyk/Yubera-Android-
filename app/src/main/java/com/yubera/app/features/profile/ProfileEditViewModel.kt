@@ -17,6 +17,7 @@ data class ProfileEditState(
     val bio: String = "",
     val visibility: String = "private",
     val selectedFrame: String? = null,
+    val selectedAvatarUri: String? = null,
     val category: String = "support",
     val loading: Boolean = true,
     val saving: Boolean = false,
@@ -65,6 +66,7 @@ class ProfileEditViewModel @Inject constructor(
     fun setVisibility(value: String) = mutable.value.let { mutable.value = it.copy(visibility = value) }
     fun setCategory(value: String) = mutable.value.let { mutable.value = it.copy(category = value) }
     fun setFrame(value: String?) = mutable.value.let { mutable.value = it.copy(selectedFrame = value) }
+    fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value) }
 
     fun save(onSaved: () -> Unit) {
         val s = mutable.value
