@@ -194,7 +194,7 @@ fun CatalogScreen(
  Box(Modifier.fillMaxWidth().aspectRatio(.68f).clip(RoundedCornerShape(14.dp)).background(YuberaSurface)){
  if(!anime.posterUrl.isNullOrBlank())AsyncImage(anime.posterUrl,"Постер: "+anime.title,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
  else Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(anime.title.take(1),color=YuberaPrimary)}
- anime.rating?.let{Text("★ "+String.format("%.1f",it),Modifier.align(Alignment.TopStart).padding(5.dp).background(Color.Black.copy(.75f),RoundedCornerShape(6.dp)).padding(5.dp),color=Color(0xFFFFB547))}
+ anime.rating?.let{Text("★ "+String.format("%.1f",it),Modifier.align(Alignment.TopStart).padding(5.dp).background(Color.Black.copy(.75f),RoundedCornerShape(6.dp)).padding(5.dp),color=YuberaGold)}
  anime.ageRating?.let{Text(it,Modifier.align(Alignment.TopEnd).padding(5.dp).background(Color.Black.copy(.75f),RoundedCornerShape(6.dp)).padding(5.dp),color=Color.White)}
  }
  Text(anime.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis)
