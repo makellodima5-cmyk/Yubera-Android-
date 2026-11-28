@@ -3,6 +3,7 @@ package com.yubera.app.data.news
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ShikimoriNewsApi {
@@ -13,6 +14,9 @@ interface ShikimoriNewsApi {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 30
     ): List<ShikimoriTopicDto>
+
+    @GET("api/topics/{id}")
+    suspend fun getTopic(@Path("id") id: Long): ShikimoriTopicDto
 }
 
 @Serializable
@@ -23,16 +27,16 @@ data class ShikimoriTopicDto(
     @SerialName("created_at") val createdAt: String,
     @SerialName("comments_count") val commentsCount: Int? = null,
     val user: ShikimoriUserDto? = null,
-    val linked: ShikimoriLinkedDto? = null
+    val linked: ShikimoriLinkedDto? = null,
+    @SerialName("linked_id") val linkedId: Long? = null
 )
 
 @Serializable
-data class ShikimoriUserDto(
-    val nickname: String? = null
-)
+data class ShikimoriUserDto(val nickname: String? = null)
 
 @Serializable
 data class ShikimoriLinkedDto(
+    val id: Long? = null,
     val name: String? = null,
     val russian: String? = null
 )
