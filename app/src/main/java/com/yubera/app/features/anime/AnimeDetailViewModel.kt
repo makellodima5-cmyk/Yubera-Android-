@@ -5,22 +5,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
-import com.yubera.app.core.database.entity.AnimeLibraryEntity\nimport com.yubera.app.core.database.entity.AnimeProgressEntity
+import com.yubera.app.core.database.entity.AnimeLibraryEntity
+import com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
-import com.yubera.app.core.domain.library.PersonalLibraryRepository\nimport com.yubera.app.core.domain.library.EpisodeCompletionPolicy
-import com.yubera.app.core.player.KodikRepository\nimport com.yubera.app.core.player.KodikLinkPolicy
+import com.yubera.app.core.domain.library.PersonalLibraryRepository
+import com.yubera.app.core.domain.library.EpisodeCompletionPolicy
+import com.yubera.app.core.player.KodikRepository
+import com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.core.player.KodikSource
 import com.yubera.app.data.anime.AnimeCommentDto
 import com.yubera.app.data.anime.AnimeCommentReplyPageResponse
 import com.yubera.app.data.anime.AnimeCommentThreadDto
 import com.yubera.app.data.anime.AnimeRatingResponse
-import com.yubera.app.data.anime.AnimeSocialRepository\nimport com.yubera.app.data.anime.ShikimoriRelatedRepository
+import com.yubera.app.data.anime.AnimeSocialRepository
+import com.yubera.app.data.anime.ShikimoriRelatedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -47,9 +52,17 @@ data class AnimeDetailUiState(
     val isInWatchLater: Boolean = false,
     val isSubscribed: Boolean = false,
     val isLoading: Boolean = true,
+    val progress: AnimeProgressEntity? = null,
     val social: AnimeSocialUiState = AnimeSocialUiState(),
     val availableSources: List<KodikSource> = emptyList(),
     val sourcesLoading: Boolean = false
+)
+
+private data class AnimeDetailLibrarySnapshot(
+    val favorites: List<AnimeLibraryEntity>,
+    val watchLater: List<AnimeLibraryEntity>,
+    val subscriptions: List<AnimeSubscriptionEntity>,
+    val progress: List<AnimeProgressEntity>
 )
 
 @HiltViewModel
@@ -58,51 +71,57 @@ class AnimeDetailViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val libraryRepository: PersonalLibraryRepository,
     private val socialRepository: AnimeSocialRepository,
-    private val kodikRepository: KodikRepository
+    private val kodikRepository: KodikRepository,
+    private val relatedRepository: ShikimoriRelatedRepository
 ) : ViewModel() {
     private val animeId: String = savedStateHandle.get<String>("animeId").orEmpty()
     private val sourcesState = MutableStateFlow<List<KodikSource>>(emptyList())
     private val sourcesLoadingState = MutableStateFlow(false)
-    private val relatedIdsState = MutableStateFlow<List<String>>(emptyList())\n    private val socialState = MutableStateFlow(
+    private val relatedIdsState = MutableStateFlow<List<String>>(emptyList())
+    private val socialState = MutableStateFlow(
         AnimeSocialUiState(hasLocalSession = socialRepository.hasSession())
     )
 
     private val libraryState = combine(
         libraryRepository.favorites,
         libraryRepository.watchLater,
-        libraryRepository.subscriptions
-    ) { favorites, watchLater, subscriptions ->
-        Triple(favorites, watchLater, subscriptions)
+        libraryRepository.subscriptions,
+        libraryRepository.progress
+    ) { favorites, watchLater, subscriptions, progress ->
+        AnimeDetailLibrarySnapshot(favorites, watchLater, subscriptions, progress)
     }
 
     private val sourceState = combine(sourcesState, sourcesLoadingState) { sources, loading ->
         sources to loading
     }
-
     private val detailExtras = combine(sourceState, socialState) { sources, social ->
         sources to social
     }
-
     private val detailState = combine(libraryState, detailExtras) { library, extras ->
         library to extras
     }
 
     val uiState = combine(catalogRepository.observeAnime(animeId), detailState) { anime, detail ->
-        val (favorites, watchLater, subscriptions) = detail.first
+        val library = detail.first
         val (sources, social) = detail.second
         AnimeDetailUiState(
             anime = anime,
-            isFavorite = favorites.any { it.animeId == animeId && it.isFavorite },
-            isInWatchLater = watchLater.any { it.animeId == animeId && it.isInWatchLater },
-            isSubscribed = subscriptions.any { it.animeId == animeId },
+            isFavorite = library.favorites.any { it.animeId == animeId && it.isFavorite },
+            isInWatchLater = library.watchLater.any { it.animeId == animeId && it.isInWatchLater },
+            isSubscribed = library.subscriptions.any { it.animeId == animeId },
             isLoading = false,
+            progress = library.progress.firstOrNull { it.animeId == animeId },
             social = social,
             availableSources = sources.first,
             sourcesLoading = sources.second
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnimeDetailUiState())
 
-    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog(), relatedIdsState) { current, all, ids ->
+    val relatedAnime = combine(
+        catalogRepository.observeAnime(animeId),
+        catalogRepository.observeCatalog(),
+        relatedIdsState
+    ) { current, all, ids ->
         AnimeRelatedPolicy.select(current, all, ids)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
