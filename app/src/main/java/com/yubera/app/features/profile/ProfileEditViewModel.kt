@@ -93,15 +93,16 @@ class ProfileEditViewModel @Inject constructor(
     fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value, selectedAvatarAnimeId = null) }
 
     private suspend fun compressAvatar(uri: Uri): String? = withContext(Dispatchers.IO) {
+        var source: Bitmap? = null
+        var cropped: Bitmap? = null
+        var resized: Bitmap? = null
         try {
-            val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
+            source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
             val side = minOf(source.width, source.height)
             val x = (source.width - side) / 2
             val y = (source.height - side) / 2
-            val cropped = Bitmap.createBitmap(source, x, y, side, side)
-            val resized = Bitmap.createScaledBitmap(cropped, 512, 512, true)
-            if (cropped !== source) cropped.recycle()
-            if (source !== resized) source.recycle()
+            cropped = if (side == source.width && side == source.height) source else Bitmap.createBitmap(source, x, y, side, side)
+            resized = if (cropped.width == 512 && cropped.height == 512) cropped else Bitmap.createScaledBitmap(cropped, 512, 512, true)
             var quality = 82
             var bytes: ByteArray
             do {
@@ -110,10 +111,14 @@ class ProfileEditViewModel @Inject constructor(
                 bytes = output.toByteArray()
                 quality -= 7
             } while (bytes.size > 140_000 && quality >= 45)
-            resized.recycle()
             if (bytes.size > 150_000) return@withContext null
             "data:image/jpeg;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
         } catch (_: Exception) { null }
+        finally {
+            if (resized != null && resized !== cropped && resized !== source) resized.recycle()
+            if (cropped != null && cropped !== source && cropped !== resized) cropped.recycle()
+            if (source != null && source !== cropped && source !== resized) source.recycle()
+        }
     }
 
     fun save(onSaved: () -> Unit) {
