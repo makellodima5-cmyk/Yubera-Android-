@@ -36,7 +36,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
 
-private data class FrameChoice(val id: String, val title: String, val resource: Int?, val requirement: String)
+internal data class FrameChoice(val id: String, val title: String, val resource: Int?, val requirement: String)
 private val supportFrames = listOf(
     FrameChoice("YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp","Союзник",R.drawable.yubera_contribution_avatar_frame_01_soyuznik,"Поддержка проекта"),
     FrameChoice("YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp","Сторонник",R.drawable.yubera_contribution_avatar_frame_02_storonnik,"Поддержка проекта"),
@@ -51,7 +51,7 @@ private val plusFrames = listOf(
     FrameChoice("YUBERA_Plus_Avatar_Frame_04_Celestial_Archive.webp","Celestial Archive",R.drawable.yubera_plus_avatar_frame_04_celestial_archive,"YUBERA Plus"),
     FrameChoice("YUBERA_Plus_Avatar_Frame_05_Cyberpunk_Neon.webp","Cyberpunk Neon",R.drawable.yubera_plus_avatar_frame_05_cyberpunk_neon,"YUBERA Plus")
 )
-private val adminFrames = (1..8).map { n ->
+internal val adminFrames = (1..8).map { n ->
     val res = when(n) {
         1 -> R.drawable.admin_frame_01; 2 -> R.drawable.admin_frame_02; 3 -> R.drawable.admin_frame_03; 4 -> R.drawable.admin_frame_04
         5 -> R.drawable.admin_frame_05; 6 -> R.drawable.admin_frame_06; 7 -> R.drawable.admin_frame_07; else -> R.drawable.admin_frame_08
