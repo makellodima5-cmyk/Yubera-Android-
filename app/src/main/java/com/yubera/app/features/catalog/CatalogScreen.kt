@@ -191,9 +191,9 @@ fun CatalogScreen(
         }
         if (state.items.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { page = (page - 1).coerceAtLeast(0) }, enabled = page > 0) { Text("‹") }
+                TextButton(onClick = { page = (page - 1).coerceAtLeast(0); panel = false; pendingScrollToTop = true }, enabled = page > 0) { Text("‹") }
                 PaginationNumbers(page, count) { selected -> page = selected; panel = false; pendingScrollToTop = true }
-                TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1) }, enabled = page < count - 1) { Text("›") }
+                TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1); panel = false; pendingScrollToTop = true }, enabled = page < count - 1) { Text("›") }
             }
         }
     }
