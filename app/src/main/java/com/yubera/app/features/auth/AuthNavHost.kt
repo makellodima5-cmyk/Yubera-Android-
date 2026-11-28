@@ -82,7 +82,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
 @Composable private fun WelcomeButton(text:String,icon:androidx.compose.ui.graphics.vector.ImageVector,primary:Boolean,onClick:()->Unit,modifier:Modifier=Modifier) {
     val motionAllowed=rememberMotionAllowed(); val shape=RoundedCornerShape(22.dp); val interaction=remember{MutableInteractionSource()}; val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if(pressed && motionAllowed).975f else 1f,tween(if(pressed)150 else 190),label="welcomePress")
-    Box(modifier.fillMaxWidth().height(58.dp).scale(scale).background(if(primary)Brush.horizontalGradient(listOf(YuberaPrimary,YuberaAccent)) else Brush.linearGradient(listOf(YuberaSurface.copy(alpha = 0.75f),Color(0xC015141C))),shape).border(1.dp,if(primary)YuberaAccent.copy(.7f) else YuberaBorder,shape).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),contentAlignment=Alignment.Center) {
+    Box(modifier.fillMaxWidth().height(58.dp).scale(scale).background(if(primary)Brush.horizontalGradient(listOf(YuberaPrimary,YuberaAccent)) else Brush.linearGradient(listOf(YuberaSurface.copy(alpha = 0.75f),YuberaSurface.copy(alpha = 0.75f))),shape).border(1.dp,if(primary)YuberaAccent.copy(.7f) else YuberaBorder,shape).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),contentAlignment=Alignment.Center) {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) { Icon(icon,null,tint=Color.White,modifier=Modifier.size(21.dp)); Spacer(Modifier.width(10.dp)); Text(text,color=Color.White,fontSize=18.sp,fontWeight=FontWeight.SemiBold) }
     }
 }
@@ -136,7 +136,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     val pressed by interaction.collectIsPressedAsState()
     Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         Text(prefix,color=YuberaMuted,fontSize=15.sp)
-        Text(linkText,color=if(pressed) YuberaAccent else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
+        Text(linkText,color=if(pressed) YuberaAccent else YuberaPrimary,fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
 
