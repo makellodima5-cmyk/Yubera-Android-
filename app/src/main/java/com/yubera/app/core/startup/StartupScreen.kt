@@ -33,6 +33,9 @@ import com.yubera.app.R
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaPrimary
+import com.yubera.app.core.ui.theme.YuberaWavePrimary
+import com.yubera.app.core.ui.theme.YuberaWaveGold
+import com.yubera.app.core.ui.theme.YuberaWaveShadow
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 
