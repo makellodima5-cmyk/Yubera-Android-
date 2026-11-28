@@ -6,6 +6,21 @@ import com.yubera.app.core.session.NativeAuthRepository
 import com.yubera.app.data.auth.YuberaProfileApi
 import com.yubera.app.data.auth.YuberaCommunityProfile
 import com.yubera.app.data.auth.YuberaProfileUpdateRequest
+import com.yubera.app.core.catalog.CatalogRepository
+import com.yubera.app.core.catalog.AnimeCatalogItem
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.net.Uri
+import android.util.Base64
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +33,8 @@ data class ProfileEditState(
     val visibility: String = "private",
     val selectedFrame: String? = null,
     val selectedAvatarUri: String? = null,
+    val selectedAvatarAnimeId: String? = null,
+    val customName: String = "",
     val category: String = "support",
     val loading: Boolean = true,
     val saving: Boolean = false,
@@ -28,10 +45,13 @@ data class ProfileEditState(
 @HiltViewModel
 class ProfileEditViewModel @Inject constructor(
     private val api: YuberaProfileApi,
-    private val auth: NativeAuthRepository
+    private val auth: NativeAuthRepository,
+    private val catalogRepository: CatalogRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val mutable = MutableStateFlow(ProfileEditState())
     val state = mutable.asStateFlow()
+    val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun load() {
         if (!mutable.value.loading) return
@@ -51,6 +71,7 @@ class ProfileEditViewModel @Inject constructor(
                 mutable.value = ProfileEditState(
                     profile = p,
                     bio = p.bio,
+                    customName = p.customName?.takeIf { it.isNotBlank() } ?: p.displayName,
                     visibility = p.visibility,
                     selectedFrame = p.avatarFrame,
                     category = if (p.isAdmin) "admin" else "support",
@@ -63,10 +84,36 @@ class ProfileEditViewModel @Inject constructor(
     }
 
     fun setBio(value: String) = mutable.value.let { mutable.value = it.copy(bio = value.take(250)) }
+    fun setCustomName(value: String) = mutable.value.let { mutable.value = it.copy(customName = value.take(20)) }
+    fun selectCatalogAvatar(animeId: String) = mutable.value.let { mutable.value = it.copy(selectedAvatarAnimeId = animeId, selectedAvatarUri = null) }
     fun setVisibility(value: String) = mutable.value.let { mutable.value = it.copy(visibility = value) }
     fun setCategory(value: String) = mutable.value.let { mutable.value = it.copy(category = value) }
     fun setFrame(value: String?) = mutable.value.let { mutable.value = it.copy(selectedFrame = value) }
     fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value) }
+
+    private suspend fun compressAvatar(uri: Uri): String? = withContext(Dispatchers.IO) {
+        try {
+            val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
+            val side = minOf(source.width, source.height)
+            val x = (source.width - side) / 2
+            val y = (source.height - side) / 2
+            val cropped = Bitmap.createBitmap(source, x, y, side, side)
+            val resized = Bitmap.createScaledBitmap(cropped, 512, 512, true)
+            if (cropped !== source) cropped.recycle()
+            if (source !== resized) source.recycle()
+            var quality = 82
+            var bytes: ByteArray
+            do {
+                val output = java.io.ByteArrayOutputStream()
+                resized.compress(Bitmap.CompressFormat.JPEG, quality, output)
+                bytes = output.toByteArray()
+                quality -= 7
+            } while (bytes.size > 140_000 && quality >= 45)
+            resized.recycle()
+            if (bytes.size > 150_000) return@withContext null
+            "data:image/jpeg;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+        } catch (_: Exception) { null }
+    }
 
     fun save(onSaved: () -> Unit) {
         val s = mutable.value
@@ -79,7 +126,7 @@ class ProfileEditViewModel @Inject constructor(
                 return@launch
             }
             try {
-                val result = api.updateProfile(authorization, YuberaProfileUpdateRequest(bio = s.bio, visibility = s.visibility, avatarFrame = s.selectedFrame))
+                val result = api.updateProfile(authorization, YuberaProfileUpdateRequest(bio = s.bio, visibility = s.visibility, avatarFrame = s.selectedFrame, customName = s.customName.trim(), avatarAnimeId = s.selectedAvatarAnimeId, avatarDataUrl = s.selectedAvatarUri?.let { compressAvatar(Uri.parse(it)) }))
                 if (!result.ok) throw IllegalStateException(result.error ?: "Не удалось сохранить профиль.")
                 mutable.value = mutable.value.copy(saving = false, saved = true)
                 onSaved()
