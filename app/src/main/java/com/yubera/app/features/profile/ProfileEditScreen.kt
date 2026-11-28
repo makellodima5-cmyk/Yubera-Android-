@@ -203,12 +203,12 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
 
 @Composable
 private fun FrameOption(id: String?, title: String, resource: Int?, requirement: String, available: Boolean, selected: Boolean, onClick: () -> Unit) {
-    Column(Modifier.width(112.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF202127)).clickable(enabled = available, onClick = onClick).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    Column(Modifier.width(112.dp).clip(RoundedCornerShape(14.dp)).background(YuberaSurfaceElevated).clickable(enabled = available, onClick = onClick).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(64.dp))
             if (resource != null) Image(painterResource(resource), null, Modifier.fillMaxSize())
             if (!available) Icon(Icons.Default.Lock, null, tint = YuberaGold, modifier = Modifier.align(Alignment.TopEnd).size(18.dp).background(YuberaSurface, CircleShape))
-            if (selected) Icon(Icons.Default.Check, null, tint = YuberaPrimary, modifier = Modifier.align(Alignment.BottomEnd).size(22.dp).background(Color(0xFF16171C), CircleShape))
+            if (selected) Icon(Icons.Default.Check, null, tint = YuberaPrimary, modifier = Modifier.align(Alignment.BottomEnd).size(22.dp).background(YuberaSurface, CircleShape))
         }
         Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.labelMedium, maxLines = 2)
         if (requirement.isNotBlank()) Text(requirement, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 2)
