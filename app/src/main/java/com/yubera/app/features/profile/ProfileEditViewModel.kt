@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+private fun sanitizeProfileName(value: String): String = value.filter { it.isLetterOrDigit() || it == '_' || it == '.' || it == '-' }.take(20)
+
 data class ProfileEditState(
     val profile: YuberaCommunityProfile? = null,
     val bio: String = "",
@@ -74,7 +76,7 @@ class ProfileEditViewModel @Inject constructor(
                 mutable.value = ProfileEditState(
                     profile = p,
                     bio = p.bio,
-                    customName = p.customName?.takeIf { it.isNotBlank() } ?: p.displayName,
+                    customName = p.customName?.takeIf { it.isNotBlank() } ?: p.username?.takeIf { it.isNotBlank() } ?: sanitizeProfileName(p.displayName).ifBlank { "YuberaUser" },
                     visibility = p.visibility,
                     selectedFrame = p.avatarFrame,
                     category = if (p.isAdmin) "admin" else "support",
