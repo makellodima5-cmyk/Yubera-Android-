@@ -39,6 +39,6 @@ class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi
  private fun sourceUrl(id: Long) = "https://shikimori.one/forum/news/" + id
  private fun cleanText(raw: String): String { val safe = raw.replace(Regex("(?is)<script[^>]*>.*?</script>"), " ").replace(Regex("(?is)<style[^>]*>.*?</style>"), " "); return Html.fromHtml(safe, Html.FROM_HTML_MODE_COMPACT).toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim() }
  private fun imageFrom(raw: String): String? = Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(raw)?.groupValues?.getOrNull(1)?.takeIf { it.length <= 2048 && !it.contains("avatar", true) }
- internal fun extractNewsVideoUrl(raw: String): String? = Regex("""(?i)(https?://(?:www\.)?(?:youtube\.com/(?:watch\?v=[^\s&<>]+|embed/[^\s?<>]+)|youtu\.be/[^\s?<>]+))""").find(raw)?.groupValues?.getOrNull(1)?.replace("http://", "https://")?.trimEnd('.', ',', ')', ']')
+
  companion object { const val PAGE_SIZE = 30; const val MAX_PAGES = 3; const val MAX_SUMMARY = 2400; const val MAX_BODY = 40000; const val FEED_TTL = 30 * 60 * 1000L; const val ARTICLE_TTL = 24 * 60 * 60 * 1000L }
 }
