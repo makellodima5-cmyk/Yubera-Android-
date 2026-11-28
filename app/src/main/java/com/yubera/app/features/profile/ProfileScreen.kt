@@ -1,10 +1,10 @@
 package com.yubera.app.features.profile
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings as AndroidSettings
+import android.content.Context
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,122 +12,242 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.R
+import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.theme.*
-import com.yubera.app.core.network.YuberaEndpoints
-import com.yubera.app.data.settings.ThemeMode
-import com.yubera.app.features.my.MyViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun ProfileScreen(
     onEditProfile: () -> Unit = {},
     onNotifications: () -> Unit = {},
-    onSettings: () -> Unit = {},
-    onAbout: () -> Unit = {},
+    onFriends: () -> Unit = {},
     onLegal: () -> Unit = {},
-    viewModel: SettingsViewModel = hiltViewModel(),
-    libraryViewModel: MyViewModel = hiltViewModel()
+    onAbout: () -> Unit = {},
+    onAllCollections: () -> Unit = {},
+    onCollection: (String) -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val account by viewModel.accountProfile.collectAsState()
     val response by viewModel.communityData.collectAsState()
-    val library by libraryViewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    val catalog by viewModel.catalog.collectAsState()
     val profile = response?.profile
-    val name = profile?.displayName?.takeIf(String::isNotBlank)
-        ?: account.user?.let { user -> listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { user.username ?: "Пользователь" } }
-        ?: "Пользователь"
-    val avatar = profile?.avatarDataUrl?.takeIf(String::isNotBlank)
-        ?: profile?.avatarUrl?.takeIf(String::isNotBlank)
-        ?: profile?.photoUrl?.takeIf(String::isNotBlank)
-        ?: account.user?.photoUrl
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var fullBio by remember { mutableStateOf(false) }
+    var coverTick by remember { mutableIntStateOf(0) }
+    val scroll = rememberScrollState()
+
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, viewModel) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshAccountProfile()
+    LaunchedEffect(Unit) { while (true) { delay(60_000); coverTick++ } }
+    DisposableEffect(viewModel) {
+        val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) viewModel.refreshAccountProfile()
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        owner.lifecycle.addObserver(observer)
+        onDispose { owner.lifecycle.removeObserver(observer) }
+    }
+
+    if (fullBio && !profile?.bio.isNullOrBlank()) {
+        ModalBottomSheet(onDismissRequest = { fullBio = false }, sheetState = rememberModalBottomSheetState()) {
+            Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Описание профиля", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { fullBio = false }) { Text("×", color = YuberaMuted, style = MaterialTheme.typography.titleLarge) }
+                }
+                Text(profile?.bio.orEmpty(), color = YuberaOnBackground, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(24.dp))
+            }
+        }
     }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("YUBERA", color = YuberaOnBackground, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-            IconButton(onClick = onNotifications) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
-        }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.fillMaxWidth().height(170.dp)) {
-                Image(painterResource(R.drawable.yubera_about_project_banner), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                Text("Профиль", Modifier.align(Alignment.BottomStart).padding(18.dp), color = YuberaOnBackground, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.width(42.dp))
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Image(painterResource(R.drawable.yubera_logo_transparent), "YUBERA", Modifier.height(34.dp), contentScale = ContentScale.Fit)
             }
-            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp)) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
-                        if (!avatar.isNullOrBlank()) AsyncImage(avatar, "Аватар профиля", Modifier.size(94.dp).clip(CircleShape), contentScale = ContentScale.Crop)
-                        else Icon(Icons.Default.AccountCircle, "Аватар", tint = YuberaMuted, modifier = Modifier.size(94.dp))
+            IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
+                Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground)
+            }
+        }
+        Text("Профиль", color = YuberaOnBackground, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp))
+        Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(92.dp), contentAlignment = Alignment.Center) {
+                        val avatar = profile?.avatarDataUrl?.takeIf(String::isNotBlank)
+                            ?: profile?.avatarUrl?.takeIf(String::isNotBlank)
+                            ?: profile?.photoUrl
+                            ?: account.user?.photoUrl
+                        if (!avatar.isNullOrBlank()) AsyncImage(avatar, "Аватар пользователя", Modifier.size(78.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                        else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(78.dp))
+                        profile?.avatarFrame?.let { frame -> profileFrameResource(frame)?.let { Image(painterResource(it), "Рамка аватара", Modifier.fillMaxSize()) } }
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(name, color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp) {
+                            Text(profile?.displayName?.takeIf(String::isNotBlank) ?: account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } } ?: "Пользователь", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            if (profile?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
                         profile?.username?.takeIf(String::isNotBlank)?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
-                        account.user?.createdAt?.let { formatRegistrationDate(it) }?.let { Text("Зарегистрирован: $it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
-                        profile?.bio?.takeIf(String::isNotBlank)?.let { Text(it, color = YuberaOnBackground, style = MaterialTheme.typography.bodySmall, maxLines = 4) }
+                        val bio = profile?.bio.orEmpty()
+                        if (bio.isNotBlank()) {
+                            Text(bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable(enabled = bio.length > 100) { fullBio = true })
+                            if (bio.length > 100) Text("Читать полностью", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { fullBio = true })
+                        }
                     }
-                    IconButton(onClick = onEditProfile) { Icon(Icons.Default.Edit, "Редактировать профиль", tint = YuberaPrimary) }
+                    IconButton(onClick = onEditProfile, modifier = Modifier.size(44.dp)) { Icon(Icons.Default.Edit, "Редактировать профиль", tint = YuberaPrimary) }
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileStat(Icons.Default.FavoriteBorder, library.favorites.size, "в избранном", Modifier.weight(1f))
-                ProfileStat(Icons.Default.BookmarkBorder, library.watchLater.size, "хочу посмотреть", Modifier.weight(1f))
-                ProfileStat(Icons.Default.History, library.history.size, "в истории", Modifier.weight(1f))
+
+            if (account.isLoading && profile == null) {
+                Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = YuberaPrimary)
+                        Text("Загружаем профиль…", color = YuberaMuted)
+                    }
+                }
             }
-            ProfileAction(Icons.Default.Edit, "Редактировать профиль", "Аватар, имя и описание", onEditProfile)
-            ProfileAction(Icons.Default.Settings, "Настройки", "Внешний вид и настройки приложения", onSettings)
-            ProfileAction(Icons.Default.Notifications, "Уведомления", "Новые серии и новости", onNotifications)
-            ProfileAction(Icons.Default.Info, "Об аккаунте", "Версия ${appVersion(context)}, документы и информация", onAbout)
-            ProfileAction(Icons.Default.Info, "Правовая информация", "Пользовательское соглашение и политика конфиденциальности", onLegal)
+            if (profile == null && !account.isLoading) {
+                Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(account.errorMessage ?: "Не удалось загрузить профиль.", color = YuberaMuted)
+                        TextButton(onClick = viewModel::refreshAccountProfile) { Text("Повторить", color = YuberaPrimary) }
+                    }
+                }
+            }
+
+            ProfileLevelSupportCard(profile?.xp, profile?.support?.title)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProfileCounter(Icons.Default.BookmarkBorder, profile?.personalCollections, "Подборки", Modifier.weight(1f))
+                ProfileCounter(Icons.Default.Movie, profile?.personalTitles, "Тайтлы", Modifier.weight(1f))
+                ProfileCounter(Icons.Default.FavoriteBorder, profile?.personalCollectionLikes, "Лайки", Modifier.weight(1f))
+            }
+
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Мои подборки", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = onAllCollections) {
+                    Text("Все подборки", color = YuberaPrimary)
+                    Spacer(Modifier.width(2.dp))
+                    Icon(Icons.Default.ArrowForward, null, tint = YuberaPrimary, modifier = Modifier.size(16.dp))
+                }
+            }
+            val collections = response?.collections.orEmpty()
+            if (collections.isEmpty()) {
+                Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text("У вас пока нет подборок.", color = YuberaMuted, modifier = Modifier.padding(16.dp))
+                }
+            } else {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    collections.forEach { collection ->
+                        val chosenId = remember(collection.id, collection.animeIds, coverTick) { chooseCollectionCover(context, collection.id, collection.animeIds) }
+                        val poster = catalog.firstOrNull { it.id == chosenId }?.posterUrl
+                        Card(
+                            modifier = Modifier.width(210.dp).height(265.dp).clickable { onCollection(collection.id) },
+                            colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Box(Modifier.fillMaxSize()) {
+                                if (!poster.isNullOrBlank()) AsyncImage(poster, collection.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                else Box(Modifier.fillMaxSize().background(Color(0xFF292A30)), contentAlignment = Alignment.Center) { Icon(Icons.Default.BookmarkBorder, null, tint = YuberaMuted, modifier = Modifier.size(52.dp)) }
+                                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .15f), Color.Black.copy(alpha = .9f)), startY = 0f, endY = 900f)))
+                                Column(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(collection.title, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                        Icon(if (collection.is_public == 1) Icons.Default.Public else Icons.Default.Lock, null, tint = Color.White.copy(alpha = .8f), modifier = Modifier.size(14.dp))
+                                        Text(if (collection.is_public == 1) "Публичная" else "Приватная", color = Color.White.copy(alpha = .8f), style = MaterialTheme.typography.labelSmall)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Icon(Icons.Default.FavoriteBorder, null, tint = YuberaPrimary, modifier = Modifier.size(15.dp))
+                                        Text(collection.like_count.toString(), color = Color.White, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            ProfileDestinationRow(Icons.Default.Group, "Друзья", "Подписки, подписчики и поиск", onFriends)
+            ProfileDestinationRow(Icons.Default.ReceiptLong, "Правовая информация", "Пользовательское соглашение, политика конфиденциальности", onLegal)
+            ProfileDestinationRow(Icons.Default.Info, "О проекте", "Версия приложения и описание проекта", onAbout)
+            Spacer(Modifier.height(10.dp))
         }
     }
 }
 
 @Composable
-private fun ProfileStat(icon: androidx.compose.ui.graphics.vector.ImageVector, count: Int, label: String, modifier: Modifier = Modifier) {
+private fun ProfileLevelSupportCard(xp: YuberaXpStatus?, supportTitle: String?) {
+    Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Icon(Icons.Default.Layers, null, tint = YuberaPrimary, modifier = Modifier.size(18.dp))
+                        Text(if (xp != null) "Уровень ${xp.level}" else "Уровень —", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    }
+                    Text(xp?.title ?: "Название уровня", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                Divider(Modifier.height(52.dp).width(1.dp), color = YuberaMuted.copy(alpha = .25f))
+                Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Icon(Icons.Default.Star, null, tint = YuberaPrimary, modifier = Modifier.size(18.dp))
+                        Text("Поддержка проекта", color = YuberaOnBackground, style = MaterialTheme.typography.titleSmall)
+                    }
+                    Text(supportTitle ?: "Без статуса", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            LinearProgressIndicator(progress = { (xp?.progress ?: 0f).coerceIn(0f,100f)/100f }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = Color(0xFF383940))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(if (xp != null && xp.nextThreshold != null) "${xp.total} / ${xp.nextThreshold} XP" else "${xp?.total ?: 0} XP", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+                Text(if (xp?.nextLevel != null) "До ${xp.nextLevel} уровня: ${xp.remaining} XP" else if (xp != null) "Максимальный уровень" else "—", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileCounter(icon: androidx.compose.ui.graphics.vector.ImageVector, count: Int?, label: String, modifier: Modifier = Modifier) {
     Card(modifier, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 5.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(22.dp))
-            Text(count.toString(), color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 5.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(20.dp))
+            Text(count?.toString() ?: "—", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(label, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
     }
 }
 
 @Composable
-private fun ProfileAction(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(icon, null, tint = YuberaMuted, modifier = Modifier.size(23.dp))
+private fun ProfileDestinationRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
                 Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
@@ -137,163 +257,39 @@ private fun ProfileAction(icon: androidx.compose.ui.graphics.vector.ImageVector,
     }
 }
 
-@Composable
-fun ProfileAboutScreen(onBack: () -> Unit, onLogout: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
-    val account by viewModel.accountProfile.collectAsState()
-    val response by viewModel.communityData.collectAsState()
-    val context = LocalContext.current
-    val name = response?.profile?.displayName?.takeIf(String::isNotBlank)
-        ?: account.user?.let { user -> listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { user.username ?: "Пользователь" } }
-        ?: "Пользователь"
-    LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
-            Text("Об аккаунте", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Имя пользователя", color = YuberaMuted, modifier = Modifier.weight(1f))
-                        Text(name, color = YuberaOnBackground)
-                    }
-                    account.user?.createdAt?.let { formatRegistrationDate(it) }?.let { date ->
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text("Дата создания аккаунта", color = YuberaMuted, modifier = Modifier.weight(1f))
-                            Text(date, color = YuberaOnBackground)
-                        }
-                    }
-                }
-            }
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("Версия ${appVersion(context)}", color = YuberaMuted)
-                    }
-                    Text("YUBERA — ваше личное пространство для аниме, каталога и истории просмотра.", color = YuberaMuted)
-                    TextButton(onClick = {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(YuberaEndpoints.SITE_ORIGIN))) }
-                    }) { Text("Открыть Website", color = YuberaPrimary) }
-                }
-            }
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Правовая информация", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("Пользовательское соглашение и политика конфиденциальности пока не подключены как отдельные ссылки в Android. Открыть официальный Website можно выше.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { viewModel.logout(onLogout) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-    }
+private fun chooseCollectionCover(context: Context, collectionId: String, animeIds: List<String>): String? {
+    if (animeIds.isEmpty()) return null
+    val prefs = context.getSharedPreferences("yubera_profile_collection_covers", Context.MODE_PRIVATE)
+    val idKey = "id_$collectionId"
+    val timeKey = "time_$collectionId"
+    val now = System.currentTimeMillis()
+    val oldId = prefs.getString(idKey, null)
+    val oldTime = prefs.getLong(timeKey, 0L)
+    if (oldId in animeIds && now - oldTime < 3_600_000L) return oldId
+    val candidates = if (animeIds.size > 1) animeIds.filter { it != oldId } else animeIds
+    val next = candidates.randomOrNull() ?: oldId?.takeIf { it in animeIds } ?: animeIds.first()
+    prefs.edit().putString(idKey, next).putLong(timeKey, now).apply()
+    return next
 }
 
-@Composable
-fun ProfileSettingsScreen(onBack: () -> Unit, onNotifications: () -> Unit, onLogout: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
-    val settings by viewModel.settings.collectAsState()
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
-            Text("Настройки", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Внешний вид", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-            ThemeMode.entries.forEach { mode ->
-                val label = when(mode) { ThemeMode.SYSTEM -> "Системная тема"; ThemeMode.LIGHT -> "Светлая тема"; ThemeMode.DARK -> "Тёмная тема" }
-                Row(Modifier.fillMaxWidth().clickable { viewModel.setTheme(mode) }, verticalAlignment = Alignment.CenterVertically) {
-                    Text(label, color = YuberaOnBackground, modifier = Modifier.weight(1f))
-                    RadioButton(settings.themeMode == mode, onClick = { viewModel.setTheme(mode) })
-                }
-            }
-            Divider(color = YuberaMuted.copy(alpha = .25f))
-            Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-            SettingSwitch("Все уведомления", settings.notificationsEnabled, onCheckedChange = viewModel::setNotifications)
-            SettingSwitch("Новые серии", settings.newEpisodeNotificationsEnabled, onCheckedChange = viewModel::setNewEpisodes)
-            SettingSwitch("Изменения тайтлов", settings.animeInfoNotificationsEnabled, onCheckedChange = viewModel::setAnimeInfo)
-            SettingSwitch("Push-уведомления", settings.pushNotificationsEnabled, onCheckedChange = viewModel::setPushNotifications)
-            TextButton(onClick = onNotifications) { Text("Управление уведомлениями", color = YuberaPrimary) }
-            Divider(color = YuberaMuted.copy(alpha = .25f))
-            TextButton(onClick = { viewModel.logout(onLogout) }) { Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error) }
-        }
-    }
-}
-
-@Composable
-private fun SettingSwitch(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(title, color = YuberaOnBackground, modifier = Modifier.weight(1f))
-        Switch(checked, onCheckedChange)
-    }
-}
-
-
-private fun appVersion(context: android.content.Context): String = runCatching {
-    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "—"
-}.getOrDefault("—")
-
-@Composable
-fun ProfileNotificationSettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
-    val settings by viewModel.settings.collectAsState()
-    val context = LocalContext.current
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
-            Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("Получать уведомления от YUBERA", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                    SettingSwitch("Все уведомления", settings.notificationsEnabled, onCheckedChange = viewModel::setNotifications)
-                }
-            }
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Типы уведомлений", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    SettingSwitch("Новые серии", settings.newEpisodeNotificationsEnabled, onCheckedChange = viewModel::setNewEpisodes)
-                    SettingSwitch("Изменения в аниме", settings.animeInfoNotificationsEnabled, onCheckedChange = viewModel::setAnimeInfo)
-                    SettingSwitch("Push-уведомления", settings.pushNotificationsEnabled, onCheckedChange = viewModel::setPushNotifications)
-                }
-            }
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Настройки системы", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("Разрешения Android для уведомлений", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = {
-                        runCatching {
-                            context.startActivity(Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName))
-                        }
-                    }) { Text("Открыть настройки Android", color = YuberaPrimary) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ProfileLegalScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
-            Text("Правовая информация", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Документы", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                    Text("Отдельные публичные страницы пользовательского соглашения и политики конфиденциальности пока не найдены в Website. Чтобы не вести на неверные ссылки, они не подставлены автоматически.", color = YuberaMuted)
-                    TextButton(onClick = {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(YuberaEndpoints.SITE_ORIGIN))) }
-                    }) { Text("Открыть официальный Website", color = YuberaPrimary) }
-                }
-            }
-        }
-    }
+private fun profileFrameResource(frame: String): Int? = when(frame) {
+    "Admin_Frame_01.webp" -> R.drawable.admin_frame_01
+    "Admin_Frame_02.webp" -> R.drawable.admin_frame_02
+    "Admin_Frame_03.webp" -> R.drawable.admin_frame_03
+    "Admin_Frame_04.webp" -> R.drawable.admin_frame_04
+    "Admin_Frame_05.webp" -> R.drawable.admin_frame_05
+    "Admin_Frame_06.webp" -> R.drawable.admin_frame_06
+    "Admin_Frame_07.webp" -> R.drawable.admin_frame_07
+    "Admin_Frame_08.webp" -> R.drawable.admin_frame_08
+    "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik_webp
+    "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik_webp
+    "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik_webp
+    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
+    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
+    "YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp" -> R.drawable.yubera_plus_avatar_frame_01_sakura_gold
+    "YUBERA_Plus_Avatar_Frame_02_Mystic_Kitsune.webp" -> R.drawable.yubera_plus_avatar_frame_02_mystic_kitsune
+    "YUBERA_Plus_Avatar_Frame_03_Samurai_Steel.webp" -> R.drawable.yubera_plus_avatar_frame_03_samurai_steel
+    "YUBERA_Plus_Avatar_Frame_04_Celestial_Archive.webp" -> R.drawable.yubera_plus_avatar_frame_04_celestial_archive
+    "YUBERA_Plus_Avatar_Frame_05_Cyberpunk_Neon.webp" -> R.drawable.yubera_plus_avatar_frame_05_cyberpunk_neon
+    else -> null
 }
