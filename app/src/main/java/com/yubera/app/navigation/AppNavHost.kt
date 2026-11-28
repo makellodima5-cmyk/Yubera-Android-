@@ -39,7 +39,6 @@ import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
-import com.yubera.app.features.profile.ProfileEditScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -60,9 +59,8 @@ fun AppNavHost(
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
     var catalogResetNonce by remember { mutableIntStateOf(0) }
-    var profileResetNonce by remember { mutableIntStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute?.startsWith("my-list/") == true || currentRoute?.startsWith("profile-") == true || currentRoute == "news-bookmarks"
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute?.startsWith("my-list/") == true || currentRoute == "news-bookmarks"
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -74,8 +72,9 @@ fun AppNavHost(
                             selected = currentRoute == destination.route || (currentRoute == "support" && destination.route == AppDestination.Home.route),
                             onClick = {
                                 if (currentRoute == destination.route) {
-                                    if (destination.route == AppDestination.Catalog.route) catalogResetNonce++
-                                    if (destination.route == AppDestination.Profile.route) profileResetNonce++
+                                    if (destination.route == AppDestination.Catalog.route) {
+                                        catalogResetNonce++
+                                    }
                                 } else {
                                     navController.navigate(destination.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
@@ -145,7 +144,12 @@ fun AppNavHost(
             composable("collections") {
                 HomeSimpleDestination("Подборки", "Тематические коллекции будут оформлены отдельным техническим заданием.", { navController.popBackStack() })
             }
-            composable("notifications") { HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием.", { navController.popBackStack() }) }
+            composable("notifications") { backStackEntry ->
+                val homeEntry = remember(backStackEntry) { navController.getBackStackEntry(AppDestination.Home.route) }
+                val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
+                LaunchedEffect(homeViewModel) { homeViewModel.markNotificationsRead() }
+                HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
+            }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") }, resetKey = catalogResetNonce)
             }
@@ -155,26 +159,7 @@ fun AppNavHost(
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
             composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
-            composable(AppDestination.Profile.route) {
-                ProfileScreen(
-                    onEditProfile = { navController.navigate("profile-edit") },
-                    onNotifications = { navController.navigate("notifications") },
-                    onFriends = { navController.navigate("profile-friends") },
-                    onLegal = { navController.navigate("profile-legal") },
-                    onAbout = { navController.navigate("profile-about") },
-                    onAllCollections = { navController.navigate("profile-collections") },
-                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") },
-                    resetKey = profileResetNonce
-                )
-            }
-            composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
-            composable("profile-friends") { HomeSimpleDestination("Друзья", "Подписки, подписчики и поиск пользователей будут доступны в отдельном разделе.", { navController.popBackStack() }) }
-            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Пользовательское соглашение и политика конфиденциальности будут доступны в отдельном разделе.", { navController.popBackStack() }) }
-            composable("profile-about") { HomeSimpleDestination("О проекте", "Описание и цели проекта YUBERA.", { navController.popBackStack() }) }
-            composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
-            composable("profile-collection/{collectionId}", arguments = listOf(navArgument("collectionId") { type = NavType.StringType })) {
-                HomeSimpleDestination("Подборка", "Просмотр содержимого подборки будет оформлен отдельным заданием.", { navController.popBackStack() })
-            }
+            composable(AppDestination.Profile.route) { ProfileScreen() }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",

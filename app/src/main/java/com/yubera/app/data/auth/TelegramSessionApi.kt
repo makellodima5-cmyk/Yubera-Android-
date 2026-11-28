@@ -47,6 +47,5 @@ data class TelegramSessionUser(
     val lastName: String? = null,
     val username: String? = null,
     val languageCode: String? = null,
-    val createdAt: String? = null,
-    val photoUrl: String? = null
+    val createdAt: String? = null
 )
