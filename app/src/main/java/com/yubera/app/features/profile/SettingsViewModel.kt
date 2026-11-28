@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
-import com.yubera.app.core.session.NativeAuthRepository\nimport com.yubera.app.core.session.ActiveAccountStore\nimport com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
+import com.yubera.app.core.session.NativeAuthRepository
+import com.yubera.app.core.session.ActiveAccountStore
+import com.yubera.app.core.database.dao.AnimeEpisodeNotificationDao
 import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.data.auth.YuberaProfileApi
 import com.yubera.app.data.auth.YuberaCommunityResponse
@@ -21,7 +23,9 @@ import javax.inject.Inject
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
-import kotlinx.coroutines.flow.flatMapLatest\nimport kotlinx.coroutines.flow.flowOf\nimport kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -45,7 +49,8 @@ class SettingsViewModel @Inject constructor(
     val accountProfile = mutableAccountProfile.asStateFlow()
     private val mutableCommunityData = MutableStateFlow<YuberaCommunityResponse?>(null)
     val communityData = mutableCommunityData.asStateFlow()
-    val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())\n    val unreadNotificationCount = activeAccountStore.activeAccountId.flatMapLatest { accountId -> if (accountId.isNullOrBlank()) flowOf(0) else notificationDao.observeUnreadDeliveredCount(accountId) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val unreadNotificationCount = activeAccountStore.activeAccountId.flatMapLatest { accountId -> if (accountId.isNullOrBlank()) flowOf(0) else notificationDao.observeUnreadDeliveredCount(accountId) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
     private val profileCache = context.getSharedPreferences("yubera_profile_cache", Context.MODE_PRIVATE)
     private val profileJson = Json { ignoreUnknownKeys = true }
     private val mutableAppUpdate = MutableStateFlow(AppUpdateUiState(availableUpdate = appUpdateCoordinator.storedUpdate(), isMandatory = appUpdateCoordinator.storedMandatory()))
