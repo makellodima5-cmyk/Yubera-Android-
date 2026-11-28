@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
@@ -83,8 +84,6 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? =
 }
 
 @Composable
-
-@Composable
 fun HomeAnnouncementTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
     Card(
         onClick = onClick,
@@ -107,6 +106,7 @@ fun HomeAnnouncementTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
     }
 }
 
+@Composable
 fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onClick: () -> Unit) {
     val fraction=if(progress.durationMillis>0L)(progress.positionMillis.toFloat()/progress.durationMillis.toFloat()).coerceIn(0f,1f) else 0f
     Card(onClick=onClick,modifier=Modifier.width(292.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {

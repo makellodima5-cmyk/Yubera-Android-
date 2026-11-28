@@ -12,7 +12,7 @@ class RetrofitFactory @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val json: Json
 ) {
-    fun create(baseUrl: String): Retrofit {
+    fun create(baseUrl: String, client: OkHttpClient = okHttpClient): Retrofit {
         require(baseUrl.startsWith("https://", ignoreCase = true)) {
             "YUBERA API base URL must use HTTPS"
         }
@@ -31,7 +31,7 @@ class RetrofitFactory @Inject constructor(
         }
         return Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(okHttpClient)
+            .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }

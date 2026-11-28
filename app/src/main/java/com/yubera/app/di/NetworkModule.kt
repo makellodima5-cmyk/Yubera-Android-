@@ -1,6 +1,8 @@
 package com.yubera.app.di
 
+import com.yubera.app.BuildConfig
 import com.yubera.app.core.network.RetrofitFactory
+import com.yubera.app.core.network.ShikimoriRateLimitInterceptor
 import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.data.auth.TelegramSessionApi
 import com.yubera.app.data.auth.YuberaProfileApi
@@ -33,14 +35,19 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .header("User-Agent", SHIKIMORI_USER_AGENT)
-                .build()
-            chain.proceed(request)
-        }
-        .build()
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder().build()
+
+    @Provides
+    @Named("shikimoriClient")
+    @Singleton
+    fun provideShikimoriOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(
+                ShikimoriRateLimitInterceptor(
+                    userAgent = "$SHIKIMORI_USER_AGENT/${BuildConfig.VERSION_NAME}"
+                )
+            )
+            .build()
 
     @Provides
     @Singleton
@@ -49,7 +56,10 @@ object NetworkModule {
     @Provides
     @Named("shikimori")
     @Singleton
-    fun provideShikimoriRetrofit(factory: RetrofitFactory): Retrofit = factory.create(SHIKIMORI_API_BASE_URL)
+    fun provideShikimoriRetrofit(
+        factory: RetrofitFactory,
+        @Named("shikimoriClient") client: OkHttpClient
+    ): Retrofit = factory.create(SHIKIMORI_API_BASE_URL, client)
 
     @Provides
     fun provideCatalogApi(retrofit: Retrofit): CatalogApi = retrofit.create(CatalogApi::class.java)

@@ -100,8 +100,11 @@ class HomeViewModel @Inject constructor(
         }
         val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in fullyCompletedAnimeIds && it.kodikAvailable != false }
         val continueList = progress.asSequence()
-            .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
-            .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
+            .mapNotNull { row ->
+                byId[row.animeId]
+                    ?.takeIf { anime -> isContinueWatchingEligible(anime, row) }
+                    ?.let { anime -> ContinueWatchingItem(anime, row) }
+            }
             .sortedByDescending { it.progress.updatedAtEpochMillis }
             .toList()
         val popular = catalog.filter { (it.rating ?: 0.0) > 8.5 }
@@ -173,7 +176,8 @@ internal fun isContinueWatchingEligible(anime: AnimeCatalogItem, progress: Anime
     if (!ongoing && anime.episodes > 0 && (progress.completedEpisodeNumber ?: 0) >= anime.episodes) return false
     return progress.durationMillis <= 0L || progress.positionMillis < progress.durationMillis * 0.90
 }
-\nprivate fun String.toReleaseDate(): LocalDate? {
+
+private fun String.toReleaseDate(): LocalDate? {
     val value = trim()
     runCatching { LocalDate.parse(value.take(10)) }.getOrNull()?.let { return it }
     val formats = listOf(
