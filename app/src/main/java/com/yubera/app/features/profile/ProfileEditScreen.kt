@@ -19,7 +19,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -93,7 +93,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                         Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
                             if (!preview.isNullOrBlank()) AsyncImage(preview, "Предпросмотр аватара", Modifier.size(104.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                             else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(104.dp))
-                            Icon(Icons.Default.CameraAlt, "Изменить аватар", tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(30.dp).background(YuberaPrimary, CircleShape).padding(6.dp))
+                            Icon(Icons.Default.Edit, "Изменить аватар", tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(30.dp).background(YuberaPrimary, CircleShape).padding(6.dp))
                         }
                         TextButton(onClick = { avatarPickerOpen = true }) { Text("Выбрать аватар", color = YuberaPrimary) }
                         OutlinedButton(onClick = { avatarLauncher.launch("image/*") }) { Text("Загрузить изображение") }
