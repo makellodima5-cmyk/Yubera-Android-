@@ -6,7 +6,6 @@ import androidx.work.WorkInfo
 import com.yubera.app.core.session.NativeAuthRepository
 import com.yubera.app.data.auth.YuberaProfileApi
 import com.yubera.app.data.auth.YuberaCommunityResponse
-import com.yubera.app.data.auth.YuberaCommunityProfile
 import com.yubera.app.data.auth.TelegramSessionUser
 import com.yubera.app.data.settings.ThemeMode
 import com.yubera.app.data.settings.UserSettings
@@ -37,7 +36,6 @@ class SettingsViewModel @Inject constructor(
     val accountProfile = mutableAccountProfile.asStateFlow()
     private val mutableCommunityData = MutableStateFlow<YuberaCommunityResponse?>(null)
     val communityData = mutableCommunityData.asStateFlow()
-    val communityProfile: kotlinx.coroutines.flow.StateFlow<YuberaCommunityProfile?> = kotlinx.coroutines.flow.map(mutableCommunityData) { it?.profile }.let { flow -> kotlinx.coroutines.flow.SharingStarted.Eagerly; kotlinx.coroutines.flow.MutableStateFlow<YuberaCommunityProfile?>(null).also { state -> viewModelScope.launch { flow.collect { state.value = it } } }.asStateFlow() }
     private val mutableAppUpdate = MutableStateFlow(AppUpdateUiState(availableUpdate = appUpdateCoordinator.storedUpdate(), isMandatory = appUpdateCoordinator.storedMandatory()))
     val appUpdate = mutableAppUpdate.asStateFlow()
 
