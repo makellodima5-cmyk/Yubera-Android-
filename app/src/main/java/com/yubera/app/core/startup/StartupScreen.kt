@@ -36,6 +36,8 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaWavePrimary
 import com.yubera.app.core.ui.theme.YuberaWaveGold
 import com.yubera.app.core.ui.theme.YuberaWaveShadow
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 
@@ -89,7 +91,8 @@ fun StartupScreen(state:StartupUiState,onRetry:()->Unit,onReady:()->Unit) {
                 is StartupUiState.Failed -> {
                     Text("Не удалось подготовить приложение",color=MaterialTheme.colorScheme.onBackground,fontSize=14.sp,fontWeight=FontWeight.Medium)
                     Spacer(Modifier.height(12.dp))
-                    Button(onClick=onRetry,enabled=state.retryable,colors=ButtonDefaults.buttonColors(containerColor=YuberaPrimary)){Text("Повторить")}
+                    val retryInteraction = rememberYuberaPressInteractionSource()
+                    Button(onClick=onRetry,enabled=state.retryable,modifier=Modifier.yuberaPressScale(retryInteraction),interactionSource=retryInteraction,colors=ButtonDefaults.buttonColors(containerColor=YuberaPrimary)){Text("Повторить")}
                 }
             }
         }
