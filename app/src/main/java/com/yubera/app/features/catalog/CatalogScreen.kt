@@ -140,10 +140,12 @@ fun CatalogScreen(
             CatalogSortOrder.entries.chunked(2).forEach { rowOrders ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     rowOrders.forEach { order ->
+                        val sortInteraction = rememberYuberaPressInteractionSource()
                         FilterChip(
                             selected = state.sortOrder == order,
                             onClick = { viewModel.onSortOrderSelected(order); page = 0; pendingScrollToTop = true },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).yuberaPressScale(sortInteraction),
+                            interactionSource = sortInteraction,
                             label = { Text(order.title, maxLines = 1) }
                         )
                     }
@@ -197,9 +199,11 @@ fun CatalogScreen(
         }
         if (state.items.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { page = (page - 1).coerceAtLeast(0); panel = false; pendingScrollToTop = true }, enabled = page > 0) { Text("‹") }
+                val previousInteraction = rememberYuberaPressInteractionSource()
+                TextButton(onClick = { page = (page - 1).coerceAtLeast(0); panel = false; pendingScrollToTop = true }, modifier = Modifier.yuberaPressScale(previousInteraction), interactionSource = previousInteraction, enabled = page > 0) { Text("‹") }
                 PaginationNumbers(page, count) { selected -> page = selected; panel = false; pendingScrollToTop = true }
-                TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1); panel = false; pendingScrollToTop = true }, enabled = page < count - 1) { Text("›") }
+                val nextInteraction = rememberYuberaPressInteractionSource()
+                TextButton(onClick = { page = (page + 1).coerceAtMost(count - 1); panel = false; pendingScrollToTop = true }, modifier = Modifier.yuberaPressScale(nextInteraction), interactionSource = nextInteraction, enabled = page < count - 1) { Text("›") }
             }
         }
     }

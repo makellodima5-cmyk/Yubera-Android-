@@ -71,7 +71,8 @@ fun MyScreen(
         }
         if (section != null) {
             Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton({ onOpenSection("") }) { Text("‹ Моё") }
+                val backInteraction = rememberYuberaPressInteractionSource()
+                TextButton({ onOpenSection("") }, modifier = Modifier.yuberaPressScale(backInteraction), interactionSource = backInteraction) { Text("‹ Моё") }
                 Text(sectionTitle, color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             if (rows.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Здесь пока нет тайтлов.", color = YuberaMuted) }

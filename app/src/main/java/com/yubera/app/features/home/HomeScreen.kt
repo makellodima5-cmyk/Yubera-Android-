@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -117,7 +118,7 @@ fun HomeScreen(
                             horizontalArrangement=Arrangement.spacedBy(10.dp),
                             flingBehavior = rememberSnapFlingBehavior(listState, SnapPosition.Center)
                         ) {
-                            items(state.recommended,key=AnimeCatalogItem::id) { anime ->
+                            itemsIndexed(state.recommended,key={ _, anime -> anime.id }) { index, anime ->
                                 val isActive = anime.id == state.recommended.getOrNull(activeIndex)?.id
                                 val targetScale = if (isActive) 1f else .86f
                                 val targetRotation = if (isActive) 0f else if (index < activeIndex) 7f else -7f

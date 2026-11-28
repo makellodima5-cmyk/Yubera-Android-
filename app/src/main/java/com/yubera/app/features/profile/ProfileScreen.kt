@@ -72,7 +72,7 @@ fun ProfileScreen(
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
     LaunchedEffect(resetKey) { scroll.scrollTo(0); viewModel.refreshAccountProfile() }
-    LaunchedEffect(Unit) { while (true) { delay(60_000); coverTick++ } }
+    LaunchedEffect(Unit) { while (true) { delay(60 * 60 * 1_000L); coverTick++ } }
     DisposableEffect(viewModel, lifecycleOwner) {
         val owner = lifecycleOwner
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -87,7 +87,8 @@ fun ProfileScreen(
             Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("Описание профиля", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { fullBio = false }) { Text("×", color = YuberaMuted, style = MaterialTheme.typography.titleLarge) }
+                    val closeBioInteraction = rememberYuberaPressInteractionSource()
+            IconButton(onClick = { fullBio = false }, modifier = Modifier.yuberaPressScale(closeBioInteraction), interactionSource = closeBioInteraction) { Text("×", color = YuberaMuted, style = MaterialTheme.typography.titleLarge) }
                 }
                 Text(profile?.bio.orEmpty(), color = YuberaOnBackground, style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(24.dp))
@@ -139,8 +140,9 @@ fun ProfileScreen(
                         profile?.let { p -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Icon(if (p.visibility == "public") Icons.Default.Public else Icons.Default.Lock, null, tint = YuberaMuted, modifier = Modifier.size(14.dp)); Text(if (p.visibility == "public") "Публичный профиль" else "Приватный профиль", color = YuberaMuted, style = MaterialTheme.typography.labelSmall) } }
                         val bio = profile?.bio.orEmpty()
                         if (bio.isNotBlank()) {
-                            Text(bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable(enabled = bio.length > 100) { fullBio = true })
-                            if (bio.length > 100) Text("Читать полностью", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { fullBio = true })
+                            val bioInteraction = rememberYuberaPressInteractionSource()
+                            Text(bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.yuberaPressScale(bioInteraction).clickable(interactionSource = bioInteraction, indication = androidx.compose.foundation.LocalIndication.current, enabled = bio.length > 100) { fullBio = true })
+                            if (bio.length > 100) { val readBioInteraction = rememberYuberaPressInteractionSource(); Text("Читать полностью", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.yuberaPressScale(readBioInteraction).clickable(interactionSource = readBioInteraction, indication = androidx.compose.foundation.LocalIndication.current) { fullBio = true }) }
                         }
                     }
                     val editInteraction = rememberYuberaPressInteractionSource()
@@ -160,7 +162,8 @@ fun ProfileScreen(
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(account.errorMessage ?: "Не удалось загрузить профиль.", color = YuberaMuted)
-                        TextButton(onClick = viewModel::refreshAccountProfile) { Text("Повторить", color = YuberaPrimary) }
+                        val retryProfileInteraction = rememberYuberaPressInteractionSource()
+                        TextButton(onClick = viewModel::refreshAccountProfile, modifier = Modifier.yuberaPressScale(retryProfileInteraction), interactionSource = retryProfileInteraction) { Text("Повторить", color = YuberaPrimary) }
                     }
                 }
             }
@@ -260,7 +263,7 @@ private fun ProfileLevelSupportCard(xp: YuberaXpStatus?, supportTitle: String?) 
                 }
             }
             val progressTarget = (xp?.progress ?: 0f).coerceIn(0f,100f)/100f
-    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(progressTarget, androidx.compose.animation.core.tween(420), label = "profileXpProgress")
+    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(progressTarget, androidx.compose.animation.core.tween(280), label = "profileXpProgress")
     LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = YuberaSurfaceElevated)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(if (xp != null && xp.nextThreshold != null) "${xp.total} / ${xp.nextThreshold} XP" else "${xp?.total ?: 0} XP", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
