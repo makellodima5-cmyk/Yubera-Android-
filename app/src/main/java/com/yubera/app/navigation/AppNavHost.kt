@@ -42,12 +42,14 @@ import com.yubera.app.features.profile.ProfileScreen
 import com.yubera.app.features.profile.ProfileEditScreen
 import com.yubera.app.features.profile.ProfileSettingsScreen
 import com.yubera.app.features.profile.ProfileAboutScreen
+import com.yubera.app.features.profile.ProfileNotificationSettingsScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
 fun AppNavHost(
     pendingAnimeRoute: PendingAnimeRoute? = null,
-    onAnimeRouteHandled: () -> Unit = {}
+    onAnimeRouteHandled: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     LaunchedEffect(pendingAnimeRoute) {
@@ -147,12 +149,7 @@ fun AppNavHost(
             composable("collections") {
                 HomeSimpleDestination("Подборки", "Тематические коллекции будут оформлены отдельным техническим заданием.", { navController.popBackStack() })
             }
-            composable("notifications") { backStackEntry ->
-                val homeEntry = remember(backStackEntry) { navController.getBackStackEntry(AppDestination.Home.route) }
-                val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
-                LaunchedEffect(homeViewModel) { homeViewModel.markNotificationsRead() }
-                HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием. Сейчас доступны системные уведомления о выходе серий.", { navController.popBackStack() })
-            }
+            composable("notifications") { ProfileNotificationSettingsScreen(onBack = { navController.popBackStack() }) }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") }, resetKey = catalogResetNonce)
             }
@@ -174,9 +171,9 @@ fun AppNavHost(
                 )
             }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
-            composable("profile-settings") { ProfileSettingsScreen(onBack = { navController.popBackStack() }, onNotifications = { navController.navigate("notifications") }) }
+            composable("profile-settings") { ProfileSettingsScreen(onBack = { navController.popBackStack() }, onNotifications = { navController.navigate("notifications") }, onLogout = onLogout) }
             composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Юридические документы будут доступны в отдельном разделе.", { navController.popBackStack() }) }
-            composable("profile-about") { ProfileAboutScreen(onBack = { navController.popBackStack() }) }
+            composable("profile-about") { ProfileAboutScreen(onBack = { navController.popBackStack() }, onLogout = onLogout) }
             composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
             composable("profile-collection/{collectionId}", arguments = listOf(navArgument("collectionId") { type = NavType.StringType })) {
                 HomeSimpleDestination("Подборка", "Просмотр содержимого подборки будет оформлен отдельным заданием.", { navController.popBackStack() })
