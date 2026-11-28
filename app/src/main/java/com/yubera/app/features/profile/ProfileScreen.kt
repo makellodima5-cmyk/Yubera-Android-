@@ -121,6 +121,7 @@ fun ProfileScreen(
                             if (profile?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
                         profile?.username?.takeIf(String::isNotBlank)?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
+                        profile?.let { p -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Icon(if (p.visibility == "public") Icons.Default.Public else Icons.Default.Lock, null, tint = YuberaMuted, modifier = Modifier.size(14.dp)); Text(if (p.visibility == "public") "Публичный профиль" else "Приватный профиль", color = YuberaMuted, style = MaterialTheme.typography.labelSmall) } }
                         val bio = profile?.bio.orEmpty()
                         if (bio.isNotBlank()) {
                             Text(bio, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable(enabled = bio.length > 100) { fullBio = true })
@@ -198,9 +199,11 @@ fun ProfileScreen(
                 }
             }
 
-            ProfileDestinationRow(Icons.Default.Group, "Друзья", "Подписки, подписчики и поиск", onFriends)
-            ProfileDestinationRow(Icons.Default.ReceiptLong, "Правовая информация", "Пользовательское соглашение, политика конфиденциальности", onLegal)
-            ProfileDestinationRow(Icons.Default.Info, "О проекте", "Версия приложения и описание проекта", onAbout)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProfileDestinationCard(Icons.Default.Group, "Друзья", "Подписки и поиск", onFriends)
+                ProfileDestinationCard(Icons.Default.ReceiptLong, "Правовая информация", "Документы", onLegal)
+                ProfileDestinationCard(Icons.Default.Info, "О проекте", "YUBERA", onAbout)
+            }
             Spacer(Modifier.height(10.dp))
         }
     }
@@ -248,15 +251,14 @@ private fun ProfileCounter(icon: androidx.compose.ui.graphics.vector.ImageVector
 }
 
 @Composable
-private fun ProfileDestinationRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun ProfileDestinationCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    Card(Modifier.width(176.dp).height(84.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+        Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
-            Icon(Icons.Default.ArrowForward, null, tint = YuberaMuted)
         }
     }
 }
