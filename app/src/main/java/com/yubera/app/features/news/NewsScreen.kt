@@ -39,7 +39,7 @@ import com.yubera.app.core.ui.theme.*
   OutlinedTextField(state.query,viewModel::onQueryChange,Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),placeholder={Text("Поиск новостей")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true)
   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},label={Text(cat.title)})}}
   if(state.isRefreshing&&state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=YuberaPrimary)}
-  else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
+  else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else if (state.query.isNotBlank()) "Ничего не найдено" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: if (state.query.isNotBlank()) "Измените запрос или выберите другую категорию." else "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
   else PullToRefreshBox(isRefreshing=state.isRefreshing,onRefresh=viewModel::refresh,modifier=Modifier.weight(1f).fillMaxWidth()){
    LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
    state.errorMessage?.let{item{Text(it,color=YuberaMuted)}}
@@ -63,7 +63,7 @@ import com.yubera.app.core.ui.theme.*
 }}}
 @Composable fun NewsBookmarksScreen(onBack:()->Unit,onArticleClick:(Long)->Unit,viewModel:NewsViewModel=hiltViewModel()){
  val state by viewModel.uiState.collectAsState();LaunchedEffect(viewModel){viewModel.showBookmarkedOnly(true);viewModel.ensureLoaded()}
- Column(Modifier.fillMaxSize()){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){TextButton(onBack){Text("‹ Новости")};Text("Закладки",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
+ Column(Modifier.fillMaxSize()){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){TextButton(onClick={viewModel.showBookmarkedOnly(false);onBack()}){Text("‹ Новости")};Text("Закладки",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
  if(state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("Сохранённых публикаций пока нет",color=YuberaMuted)}
  else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){items(state.articles,key=NewsArticleEntity::id){a->NewsRow(a,true,{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}}
  }
