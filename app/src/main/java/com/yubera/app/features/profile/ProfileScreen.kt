@@ -109,7 +109,6 @@ fun ProfileScreen(
                     Box(Modifier.size(92.dp), contentAlignment = Alignment.Center) {
                         val avatar = profile?.avatarDataUrl?.takeIf(String::isNotBlank)
                             ?: profile?.avatarUrl?.takeIf(String::isNotBlank)
-                            ?: profile?.photoUrl
                             ?: account.user?.photoUrl
                         if (!avatar.isNullOrBlank()) AsyncImage(avatar, "Аватар пользователя", Modifier.size(78.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                         else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(78.dp))
