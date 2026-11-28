@@ -26,9 +26,9 @@ fun filterNews(
     category: NewsCategory,
     bookmarksOnly: Boolean
 ): List<NewsArticleEntity> {
-    val source = if (bookmarksOnly) saved else feed
-    return (if (category == NewsCategory.ALL) source else source.filter { it.category == category.name })
-        .searchNews(query)
+    if (bookmarksOnly) return saved
+    val filtered = if (category == NewsCategory.ALL) feed else feed.filter { it.category == category.name }
+    return filtered.searchNews(query)
 }
 
 /**

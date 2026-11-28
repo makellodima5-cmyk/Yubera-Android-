@@ -59,16 +59,16 @@ class NewsSearchTest {
     }
 
     @Test
-    fun bookmarksModeShowsOnlySavedArticlesAndKeepsSearchAndCategoryFilters() {
+    fun bookmarksModeShowsEverySavedArticleIndependentOfFeedFilters() {
         val result = filterNews(
             feed = articles,
             saved = listOf(articles[1], articles[2]),
-            query = "фестиваль",
-            category = NewsCategory.EVENTS,
+            query = "несуществующий запрос",
+            category = NewsCategory.NEW_SEASONS,
             bookmarksOnly = true
         )
 
-        assertEquals(listOf(3L), result.map { it.id })
+        assertEquals(listOf(2L, 3L), result.map { it.id })
     }
 
     private fun article(

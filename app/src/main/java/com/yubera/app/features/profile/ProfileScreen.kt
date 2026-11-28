@@ -110,13 +110,24 @@ fun ProfileScreen(
                     Box(Modifier.size(92.dp), contentAlignment = Alignment.Center) {
                         val avatar = profile?.avatarDataUrl?.takeIf(String::isNotBlank)
                             ?: profile?.avatarUrl?.takeIf(String::isNotBlank)
+                            ?: profile?.photoUrl?.takeIf(String::isNotBlank)
                         if (!avatar.isNullOrBlank()) AsyncImage(avatar, "Аватар пользователя", Modifier.size(78.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                         else Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(78.dp))
                         profile?.avatarFrame?.let { frame -> profileFrameResource(frame)?.let { Image(painterResource(it), "Рамка аватара", Modifier.fillMaxSize()) } }
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(profile?.displayName?.takeIf(String::isNotBlank) ?: account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } } ?: "Пользователь", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                profile?.customName?.takeIf(String::isNotBlank)
+                                    ?: profile?.displayName?.takeIf(String::isNotBlank)
+                                    ?: account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } }
+                                    ?: "Пользователь",
+                                color = YuberaOnBackground,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                             if (profile?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
                         profile?.username?.takeIf(String::isNotBlank)?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }

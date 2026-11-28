@@ -65,7 +65,12 @@ import kotlin.math.abs
   when{
    n<=0 -> emptyList()
    n==1 -> listOf(Triple(center,0,fav[center]))
-   n==2 -> listOf(Triple(center,0,fav[center]),Triple((center+1)%n,1,fav[(center+1)%n]))
+   n==2 -> {
+    val neighbor=(center+1)%n
+    listOf(Triple(neighbor,-1,fav[neighbor]),Triple(center,0,fav[center]),Triple(neighbor,1,fav[neighbor]))
+   }
+   n==3 -> (-1..1).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}
+   n==4 -> (-2..1).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}
    else -> (-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}
   }
  }
