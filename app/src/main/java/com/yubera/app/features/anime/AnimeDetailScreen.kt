@@ -74,6 +74,8 @@ import com.yubera.app.data.anime.AnimeRatingResponse
 import com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.features.player.KodikEmbedWebView
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground

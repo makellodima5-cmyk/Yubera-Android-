@@ -69,6 +69,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary

@@ -53,6 +53,8 @@ import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 
 @Composable
 fun PlayerScreen(
