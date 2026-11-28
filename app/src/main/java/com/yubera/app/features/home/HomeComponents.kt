@@ -44,6 +44,8 @@ import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
+import com.yubera.app.core.ui.theme.YuberaScrim
+import com.yubera.app.core.ui.theme.YuberaGold
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? = null) {
