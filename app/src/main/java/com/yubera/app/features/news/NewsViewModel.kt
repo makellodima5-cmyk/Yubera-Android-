@@ -41,6 +41,7 @@ class NewsViewModel @Inject constructor(
     private val showBookmarkedOnly = MutableStateFlow(false)
     private val isRefreshing = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
+    private var initialRefreshRequested = false
 
     private val content = combine(
         repository.observeNews(),
@@ -74,21 +75,15 @@ class NewsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NewsUiState())
 
-    init {
+    fun ensureLoaded() {
+        if (initialRefreshRequested) return
+        initialRefreshRequested = true
         refresh()
     }
 
-    fun onQueryChange(value: String) {
-        query.value = value
-    }
-
-    fun selectCategory(category: NewsCategory) {
-        selectedCategory.value = category
-    }
-
-    fun showBookmarkedOnly(show: Boolean) {
-        showBookmarkedOnly.value = show
-    }
+    fun onQueryChange(value: String) { query.value = value }
+    fun selectCategory(category: NewsCategory) { selectedCategory.value = category }
+    fun showBookmarkedOnly(show: Boolean) { showBookmarkedOnly.value = show }
 
     fun toggleBookmark(id: Long) {
         viewModelScope.launch {
@@ -106,8 +101,7 @@ class NewsViewModel @Inject constructor(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                errorMessage.value =
-                    "Не удалось обновить ленту. Сохранённые публикации остались доступны."
+                errorMessage.value = "Не удалось обновить ленту. Сохранённые публикации остались доступны."
             } finally {
                 isRefreshing.value = false
             }
