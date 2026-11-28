@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.yubera.app.BuildConfig
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
 import com.yubera.app.core.network.YuberaEndpoints
@@ -51,6 +50,7 @@ fun ProfileScreen(
     val account by viewModel.accountProfile.collectAsState()
     val response by viewModel.communityData.collectAsState()
     val library by libraryViewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val profile = response?.profile
     val name = profile?.displayName?.takeIf(String::isNotBlank)
         ?: account.user?.let { user -> listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { user.username ?: "Пользователь" } }
@@ -94,7 +94,7 @@ fun ProfileScreen(
             ProfileAction(Icons.Default.Edit, "Редактировать профиль", "Аватар, имя и описание", onEditProfile)
             ProfileAction(Icons.Default.Settings, "Настройки", "Внешний вид и настройки приложения", onSettings)
             ProfileAction(Icons.Default.Notifications, "Уведомления", "Новые серии и новости", onNotifications)
-            ProfileAction(Icons.Default.Info, "Об аккаунте", "Версия ${BuildConfig.VERSION_NAME}, документы и информация", onAbout)
+            ProfileAction(Icons.Default.Info, "Об аккаунте", "Версия ${appVersion(context)}, документы и информация", onAbout)
             ProfileAction(Icons.Default.Info, "Правовая информация", "Пользовательское соглашение и политика конфиденциальности", onLegal)
         }
     }
@@ -158,7 +158,7 @@ fun ProfileAboutScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltVi
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text("YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("Версия ${BuildConfig.VERSION_NAME}", color = YuberaMuted)
+                        Text("Версия ${appVersion(context)}", color = YuberaMuted)
                     }
                     Text("YUBERA — ваше личное пространство для аниме, каталога и истории просмотра.", color = YuberaMuted)
                     TextButton(onClick = {
@@ -218,3 +218,8 @@ private fun SettingSwitch(title: String, checked: Boolean, onCheckedChange: (Boo
         Switch(checked, onCheckedChange)
     }
 }
+
+
+private fun appVersion(context: android.content.Context): String = runCatching {
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "—"
+}.getOrDefault("—")
