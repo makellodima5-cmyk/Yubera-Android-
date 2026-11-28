@@ -49,6 +49,20 @@ class HomeRecommendationPolicyTest {
         assertFalse("Unknown episode count must not cause false exclusion", "unknown" in HomeRecommendationPolicy.fullyCompletedAnimeIds(progress, catalog))
     }
 
+    @Test
+    fun continueWatchingExcludesFullyCompletedTitles() {
+        val finished = anime("finished", episodes = 12)
+        assertFalse(isContinueWatchingEligible(finished, progress("finished", currentEpisode = 12, completedEpisode = 12)))
+    }
+
+    @Test
+    fun continueWatchingKeepsIncompleteAndOngoingTitles() {
+        val incomplete = anime("incomplete", episodes = 12)
+        val ongoing = anime("ongoing", episodes = 12, status = "Онгоинг")
+        assertTrue(isContinueWatchingEligible(incomplete, progress("incomplete", currentEpisode = 5, completedEpisode = 4)))
+        assertTrue(isContinueWatchingEligible(ongoing, progress("ongoing", currentEpisode = 12, completedEpisode = 12)))
+    }
+
     private fun progress(animeId: String, currentEpisode: Int, completedEpisode: Int) = AnimeProgressEntity(
         animeId = animeId,
         seasonNumber = null,
