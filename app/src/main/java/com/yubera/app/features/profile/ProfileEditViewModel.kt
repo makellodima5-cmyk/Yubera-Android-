@@ -100,7 +100,13 @@ class ProfileEditViewModel @Inject constructor(
         try {
             val raw = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
             if (raw.size > 2 * 1024 * 1024) return@withContext null
-            val decoded = BitmapFactory.decodeByteArray(raw, 0, raw.size) ?: return@withContext null
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(raw, 0, raw.size, bounds)
+            var sampleSize = 1
+            val maxDimension = maxOf(bounds.outWidth, bounds.outHeight)
+            while (maxDimension / sampleSize > 1024) sampleSize *= 2
+            val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize.coerceAtLeast(1) }
+            val decoded = BitmapFactory.decodeByteArray(raw, 0, raw.size, decodeOptions) ?: return@withContext null
             source = decoded
             val side = minOf(decoded.width, decoded.height)
             val x = (decoded.width - side) / 2
