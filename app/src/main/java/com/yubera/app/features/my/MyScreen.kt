@@ -124,15 +124,15 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
             val rotation by animateFloatAsState(offset * -22f, tween(duration), label = "carousel-rotation")
             val blur by animateFloatAsState(if (abs(offset) > 1) 2f else 0f, tween(duration), label = "carousel-blur")
             val alpha by animateFloatAsState(if (abs(offset) > 1) .58f else 1f, tween(duration), label = "carousel-alpha")
-            val translationX by animateFloatAsState(offset * 120f, tween(duration), label = "carousel-translation")
+            val animatedTranslationX by animateFloatAsState(offset * 120f, tween(duration), label = "carousel-translation")
             Poster(
                 item.anime,
                 Modifier.width(214.dp).height(318.dp).graphicsLayer {
-                    translationX = translationX.dp.toPx()
+                    this.translationX = animatedTranslationX.dp.toPx()
                     translationY = (1f - kotlin.math.cos(offset * .58f)) * 16.dp.toPx()
-                    translationZ = -abs(offset) * 18.dp.toPx()
+                    
                     scaleX = scale; scaleY = scale; rotationY = rotation; cameraDistance = 18 * density; this.alpha = alpha
-                }.blur(blur.dp),
+                }.blur(blur.dp).zIndex(-abs(offset).toFloat()),
                 offset == 0,
                 click = {
                     if (offset == 0) onOpen(item.anime.id)
