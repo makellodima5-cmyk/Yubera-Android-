@@ -152,7 +152,6 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                             color = YuberaMuted,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        }
                     }
                 }
 
