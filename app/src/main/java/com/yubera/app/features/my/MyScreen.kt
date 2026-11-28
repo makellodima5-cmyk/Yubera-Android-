@@ -156,7 +156,8 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
 
 @Composable
 private fun Poster(a: AnimeCatalogItem, modifier: Modifier, central: Boolean, click: () -> Unit, remove: () -> Unit) {
-    val interaction = rememberYuberaPressInteractionSource()\n    Card(onClick = click, modifier = modifier.yuberaPressScale(interaction), interactionSource = interaction, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = YuberaSurface), border = BorderStroke(1.dp, YuberaBorder), elevation = CardDefaults.cardElevation(if (central) 8.dp else 2.dp)) {
+    val interaction = rememberYuberaPressInteractionSource()
+    Card(onClick = click, modifier = modifier.yuberaPressScale(interaction), interactionSource = interaction, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = YuberaSurface), border = BorderStroke(1.dp, YuberaBorder), elevation = CardDefaults.cardElevation(if (central) 8.dp else 2.dp)) {
         Box(Modifier.fillMaxSize()) {
             if (!a.posterUrl.isNullOrBlank()) AsyncImage(a.posterUrl, "Постер: ${a.title}", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             else Box(Modifier.fillMaxSize().background(YuberaSurfaceElevated), contentAlignment = Alignment.Center) { Text(a.title.take(1), color = YuberaPrimary, style = MaterialTheme.typography.displayLarge) }
@@ -175,7 +176,8 @@ private fun Poster(a: AnimeCatalogItem, modifier: Modifier, central: Boolean, cl
 
 @Composable
 private fun Tile(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, count: Int, onClick: () -> Unit) {
-    val interaction = rememberYuberaPressInteractionSource()\n    Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).yuberaPressScale(interaction), interactionSource = interaction, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), border = BorderStroke(1.dp, YuberaBorder)) {
+    val interaction = rememberYuberaPressInteractionSource()
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).yuberaPressScale(interaction), interactionSource = interaction, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), border = BorderStroke(1.dp, YuberaBorder)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(icon, contentDescription = null, tint = YuberaPrimary, modifier = Modifier.size(28.dp))
             Column(Modifier.weight(1f)) { Text(title, color = YuberaOnBackground, fontWeight = FontWeight.Bold); Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }
