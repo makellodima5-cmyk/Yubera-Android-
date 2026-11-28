@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.session.NativeAuthRepository
 import com.yubera.app.data.auth.YuberaProfileApi
 import com.yubera.app.data.auth.YuberaCommunityProfile
+import com.yubera.app.data.auth.YuberaCommunityResponse
 import com.yubera.app.data.auth.YuberaProfileUpdateRequest
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,6 +13,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,11 +44,25 @@ class ProfileEditViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutable = MutableStateFlow(ProfileEditState())
     val state = mutable.asStateFlow()
+    private val profileCache = context.getSharedPreferences("yubera_profile_cache", Context.MODE_PRIVATE)
+    private val profileJson = Json { ignoreUnknownKeys = true }
 
     fun load() {
         if (mutable.value.loading && mutable.value.profile != null) return
         mutable.value = mutable.value.copy(loading = true, error = null)
         viewModelScope.launch {
+            val accountId = auth.getStoredAccountId()
+            if (accountId != null) {
+                profileCache.getString("community_${accountId}", null)?.let { cached ->
+                    runCatching { profileJson.decodeFromString<YuberaCommunityResponse>(cached) }
+                        .getOrNull()?.profile?.let { p ->
+                            if (mutable.value.profile == null) mutable.value = mutable.value.copy(
+                                profile = p, bio = p.bio, visibility = p.visibility, selectedFrame = p.avatarFrame,
+                                category = if (p.isAdmin) "admin" else "support"
+                            )
+                        }
+                }
+            }
             val authorization = auth.getSessionAuthorization()
             if (authorization == null) {
                 mutable.value = mutable.value.copy(loading = false, error = "Войдите в аккаунт YUBERA.")
@@ -59,15 +76,12 @@ class ProfileEditViewModel @Inject constructor(
                     return@launch
                 }
                 mutable.value = ProfileEditState(
-                    profile = p,
-                    bio = p.bio,
-                    visibility = p.visibility,
-                    selectedFrame = p.avatarFrame,
-                    category = if (p.isAdmin) "admin" else "support",
-                    loading = false
+                    profile = p, bio = p.bio, visibility = p.visibility, selectedFrame = p.avatarFrame,
+                    category = if (p.isAdmin) "admin" else "support", loading = false
                 )
-            } catch (e: Exception) {
-                mutable.value = mutable.value.copy(loading = false, error = "Не удалось загрузить профиль. Проверьте соединение.")
+                if (accountId != null) profileCache.edit().putString("community_${accountId}", profileJson.encodeToString(result)).apply()
+            } catch (_: Exception) {
+                mutable.value = mutable.value.copy(loading = false, error = "Не удалось загрузить профиль. Сохранённые данные доступны офлайн.")
             }
         }
     }
