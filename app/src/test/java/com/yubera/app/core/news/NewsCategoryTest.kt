@@ -13,6 +13,7 @@ class NewsCategoryTest {
     @Test
     fun classifiesEventsAndGeneralIndustryNews() {
         assertEquals(NewsCategory.EVENTS, NewsCategory.classify("Победители фестиваля", ""))
+        assertEquals(NewsCategory.EVENTS, NewsCategory.classify("На фестивале объявили победителей", ""))
         assertEquals(NewsCategory.INDUSTRY, NewsCategory.classify("Изменения в производстве аниме", ""))
     }
 
