@@ -31,12 +31,14 @@ class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi
   newsDao.replaceFeed(rows)
  }
  override suspend fun refreshArticle(articleId: Long) = withContext(Dispatchers.IO) {
-  val remote = api.getTopic(articleId); val cached = newsDao.getById(articleId); val text = cleanText(remote.body.orEmpty()).take(MAX_BODY); val raw = remote.body.orEmpty(); val now = System.currentTimeMillis()
+  val cached = newsDao.getById(articleId); val now = System.currentTimeMillis()
+  if (cached?.bodyText?.isNotBlank() == true && cached.lastFetchedAtEpochMillis?.let { now - it < ARTICLE_TTL } == true) return@withContext
+  val remote = api.getTopic(articleId); val text = cleanText(remote.body.orEmpty()).take(MAX_BODY); val raw = remote.body.orEmpty()
   newsDao.upsert(NewsArticleEntity(remote.id, remote.topicTitle.ifBlank { cached?.title.orEmpty() }, text.take(MAX_SUMMARY).ifBlank { cached?.summary.orEmpty() }, remote.createdAt.ifBlank { cached?.createdAt.orEmpty() }, remote.commentsCount?.coerceAtLeast(0) ?: cached?.commentsCount ?: 0, remote.user?.nickname?.takeIf(String::isNotBlank) ?: cached?.authorName.orEmpty(), remote.linked?.russian?.takeIf(String::isNotBlank) ?: remote.linked?.name ?: cached?.linkedTitle, NewsCategory.classify(remote.topicTitle, text).name, sourceUrl(remote.id), imageFrom(raw) ?: cached?.imageUrl, videoFrom(raw) ?: cached?.videoUrl, text.ifBlank { cached?.bodyText }, remote.linkedId ?: remote.linked?.id ?: cached?.linkedAnimeId, now))
  }
  private fun sourceUrl(id: Long) = "https://shikimori.one/forum/news/" + id
  private fun cleanText(raw: String): String { val safe = raw.replace(Regex("(?is)<script[^>]*>.*?</script>"), " ").replace(Regex("(?is)<style[^>]*>.*?</style>"), " "); return Html.fromHtml(safe, Html.FROM_HTML_MODE_COMPACT).toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim() }
  private fun imageFrom(raw: String): String? = Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(raw)?.groupValues?.getOrNull(1)?.takeIf { it.length <= 2048 && !it.contains("avatar", true) }
  private fun videoFrom(raw: String): String? = Regex("""(?i)(https?://(?:www\\.)?(?:youtube\\.com/watch\\?v=[^\\s&<>]+|youtu\\.be/[^\\s?<>]+|youtube\\.com/embed/[^\\s?<>]+))""").find(raw)?.groupValues?.getOrNull(1)?.replace("http://", "https://")?.trimEnd('.', ',', ')', ']')
- companion object { const val PAGE_SIZE = 30; const val MAX_PAGES = 3; const val MAX_SUMMARY = 2400; const val MAX_BODY = 40000; const val FEED_TTL = 30 * 60 * 1000L }
+ companion object { const val PAGE_SIZE = 30; const val MAX_PAGES = 3; const val MAX_SUMMARY = 2400; const val MAX_BODY = 40000; const val FEED_TTL = 30 * 60 * 1000L; const val ARTICLE_TTL = 24 * 60 * 60 * 1000L }
 }
