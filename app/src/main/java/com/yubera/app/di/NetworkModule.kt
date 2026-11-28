@@ -67,6 +67,9 @@ object NetworkModule {
     fun provideTelegramSessionApi(retrofit: Retrofit): TelegramSessionApi = retrofit.create(TelegramSessionApi::class.java)
 
     @Provides
+    fun provideYuberaProfileApi(retrofit: Retrofit): YuberaProfileApi = retrofit.create(YuberaProfileApi::class.java)
+
+    @Provides
     fun provideTelegramLibrarySyncApi(retrofit: Retrofit): TelegramLibrarySyncApi =
         retrofit.create(TelegramLibrarySyncApi::class.java)
 
