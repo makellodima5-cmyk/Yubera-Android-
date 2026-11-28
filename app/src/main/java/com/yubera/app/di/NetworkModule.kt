@@ -6,7 +6,8 @@ import com.yubera.app.core.network.ShikimoriRateLimitInterceptor
 import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.data.auth.TelegramSessionApi
 import com.yubera.app.data.auth.YuberaProfileApi
-import com.yubera.app.data.anime.AnimeSocialApi\nimport com.yubera.app.data.anime.ShikimoriAnimeApi
+import com.yubera.app.data.anime.AnimeSocialApi
+import com.yubera.app.data.anime.ShikimoriAnimeApi
 import com.yubera.app.data.catalog.CatalogApi
 import com.yubera.app.data.library.TelegramLibrarySyncApi
 import com.yubera.app.data.news.ShikimoriEpisodeUpdatesApi
