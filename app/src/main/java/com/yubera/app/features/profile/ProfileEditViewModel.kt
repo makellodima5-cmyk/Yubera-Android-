@@ -54,7 +54,8 @@ class ProfileEditViewModel @Inject constructor(
     val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun load() {
-        if (!mutable.value.loading) return
+        if (mutable.value.loading && mutable.value.profile != null) return
+        mutable.value = mutable.value.copy(loading = true, error = null)
         viewModelScope.launch {
             val authorization = auth.getSessionAuthorization()
             if (authorization == null) {
@@ -89,7 +90,7 @@ class ProfileEditViewModel @Inject constructor(
     fun setVisibility(value: String) = mutable.value.let { mutable.value = it.copy(visibility = value) }
     fun setCategory(value: String) = mutable.value.let { mutable.value = it.copy(category = value) }
     fun setFrame(value: String?) = mutable.value.let { mutable.value = it.copy(selectedFrame = value) }
-    fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value) }
+    fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value, selectedAvatarAnimeId = null) }
 
     private suspend fun compressAvatar(uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
@@ -126,7 +127,13 @@ class ProfileEditViewModel @Inject constructor(
                 return@launch
             }
             try {
-                val result = api.updateProfile(authorization, YuberaProfileUpdateRequest(bio = s.bio, visibility = s.visibility, avatarFrame = s.selectedFrame, customName = s.customName.trim(), avatarAnimeId = s.selectedAvatarAnimeId, avatarDataUrl = s.selectedAvatarUri?.let { compressAvatar(Uri.parse(it)) }))
+                val compressedAvatar = if (s.selectedAvatarUri != null) compressAvatar(Uri.parse(s.selectedAvatarUri)) else null
+                if (s.selectedAvatarUri != null && compressedAvatar == null) throw IllegalStateException("Не удалось обработать изображение. Выберите другой файл.")
+                val result = api.updateProfile(authorization, YuberaProfileUpdateRequest(
+                    bio = s.bio, visibility = s.visibility, avatarFrame = s.selectedFrame,
+                    customName = s.customName.trim(), avatarAnimeId = s.selectedAvatarAnimeId,
+                    avatarDataUrl = compressedAvatar
+                ))
                 if (!result.ok) throw IllegalStateException(result.error ?: "Не удалось сохранить профиль.")
                 mutable.value = mutable.value.copy(saving = false, saved = true)
                 onSaved()
