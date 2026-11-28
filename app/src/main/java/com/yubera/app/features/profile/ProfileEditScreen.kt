@@ -123,7 +123,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                         BasicTextField(
                             value = state.bio, onValueChange = viewModel::setBio, maxLines = 5,
                             textStyle = TextStyle(color = YuberaOnBackground, fontSize = 15.sp),
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).background(Color(0xFF202127), RoundedCornerShape(12.dp)).padding(12.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).background(YuberaSurfaceElevated, RoundedCornerShape(12.dp)).padding(12.dp),
                             decorationBox = { inner -> Box { if (state.bio.isEmpty()) Text("Расскажите о себе", color = YuberaMuted); inner() } }
                         )
                     }
@@ -207,7 +207,7 @@ private fun FrameOption(id: String?, title: String, resource: Int?, requirement:
         Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(64.dp))
             if (resource != null) Image(painterResource(resource), null, Modifier.fillMaxSize())
-            if (!available) Icon(Icons.Default.Lock, null, tint = Color(0xFFE0A45A), modifier = Modifier.align(Alignment.TopEnd).size(18.dp).background(Color(0xFF16171C), CircleShape))
+            if (!available) Icon(Icons.Default.Lock, null, tint = YuberaGold, modifier = Modifier.align(Alignment.TopEnd).size(18.dp).background(YuberaSurface, CircleShape))
             if (selected) Icon(Icons.Default.Check, null, tint = YuberaPrimary, modifier = Modifier.align(Alignment.BottomEnd).size(22.dp).background(Color(0xFF16171C), CircleShape))
         }
         Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.labelMedium, maxLines = 2)
