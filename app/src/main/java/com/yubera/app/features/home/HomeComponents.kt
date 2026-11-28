@@ -131,11 +131,11 @@ fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onC
 fun RecommendedCard(anime: AnimeCatalogItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier.width(270.dp).height(218.dp).clip(RoundedCornerShape(20.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
         AnimeImage(anime,Modifier.fillMaxSize(),preferBanner=true)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xE8100D17)))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,YuberaScrim))))
         Column(Modifier.align(Alignment.BottomStart).padding(14.dp).fillMaxWidth(.84f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
             Pill("Рекомендуем")
             Text(anime.title,color=Color.White,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
-            Text(anime.genres.take(3).joinToString(" · "),color=Color(0xFFD7D1DA),style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)
+            Text(anime.genres.take(3).joinToString(" · "),color=YuberaMuted,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)
         }
         androidx.compose.material3.IconButton(
             onClick = onClick,
@@ -176,7 +176,7 @@ private fun AnimeImage(anime: AnimeCatalogItem, modifier: Modifier, preferBanner
 
 @Composable
 private fun Pill(text: String) {
-    Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xB5100E17)).padding(horizontal=8.dp,vertical=4.dp)) {
+    Box(Modifier.clip(RoundedCornerShape(50)).background(YuberaScrim.copy(alpha = 0.7f)).padding(horizontal=8.dp,vertical=4.dp)) {
         Text(text,color=Color.White,style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.SemiBold)
     }
 }
