@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,7 +49,7 @@ fun ProfileScreen(
     val library by libraryViewModel.uiState.collectAsState()
     val profile = response?.profile
     val name = profile?.displayName?.takeIf(String::isNotBlank)
-        ?: account.user?.let { listOfNotNull(it.firstName, it.lastName).joinToString(" ").ifBlank { it.username ?: "Пользователь" } }
+        ?: account.user?.let { user -> listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { user.username ?: "Пользователь" } }
         ?: "Пользователь"
     val avatar = profile?.avatarDataUrl?.takeIf(String::isNotBlank)
         ?: profile?.avatarUrl?.takeIf(String::isNotBlank)
@@ -61,7 +62,7 @@ fun ProfileScreen(
             Text("YUBERA", color = YuberaOnBackground, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             IconButton(onClick = onNotifications) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
         }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(bottom = 18.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(Modifier.fillMaxWidth().height(170.dp)) {
                 Image(painterResource(R.drawable.yubera_about_project_banner), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 Text("Профиль", Modifier.align(Alignment.BottomStart).padding(18.dp), color = YuberaOnBackground, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
