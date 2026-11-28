@@ -16,7 +16,12 @@ internal object HomeRecommendationPolicy {
     ): Set<String> {
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         return progress.mapNotNull { row ->
-            val totalEpisodes = byId[row.animeId]?.episodes?.takeIf { it > 0 } ?: return@mapNotNull null
+            val anime = byId[row.animeId] ?: return@mapNotNull null
+            val totalEpisodes = anime.episodes.takeIf { it > 0 } ?: return@mapNotNull null
+            val status = anime.status.lowercase(Locale.ROOT)
+            val isOngoingOrUpcoming = listOf("ongoing", "airing", "онгоинг", "выходит", "анонс", "upcoming", "planned", "not yet aired")
+                .any(status::contains)
+            if (isOngoingOrUpcoming) return@mapNotNull null
             val completedEpisode = maxOf(
                 row.completedEpisodeNumber ?: 0,
                 if (EpisodeCompletionPolicy.isEpisodeCompleted(row)) row.episodeNumber ?: 0 else 0

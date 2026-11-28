@@ -32,6 +32,16 @@ class HomeRecommendationPolicyTest {
     }
 
     @Test
+    fun ongoingTitleIsNotExcludedEvenWhenAllCurrentlyListedEpisodesAreComplete() {
+        val catalog = listOf(anime("ongoing", episodes = 12, status = "Онгоинг"), anime("other", episodes = 24))
+        val progress = listOf(progress("ongoing", currentEpisode = 12, completedEpisode = 12))
+
+        val completed = HomeRecommendationPolicy.fullyCompletedAnimeIds(progress, catalog)
+
+        assertFalse("An ongoing title is not fully watched", "ongoing" in completed)
+    }
+
+    @Test
     fun titleWithUnknownEpisodeCountIsNotAssumedFullyWatched() {
         val catalog = listOf(anime("unknown", episodes = 0), anime("other", episodes = 12))
         val progress = listOf(progress("unknown", currentEpisode = 5, completedEpisode = 5))
@@ -50,7 +60,7 @@ class HomeRecommendationPolicyTest {
         completedAtEpochMillis = 1L
     )
 
-    private fun anime(id: String, episodes: Int) = AnimeCatalogItem(
+    private fun anime(id: String, episodes: Int, status: String = "Вышел") = AnimeCatalogItem(
         id = id,
         title = id,
         englishTitle = null,
@@ -59,7 +69,7 @@ class HomeRecommendationPolicyTest {
         episodes = episodes,
         rating = 8.0,
         genres = listOf("Fantasy"),
-        status = "Вышел",
+        status = status,
         description = "",
         posterUrl = null,
         bannerUrl = null,
