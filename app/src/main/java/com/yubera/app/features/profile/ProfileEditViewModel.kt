@@ -97,17 +97,20 @@ class ProfileEditViewModel @Inject constructor(
         var cropped: Bitmap? = null
         var resized: Bitmap? = null
         try {
-            source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
-            val side = minOf(source.width, source.height)
-            val x = (source.width - side) / 2
-            val y = (source.height - side) / 2
-            cropped = if (side == source.width && side == source.height) source else Bitmap.createBitmap(source, x, y, side, side)
-            resized = if (cropped.width == 512 && cropped.height == 512) cropped else Bitmap.createScaledBitmap(cropped, 512, 512, true)
+            val decoded = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
+            source = decoded
+            val side = minOf(decoded.width, decoded.height)
+            val x = (decoded.width - side) / 2
+            val y = (decoded.height - side) / 2
+            val cropBitmap = if (side == decoded.width && side == decoded.height) decoded else Bitmap.createBitmap(decoded, x, y, side, side)
+            cropped = cropBitmap
+            val scaledBitmap = if (cropBitmap.width == 512 && cropBitmap.height == 512) cropBitmap else Bitmap.createScaledBitmap(cropBitmap, 512, 512, true)
+            resized = scaledBitmap
             var quality = 82
             var bytes: ByteArray
             do {
                 val output = java.io.ByteArrayOutputStream()
-                resized.compress(Bitmap.CompressFormat.JPEG, quality, output)
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
                 bytes = output.toByteArray()
                 quality -= 7
             } while (bytes.size > 140_000 && quality >= 45)
