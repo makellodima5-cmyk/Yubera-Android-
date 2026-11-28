@@ -43,6 +43,7 @@ import com.yubera.app.features.profile.ProfileEditScreen
 import com.yubera.app.features.profile.ProfileSettingsScreen
 import com.yubera.app.features.profile.ProfileAboutScreen
 import com.yubera.app.features.profile.ProfileNotificationSettingsScreen
+import com.yubera.app.features.profile.ProfileLegalScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -172,7 +173,7 @@ fun AppNavHost(
             }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
             composable("profile-settings") { ProfileSettingsScreen(onBack = { navController.popBackStack() }, onNotifications = { navController.navigate("notifications") }, onLogout = onLogout) }
-            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Юридические документы будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-legal") { ProfileLegalScreen(onBack = { navController.popBackStack() }) }
             composable("profile-about") { ProfileAboutScreen(onBack = { navController.popBackStack() }, onLogout = onLogout) }
             composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
             composable("profile-collection/{collectionId}", arguments = listOf(navArgument("collectionId") { type = NavType.StringType })) {
