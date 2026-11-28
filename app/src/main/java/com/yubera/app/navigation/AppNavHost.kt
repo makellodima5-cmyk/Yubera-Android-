@@ -60,8 +60,9 @@ fun AppNavHost(
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
     var catalogResetNonce by remember { mutableIntStateOf(0) }
+    var profileResetNonce by remember { mutableIntStateOf(0) }
     val isDetailRoute = currentRoute?.startsWith("anime/") == true ||
-        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute?.startsWith("my-list/") == true || currentRoute == "news-bookmarks"
+        currentRoute?.startsWith("player/") == true || currentRoute?.startsWith("news/") == true || currentRoute?.startsWith("my-list/") == true || currentRoute?.startsWith("profile-") == true || currentRoute == "news-bookmarks"
 
     Scaffold(
         containerColor = YuberaBackground,
@@ -73,9 +74,8 @@ fun AppNavHost(
                             selected = currentRoute == destination.route || (currentRoute == "support" && destination.route == AppDestination.Home.route),
                             onClick = {
                                 if (currentRoute == destination.route) {
-                                    if (destination.route == AppDestination.Catalog.route) {
-                                        catalogResetNonce++
-                                    }
+                                    if (destination.route == AppDestination.Catalog.route) catalogResetNonce++
+                                    if (destination.route == AppDestination.Profile.route) profileResetNonce++
                                 } else {
                                     navController.navigate(destination.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
@@ -163,7 +163,8 @@ fun AppNavHost(
                     onLegal = { navController.navigate("profile-legal") },
                     onAbout = { navController.navigate("profile-about") },
                     onAllCollections = { navController.navigate("profile-collections") },
-                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }
+                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") },
+                    resetKey = profileResetNonce
                 )
             }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
