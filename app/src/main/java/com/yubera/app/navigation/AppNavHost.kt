@@ -40,17 +40,12 @@ import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
 import com.yubera.app.features.profile.ProfileEditScreen
-import com.yubera.app.features.profile.ProfileSettingsScreen
-import com.yubera.app.features.profile.ProfileAboutScreen
-import com.yubera.app.features.profile.ProfileNotificationSettingsScreen
-import com.yubera.app.features.profile.ProfileLegalScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
 fun AppNavHost(
     pendingAnimeRoute: PendingAnimeRoute? = null,
-    onAnimeRouteHandled: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onAnimeRouteHandled: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     LaunchedEffect(pendingAnimeRoute) {
@@ -150,7 +145,7 @@ fun AppNavHost(
             composable("collections") {
                 HomeSimpleDestination("Подборки", "Тематические коллекции будут оформлены отдельным техническим заданием.", { navController.popBackStack() })
             }
-            composable("notifications") { ProfileNotificationSettingsScreen(onBack = { navController.popBackStack() }) }
+            composable("notifications") { HomeSimpleDestination("Уведомления", "Экран уведомлений будет оформлен отдельным техническим заданием.", { navController.popBackStack() }) }
             composable(AppDestination.Catalog.route) {
                 CatalogScreen(onAnimeClick = { anime -> navController.navigate("anime/${Uri.encode(anime.id)}") }, onNotificationsClick = { navController.navigate("notifications") }, resetKey = catalogResetNonce)
             }
@@ -164,7 +159,7 @@ fun AppNavHost(
                 ProfileScreen(
                     onEditProfile = { navController.navigate("profile-edit") },
                     onNotifications = { navController.navigate("notifications") },
-                    onSettings = { navController.navigate("profile-settings") },
+                    onFriends = { navController.navigate("profile-friends") },
                     onLegal = { navController.navigate("profile-legal") },
                     onAbout = { navController.navigate("profile-about") },
                     onAllCollections = { navController.navigate("profile-collections") },
@@ -172,9 +167,9 @@ fun AppNavHost(
                 )
             }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
-            composable("profile-settings") { ProfileSettingsScreen(onBack = { navController.popBackStack() }, onNotifications = { navController.navigate("notifications") }, onLogout = onLogout) }
-            composable("profile-legal") { ProfileLegalScreen(onBack = { navController.popBackStack() }) }
-            composable("profile-about") { ProfileAboutScreen(onBack = { navController.popBackStack() }, onLogout = onLogout) }
+            composable("profile-friends") { HomeSimpleDestination("Друзья", "Подписки, подписчики и поиск пользователей будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Пользовательское соглашение и политика конфиденциальности будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-about") { HomeSimpleDestination("О проекте", "Описание и цели проекта YUBERA.", { navController.popBackStack() }) }
             composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
             composable("profile-collection/{collectionId}", arguments = listOf(navArgument("collectionId") { type = NavType.StringType })) {
                 HomeSimpleDestination("Подборка", "Просмотр содержимого подборки будет оформлен отдельным заданием.", { navController.popBackStack() })
