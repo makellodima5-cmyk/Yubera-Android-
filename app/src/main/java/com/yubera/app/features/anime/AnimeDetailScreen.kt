@@ -109,7 +109,8 @@ fun AnimeDetailScreen(
             modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.size(44.dp)) {
+            val backInteraction = rememberYuberaPressInteractionSource()
+            IconButton(onClick = onBack, modifier = Modifier.size(44.dp).yuberaPressScale(backInteraction), interactionSource = backInteraction) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад", tint = YuberaOnBackground)
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { YuberaLogo(width = 122.dp) }
@@ -151,9 +152,9 @@ fun AnimeDetailScreen(
                         SectionTitle("Описание")
                         Text(anime.description, color = YuberaOnBackground.copy(alpha = 0.9f), style = MaterialTheme.typography.bodyMedium,
                             maxLines = if (expandedDescription) Int.MAX_VALUE else 5, overflow = TextOverflow.Ellipsis)
-                        if (anime.description.length > 420) TextButton(onClick = { expandedDescription = !expandedDescription }) {
+                        if (anime.description.length > 420) { val descriptionInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { expandedDescription = !expandedDescription }, modifier = Modifier.yuberaPressScale(descriptionInteraction), interactionSource = descriptionInteraction) {
                             Text(if (expandedDescription) "Свернуть" else "Развернуть")
-                        }
+                        } }
                     }
                 }
 
@@ -321,16 +322,16 @@ fun AnimeDetailScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { viewModel.toggleSubscription(true); showSubscribeDialog = false }) { Text(if (state.isSubscribed) "Оставить подписку" else "Подписаться") } },
-            dismissButton = { TextButton(onClick = { viewModel.toggleSubscription(false); showSubscribeDialog = false }) { Text("Отменить подписку") } }
+            confirmButton = { val confirmSubInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { viewModel.toggleSubscription(true); showSubscribeDialog = false }, modifier = Modifier.yuberaPressScale(confirmSubInteraction), interactionSource = confirmSubInteraction) { Text(if (state.isSubscribed) "Оставить подписку" else "Подписаться") } },
+            dismissButton = { val dismissSubInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { viewModel.toggleSubscription(false); showSubscribeDialog = false }, modifier = Modifier.yuberaPressScale(dismissSubInteraction), interactionSource = dismissSubInteraction) { Text("Отменить подписку") } }
         )
     }
 
     showDeleteDialogFor?.let { id ->
         AlertDialog(onDismissRequest = { showDeleteDialogFor = null }, title = { Text("Удалить комментарий?") },
             text = { Text("Комментарий будет удалён из обсуждения YUBERA.") },
-            confirmButton = { TextButton(onClick = { viewModel.deleteComment(id); showDeleteDialogFor = null }) { Text("Удалить") } },
-            dismissButton = { TextButton(onClick = { showDeleteDialogFor = null }) { Text("Отмена") } })
+            confirmButton = { val deleteConfirmInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { viewModel.deleteComment(id); showDeleteDialogFor = null }, modifier = Modifier.yuberaPressScale(deleteConfirmInteraction), interactionSource = deleteConfirmInteraction) { Text("Удалить") } },
+            dismissButton = { val deleteDismissInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { showDeleteDialogFor = null }, modifier = Modifier.yuberaPressScale(deleteDismissInteraction), interactionSource = deleteDismissInteraction) { Text("Отмена") } })
     }
 }
 
@@ -366,9 +367,11 @@ private fun EpisodeProgressCard(
     progressFraction: Float,
     onClick: () -> Unit
 ) {
+    val interaction = rememberYuberaPressInteractionSource()
     Card(
         onClick = onClick,
-        modifier = Modifier.width(64.dp).height(68.dp),
+        modifier = Modifier.width(64.dp).height(68.dp).yuberaPressScale(interaction),
+        interactionSource = interaction,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = if (selected) YuberaSurface else YuberaSurface.copy(alpha = 0.7f)),
         border = BorderStroke(1.dp, if (selected) YuberaPrimary else YuberaSurface.copy(alpha = 0.45f))
@@ -471,7 +474,8 @@ private fun CommentsSection(
             SectionTitle("Комментарии")
             Text(totalCount.toString(), color = YuberaMuted, style = MaterialTheme.typography.labelMedium)
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = onRetry, enabled = !loading) { Text("Обновить") }
+            val retryInteraction = rememberYuberaPressInteractionSource()
+            TextButton(onClick = onRetry, enabled = !loading, modifier = Modifier.yuberaPressScale(retryInteraction), interactionSource = retryInteraction) { Text("Обновить") }
         }
         if (!hasSession) {
             Text("Читать обсуждение можно без входа. Войдите через Telegram, чтобы писать комментарии и ставить лайки.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
@@ -485,7 +489,8 @@ private fun CommentsSection(
                 maxLines = 4,
                 enabled = !submitting,
                 trailingIcon = {
-                    IconButton(onClick = onSend, enabled = draft.isNotBlank() && !submitting) {
+                    val sendInteraction = rememberYuberaPressInteractionSource()
+                    IconButton(onClick = onSend, enabled = draft.isNotBlank() && !submitting, modifier = Modifier.yuberaPressScale(sendInteraction), interactionSource = sendInteraction) {
                         Icon(Icons.Default.Send, contentDescription = "Опубликовать комментарий", tint = YuberaPrimary)
                     }
                 }
@@ -495,7 +500,8 @@ private fun CommentsSection(
             Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(12.dp)) {
                 Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = onClearError) { Text("Закрыть") }
+                    val clearErrorInteraction = rememberYuberaPressInteractionSource()
+                    TextButton(onClick = onClearError, modifier = Modifier.yuberaPressScale(clearErrorInteraction), interactionSource = clearErrorInteraction) { Text("Закрыть") }
                 }
             }
         }
@@ -512,11 +518,12 @@ private fun CommentsSection(
                     CommentHeader(root.authorName, root.createdAt, root.authorId != null && root.authorId == viewerId) { onDelete(root.id) }
                     Text(if (root.deleted) "Комментарий удалён" else root.body, color = if (root.deleted) YuberaMuted else YuberaOnBackground, style = MaterialTheme.typography.bodyMedium)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IconButton(onClick = { onLikeRoot(root) }, enabled = hasSession && !root.deleted, modifier = Modifier.size(32.dp)) {
+                        val rootLikeInteraction = rememberYuberaPressInteractionSource()
+                        IconButton(onClick = { onLikeRoot(root) }, enabled = hasSession && !root.deleted, modifier = Modifier.size(32.dp).yuberaPressScale(rootLikeInteraction), interactionSource = rootLikeInteraction) {
                             Icon(if (root.liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Нравится", tint = if (root.liked) YuberaPrimary else YuberaMuted)
                         }
                         Text(root.likeCount.toString(), color = YuberaMuted, style = MaterialTheme.typography.labelMedium)
-                        if (hasSession && !root.deleted) TextButton(onClick = { onReplyClick(root.id) }) { Text("Ответить") }
+                        if (hasSession && !root.deleted) { val rootReplyInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { onReplyClick(root.id) }, modifier = Modifier.yuberaPressScale(rootReplyInteraction), interactionSource = rootReplyInteraction) { Text("Ответить") } }
                         if (root.replyCount > 0) Text("${root.replyCount} ответов", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
                     }
                     root.replies.forEach { reply ->
@@ -527,17 +534,19 @@ private fun CommentsSection(
                                 if (!reply.replyToName.isNullOrBlank()) Text("Ответ для ${reply.replyToName}", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall)
                                 Text(if (reply.deleted) "Комментарий удалён" else reply.body, color = if (reply.deleted) YuberaMuted else YuberaOnBackground, style = MaterialTheme.typography.bodySmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(onClick = { onLikeReply(reply) }, enabled = hasSession && !reply.deleted, modifier = Modifier.size(30.dp)) {
+                                    val replyLikeInteraction = rememberYuberaPressInteractionSource()
+                                    IconButton(onClick = { onLikeReply(reply) }, enabled = hasSession && !reply.deleted, modifier = Modifier.size(30.dp).yuberaPressScale(replyLikeInteraction), interactionSource = replyLikeInteraction) {
                                         Icon(if (reply.liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Нравится", tint = if (reply.liked) YuberaPrimary else YuberaMuted, modifier = Modifier.size(17.dp))
                                     }
                                     Text(reply.likeCount.toString(), color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
-                                    if (hasSession && !reply.deleted) TextButton(onClick = { onReplyClick(reply.id) }) { Text("Ответить") }
+                                    if (hasSession && !reply.deleted) { val replyTextInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { onReplyClick(reply.id) }, modifier = Modifier.yuberaPressScale(replyTextInteraction), interactionSource = replyTextInteraction) { Text("Ответить") } }
                                 }
                             }
                         }
                     }
                     if (root.hasMoreReplies) {
-                        TextButton(onClick = { onLoadMoreReplies(root.id) }, enabled = repliesLoadingFor != root.id) {
+                        val loadRepliesInteraction = rememberYuberaPressInteractionSource()
+                        TextButton(onClick = { onLoadMoreReplies(root.id) }, enabled = repliesLoadingFor != root.id, modifier = Modifier.yuberaPressScale(loadRepliesInteraction), interactionSource = loadRepliesInteraction) {
                             if (repliesLoadingFor == root.id) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                             else Text("Показать ещё ответы")
                         }
@@ -552,8 +561,10 @@ private fun CommentsSection(
                             enabled = !submitting,
                             trailingIcon = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    TextButton(onClick = onCancelReply) { Text("Отмена") }
-                                    IconButton(onClick = { onReply(replyParentId ?: root.id) }, enabled = replyDraft.isNotBlank() && !submitting) {
+                                    val cancelReplyInteraction = rememberYuberaPressInteractionSource()
+                                    TextButton(onClick = onCancelReply, modifier = Modifier.yuberaPressScale(cancelReplyInteraction), interactionSource = cancelReplyInteraction) { Text("Отмена") }
+                                    val sendReplyInteraction = rememberYuberaPressInteractionSource()
+                                    IconButton(onClick = { onReply(replyParentId ?: root.id) }, enabled = replyDraft.isNotBlank() && !submitting, modifier = Modifier.yuberaPressScale(sendReplyInteraction), interactionSource = sendReplyInteraction) {
                                         Icon(Icons.Default.Send, contentDescription = "Отправить ответ", tint = YuberaPrimary)
                                     }
                                 }
@@ -564,7 +575,8 @@ private fun CommentsSection(
             }
         }
         if (hasMore) {
-            Button(onClick = onLoadMore, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
+            val loadCommentsInteraction = rememberYuberaPressInteractionSource()
+            Button(onClick = onLoadMore, enabled = !loading, modifier = Modifier.fillMaxWidth().yuberaPressScale(loadCommentsInteraction), interactionSource = loadCommentsInteraction) {
                 if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Text("Показать ещё комментарии")
             }
@@ -578,7 +590,8 @@ private fun CommentHeader(author: String, createdAt: String, isOwn: Boolean, onD
         Text(author.ifBlank { "Пользователь YUBERA" }, color = YuberaOnBackground, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         Text(formatCommentDate(createdAt), color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
         if (isOwn) {
-            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            val deleteCommentInteraction = rememberYuberaPressInteractionSource()
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp).yuberaPressScale(deleteCommentInteraction), interactionSource = deleteCommentInteraction) {
                 Icon(Icons.Default.Delete, contentDescription = "Удалить комментарий", tint = YuberaMuted, modifier = Modifier.size(18.dp))
             }
         }
@@ -598,12 +611,15 @@ private fun FrameViewer(frames: List<AnimeScreenshot>, initialIndex: Int, onClos
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("Кадр ${index + 1} из ${frames.size}", color = YuberaOnBackground, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = YuberaOnBackground) }
+                    val closeFrameInteraction = rememberYuberaPressInteractionSource()
+                    IconButton(onClick = onClose, modifier = Modifier.yuberaPressScale(closeFrameInteraction), interactionSource = closeFrameInteraction) { Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = YuberaOnBackground) }
                 }
                 AsyncImage(model = frames[index].originalUrl.ifBlank { frames[index].previewUrl }, contentDescription = null, modifier = Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Fit)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    TextButton(onClick = { index = (index - 1).coerceAtLeast(0) }, enabled = index > 0) { Text("←") }
-                    TextButton(onClick = { index = (index + 1).coerceAtMost(frames.lastIndex) }, enabled = index < frames.lastIndex) { Text("→") }
+                    val prevFrameInteraction = rememberYuberaPressInteractionSource()
+                    TextButton(onClick = { index = (index - 1).coerceAtLeast(0) }, enabled = index > 0, modifier = Modifier.yuberaPressScale(prevFrameInteraction), interactionSource = prevFrameInteraction) { Text("←") }
+                    val nextFrameInteraction = rememberYuberaPressInteractionSource()
+                    TextButton(onClick = { index = (index + 1).coerceAtMost(frames.lastIndex) }, enabled = index < frames.lastIndex, modifier = Modifier.yuberaPressScale(nextFrameInteraction), interactionSource = nextFrameInteraction) { Text("→") }
                 }
             }
         }
