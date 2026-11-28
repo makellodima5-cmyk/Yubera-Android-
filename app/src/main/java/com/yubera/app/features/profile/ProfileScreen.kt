@@ -99,8 +99,10 @@ fun ProfileScreen(
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Image(painterResource(R.drawable.yubera_logo_transparent), "YUBERA", Modifier.height(34.dp), contentScale = ContentScale.Fit)
             }
-            IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
-                Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground)
+            Box {
+                IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
+                val unread by viewModel.unreadNotificationCount.collectAsState()
+                if (unread > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 5.dp, end = 5.dp).size(8.dp).background(YuberaRed, CircleShape))
             }
         }
         Text("Профиль", color = YuberaOnBackground, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp))
@@ -315,6 +317,7 @@ private fun profileFrameResource(frame: String): Int? = when(frame) {
     "Admin_Frame_06.webp" -> R.drawable.admin_frame_06
     "Admin_Frame_07.webp" -> R.drawable.admin_frame_07
     "Admin_Frame_08.webp" -> R.drawable.admin_frame_08
+    "Ramka_Admin_01.webp" -> R.drawable.ramka_admin_01
     "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik
     "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik
     "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik
