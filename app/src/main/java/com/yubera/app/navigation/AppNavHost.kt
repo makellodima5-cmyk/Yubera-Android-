@@ -35,6 +35,7 @@ import com.yubera.app.features.home.HomeViewModel
 import com.yubera.app.features.home.HomeSimpleDestination
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
+import com.yubera.app.features.news.NewsViewModel
 import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
@@ -159,8 +160,24 @@ fun AppNavHost(
                 MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { section -> if(section.isBlank()) navController.popBackStack() else navController.navigate("my-list/${Uri.encode(section)}") }, onNotificationsClick = { navController.navigate("notifications") })
             }
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
-            composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
-            composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
+            composable(AppDestination.News.route) { backStackEntry ->
+                val newsViewModel: NewsViewModel = hiltViewModel(backStackEntry)
+                NewsScreen(
+                    viewModel = newsViewModel,
+                    onArticleClick = { id -> navController.navigate("news/$id") },
+                    onBookmarksClick = { navController.navigate("news-bookmarks") },
+                    onNotificationsClick = { navController.navigate("notifications") }
+                )
+            }
+            composable("news-bookmarks") { backStackEntry ->
+                val newsEntry = remember(backStackEntry) { navController.getBackStackEntry(AppDestination.News.route) }
+                val newsViewModel: NewsViewModel = hiltViewModel(newsEntry)
+                NewsBookmarksScreen(
+                    viewModel = newsViewModel,
+                    onBack = { navController.popBackStack() },
+                    onArticleClick = { id -> navController.navigate("news/$id") }
+                )
+            }
             composable(AppDestination.Profile.route) { entry ->
                 val profileViewModel: SettingsViewModel = hiltViewModel(entry)
                 ProfileScreen(
