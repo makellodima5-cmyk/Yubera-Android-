@@ -264,3 +264,25 @@ fun ProfileNotificationSettingsScreen(onBack: () -> Unit, viewModel: SettingsVie
         }
     }
 }
+
+@Composable
+fun ProfileLegalScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
+            Text("Правовая информация", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        }
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Документы", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    Text("Отдельные публичные страницы пользовательского соглашения и политики конфиденциальности пока не найдены в Website. Чтобы не вести на неверные ссылки, они не подставлены автоматически.", color = YuberaMuted)
+                    TextButton(onClick = {
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(YuberaEndpoints.SITE_ORIGIN))) }
+                    }) { Text("Открыть официальный Website", color = YuberaPrimary) }
+                }
+            }
+        }
+    }
+}
