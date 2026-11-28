@@ -41,6 +41,8 @@ import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
 import com.yubera.app.features.profile.ProfileEditScreen
+import com.yubera.app.features.profile.ProfileCollectionsScreen
+import com.yubera.app.features.profile.ProfileCollectionDetailScreen
 import com.yubera.app.features.profile.SettingsViewModel
 import com.yubera.app.features.support.SupportScreen
 
@@ -186,8 +188,8 @@ fun AppNavHost(
             composable("profile-friends") { HomeSimpleDestination("Друзья", "Раздел подписок, подписчиков и поиска пользователей описан отдельным ТЗ.", { navController.popBackStack() }) }
             composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Пользовательское соглашение и политика конфиденциальности проекта.", { navController.popBackStack() }) }
             composable("profile-about") { HomeSimpleDestination("О проекте", "YUBERA · Информация о проекте и его целях.", { navController.popBackStack() }) }
-            composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список подборок пользователя.", { navController.popBackStack() }) }
-            composable("profile-collection/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { HomeSimpleDestination("Подборка", "Просмотр выбранной подборки.", { navController.popBackStack() }) }
+            composable("profile-collections") { ProfileCollectionsScreen(onBack = { navController.popBackStack() }, onCollectionClick = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }) }
+            composable("profile-collection/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry -> ProfileCollectionDetailScreen(collectionId = entry.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() }, onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }) }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
