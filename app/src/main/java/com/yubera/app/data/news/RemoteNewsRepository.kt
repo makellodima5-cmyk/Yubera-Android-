@@ -26,7 +26,7 @@ class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi
   if (found.isEmpty()) return@withContext
   val rows = found.values.map { topic ->
    val text = cleanText(topic.body.orEmpty()); val previous = newsDao.getById(topic.id)
-   NewsArticleEntity(topic.id, topic.topicTitle.trim(), text.take(MAX_SUMMARY), topic.createdAt, topic.commentsCount?.coerceAtLeast(0) ?: 0, topic.user?.nickname.orEmpty(), topic.linked?.russian?.takeIf(String::isNotBlank) ?: topic.linked?.name, NewsCategory.classify(topic.topicTitle, text).name, sourceUrl(topic.id), imageFrom(topic.body.orEmpty()) ?: previous?.imageUrl, videoFrom(topic.body.orEmpty()) ?: previous?.videoUrl, previous?.bodyText ?: text.take(MAX_BODY).ifBlank { null }, topic.linkedId ?: topic.linked?.id ?: previous?.linkedAnimeId, previous?.lastFetchedAtEpochMillis ?: now)
+   NewsArticleEntity(topic.id, topic.topicTitle.trim(), text.take(MAX_SUMMARY), topic.createdAt, topic.commentsCount?.coerceAtLeast(0) ?: 0, topic.user?.nickname.orEmpty(), topic.linked?.russian?.takeIf(String::isNotBlank) ?: topic.linked?.name, NewsCategory.classify(topic.topicTitle, text).name, sourceUrl(topic.id), imageFrom(topic.body.orEmpty()) ?: previous?.imageUrl, videoFrom(topic.body.orEmpty()) ?: previous?.videoUrl, previous?.bodyText ?: text.take(MAX_BODY).ifBlank { null }, topic.linkedId ?: topic.linked?.id ?: previous?.linkedAnimeId, now)
   }
   newsDao.replaceFeed(rows)
  }
