@@ -73,7 +73,7 @@ import com.yubera.app.core.ui.theme.*
 }
 @Composable private fun Featured(a:NewsArticleEntity,saved:Boolean,open:()->Unit,bookmark:()->Unit){Card(onClick=open,Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface)){Box(Modifier.fillMaxWidth().height(230.dp)){
  if(!a.imageUrl.isNullOrBlank())AsyncImage(a.imageUrl,"Обложка новости",Modifier.fillMaxSize(),contentScale=ContentScale.Crop)else Box(Modifier.fillMaxSize().background(YuberaSurfaceElevated))
- Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color(0xE8000000)))))
+ Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,YuberaScrim))))
  Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp).padding(end=48.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){Text(category(a.category).title.uppercase(),color=YuberaPrimary,style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold);Text(a.title,color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge,maxLines=3,overflow=TextOverflow.Ellipsis);Text(a.summary,color=Color.White.copy(.82f),style=MaterialTheme.typography.bodySmall,maxLines=2,overflow=TextOverflow.Ellipsis);Text(a.createdAt.take(10),color=Color.White.copy(.7f),style=MaterialTheme.typography.labelSmall)}
  IconButton(bookmark,Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(.45f),RoundedCornerShape(50))){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else Color.White)}
 }}}
