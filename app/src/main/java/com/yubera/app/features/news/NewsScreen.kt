@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
+import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,11 +40,13 @@ import com.yubera.app.core.ui.theme.*
   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},label={Text(cat.title)})}}
   if(state.isRefreshing&&state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=YuberaPrimary)}
   else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
-  else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+  else PullToRefreshBox(isRefreshing=state.isRefreshing,onRefresh=viewModel::refresh,modifier=Modifier.weight(1f).fillMaxWidth()){
+   LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
    state.errorMessage?.let{item{Text(it,color=YuberaMuted)}}
    val featured=state.articles.firstOrNull()
    if(featured!=null)item{Featured(featured,state.bookmarkedIds.contains(featured.id),{onArticleClick(featured.id)},{viewModel.toggleBookmark(featured.id)})}
    items(state.articles.drop(if(featured==null)0 else 1),key=NewsArticleEntity::id){a->NewsRow(a,state.bookmarkedIds.contains(a.id),{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}
+   }
   }
  }
 }
