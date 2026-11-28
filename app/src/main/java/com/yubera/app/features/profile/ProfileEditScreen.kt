@@ -203,7 +203,8 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
 
 @Composable
 private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
+    val interaction = rememberYuberaPressInteractionSource()
+    FilterChip(selected = selected, onClick = onClick, modifier = Modifier.yuberaPressScale(interaction), interactionSource = interaction, label = { Text(label) })
 }
 
 @Composable

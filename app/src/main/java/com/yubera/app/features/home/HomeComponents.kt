@@ -2,6 +2,8 @@ package com.yubera.app.features.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,8 @@ import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
 import com.yubera.app.core.ui.theme.YuberaScrim
 import com.yubera.app.core.ui.theme.YuberaGold
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? = null) {
@@ -88,9 +92,11 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? =
 
 @Composable
 fun HomeAnnouncementTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
+    val interaction = rememberYuberaPressInteractionSource()
     Card(
         onClick = onClick,
-        modifier = Modifier.width(320.dp).height(174.dp),
+        modifier = Modifier.width(320.dp).height(174.dp).yuberaPressScale(interaction),
+        interactionSource = interaction,
         colors = CardDefaults.cardColors(containerColor = YuberaSurface),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -133,7 +139,8 @@ fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onC
 
 @Composable
 fun RecommendedCard(anime: AnimeCatalogItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.width(270.dp).height(218.dp).clip(RoundedCornerShape(20.dp)).background(YuberaSurface).clickable(onClick=onClick)) {
+    val cardInteraction = rememberYuberaPressInteractionSource()
+    Box(modifier.width(270.dp).height(218.dp).yuberaPressScale(cardInteraction).clip(RoundedCornerShape(20.dp)).background(YuberaSurface).clickable(interactionSource=cardInteraction,indication=LocalIndication.current,onClick=onClick)) {
         AnimeImage(anime,Modifier.fillMaxSize(),preferBanner=true)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,YuberaScrim))))
         Column(Modifier.align(Alignment.BottomStart).padding(14.dp).fillMaxWidth(.84f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -141,10 +148,12 @@ fun RecommendedCard(anime: AnimeCatalogItem, onClick: () -> Unit, modifier: Modi
             Text(anime.title,color=Color.White,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
             Text(anime.genres.take(3).joinToString(" · "),color=YuberaMuted,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)
         }
+        val playInteraction = rememberYuberaPressInteractionSource()
         androidx.compose.material3.IconButton(
             onClick = onClick,
             modifier = Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp)
-                .background(YuberaPrimary, CircleShape)
+                .background(YuberaPrimary, CircleShape).yuberaPressScale(playInteraction),
+            interactionSource = playInteraction
         ) {
             Text("▶", color = Color.White)
         }

@@ -102,7 +102,8 @@ fun ProfileScreen(
                 Image(painterResource(R.drawable.yubera_logo_transparent), "YUBERA", Modifier.height(34.dp), contentScale = ContentScale.Fit)
             }
             Box {
-                IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
+                val notificationInteraction = rememberYuberaPressInteractionSource()
+                IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp).yuberaPressScale(notificationInteraction), interactionSource = notificationInteraction) { Icon(Icons.Default.Notifications, "Уведомления", tint = YuberaOnBackground) }
                 val unread by viewModel.unreadNotificationCount.collectAsState()
                 if (unread > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 5.dp, end = 5.dp).size(8.dp).background(YuberaRed, CircleShape))
             }
@@ -142,7 +143,8 @@ fun ProfileScreen(
                             if (bio.length > 100) Text("Читать полностью", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { fullBio = true })
                         }
                     }
-                    IconButton(onClick = onEditProfile, modifier = Modifier.size(44.dp)) { Icon(Icons.Default.Edit, "Редактировать профиль", tint = YuberaPrimary) }
+                    val editInteraction = rememberYuberaPressInteractionSource()
+                    IconButton(onClick = onEditProfile, modifier = Modifier.size(44.dp).yuberaPressScale(editInteraction), interactionSource = editInteraction) { Icon(Icons.Default.Edit, "Редактировать профиль", tint = YuberaPrimary) }
                 }
             }
 
@@ -172,7 +174,8 @@ fun ProfileScreen(
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Мои подборки", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                TextButton(onClick = onAllCollections) {
+                val allCollectionsInteraction = rememberYuberaPressInteractionSource()
+                TextButton(onClick = onAllCollections, modifier = Modifier.yuberaPressScale(allCollectionsInteraction), interactionSource = allCollectionsInteraction) {
                     Text("Все подборки", color = YuberaPrimary)
                     Spacer(Modifier.width(2.dp))
                     Icon(Icons.Default.ArrowForward, null, tint = YuberaPrimary, modifier = Modifier.size(16.dp))

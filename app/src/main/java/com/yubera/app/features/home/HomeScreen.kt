@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
@@ -42,6 +44,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,12 +114,18 @@ fun HomeScreen(
                         LazyRow(
                             state=listState,
                             contentPadding=PaddingValues(horizontal=32.dp),
-                            horizontalArrangement=Arrangement.spacedBy(10.dp)
+                            horizontalArrangement=Arrangement.spacedBy(10.dp),
+                            flingBehavior = rememberSnapFlingBehavior(listState, SnapPosition.Center)
                         ) {
                             items(state.recommended,key=AnimeCatalogItem::id) { anime ->
-                                val targetScale=if(anime.id==state.recommended.getOrNull(activeIndex)?.id) 1f else .94f
-                                val scale by animateFloatAsState(targetScale,tween(if(motionAllowed) 220 else 0),label="recommendationScale")
-                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.scale(scale))
+                                val isActive = anime.id == state.recommended.getOrNull(activeIndex)?.id
+                                val targetScale = if (isActive) 1f else .86f
+                                val targetRotation = if (isActive) 0f else if (index < activeIndex) 7f else -7f
+                                val scale by animateFloatAsState(targetScale,tween(if(motionAllowed) 260 else 0),label="recommendationScale")
+                                val rotation by animateFloatAsState(targetRotation,tween(if(motionAllowed) 260 else 0),label="recommendationRotation")
+                                val alpha by animateFloatAsState(if (isActive) 1f else .82f,tween(if(motionAllowed) 260 else 0),label="recommendationAlpha")
+                                val offsetY by animateFloatAsState(if (isActive) 0f else 6f,tween(if(motionAllowed) 260 else 0),label="recommendationOffset")
+                                RecommendedCard(anime,onClick={onAnimeClick(anime.id)},modifier=Modifier.graphicsLayer { rotationY=rotation; this.alpha=alpha; translationY=offsetY.dp.toPx(); cameraDistance=20*density }.scale(scale).zIndex(if(isActive)1f else 0f))
                             }
                         }
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically) {
@@ -150,7 +160,7 @@ fun HomeScreen(
                         }
                     }
                     val collectionsInteraction = rememberYuberaPressInteractionSource()
-                    Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f).yuberaPressScale(collectionsInteraction),interactionSource=collectionsInteraction,colors=CardDefaults.cardColors(containerColor=YuberaSurface))
+                    Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f).yuberaPressScale(collectionsInteraction),interactionSource=collectionsInteraction,colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Bookmarks,contentDescription="Подборки",tint=YuberaPrimary)
                             Text("Подборки",fontWeight=FontWeight.Bold,color=YuberaOnBackground)

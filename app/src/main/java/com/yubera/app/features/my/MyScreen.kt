@@ -167,7 +167,8 @@ private fun Poster(a: AnimeCatalogItem, modifier: Modifier, central: Boolean, cl
                 Text(a.title, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (central) Text(listOfNotNull(a.kind, a.year.takeIf { it > 0 }?.toString()).joinToString(" · "), color = Color.White.copy(.7f), style = MaterialTheme.typography.labelSmall)
             }
-            IconButton(remove, Modifier.align(Alignment.BottomEnd).padding(8.dp).size(38.dp).background(Color.Black.copy(.5f), RoundedCornerShape(50)).yuberaPressScale(rememberYuberaPressInteractionSource())) { Icon(Icons.Default.Favorite, "Удалить из избранного", tint = YuberaRed) }
+            val removeInteraction = rememberYuberaPressInteractionSource()
+            IconButton(remove, Modifier.align(Alignment.BottomEnd).padding(8.dp).size(38.dp).background(Color.Black.copy(.5f), RoundedCornerShape(50)).yuberaPressScale(removeInteraction), interactionSource = removeInteraction) { Icon(Icons.Default.Favorite, "Удалить из избранного", tint = YuberaRed) }
         }
     }
 }
