@@ -47,6 +47,11 @@ import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.YuberaBackground
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaPrimary
+import com.yubera.app.core.ui.theme.YuberaAccent
+import com.yubera.app.core.ui.theme.YuberaBorder
+import com.yubera.app.core.ui.theme.YuberaSurface
+import com.yubera.app.core.ui.theme.YuberaTelegramBlue
+import com.yubera.app.core.ui.theme.YuberaTelegramFold
 
 private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-in"; const val Register="register" }
 
