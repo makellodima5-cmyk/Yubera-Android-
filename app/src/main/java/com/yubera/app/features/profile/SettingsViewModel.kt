@@ -47,7 +47,7 @@ class SettingsViewModel @Inject constructor(
     val communityData = mutableCommunityData.asStateFlow()
     val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val profileCache = context.getSharedPreferences("yubera_profile_cache", Context.MODE_PRIVATE)
-    private val profileJson = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val profileJson = Json { ignoreUnknownKeys = true }
     private val mutableAppUpdate = MutableStateFlow(AppUpdateUiState(availableUpdate = appUpdateCoordinator.storedUpdate(), isMandatory = appUpdateCoordinator.storedMandatory()))
     val appUpdate = mutableAppUpdate.asStateFlow()
 
@@ -81,21 +81,26 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             mutableAccountProfile.value = AccountProfileUiState(isLoading = true)
             val authorization = authRepository.getSessionAuthorization()
-            val user = runCatching { authRepository.getCurrentProfile() }.getOrNull()
-            if (user != null) {
-                profileCache.getString("community_${user.id}", null)?.let { cached ->
+            val storedAccountId = authRepository.getStoredAccountId()
+            if (storedAccountId != null) {
+                profileCache.getString("community_${storedAccountId}", null)?.let { cached ->
                     runCatching { profileJson.decodeFromString<YuberaCommunityResponse>(cached) }
-                        .getOrNull()?.let { if (mutableCommunityData.value == null) mutableCommunityData.value = it }
+                        .getOrNull()?.let { mutableCommunityData.value = it }
                 }
             }
-            if (authorization == null || user == null) {
+            if (authorization == null || storedAccountId == null) {
                 mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Профиль аккаунта временно недоступен.")
+                return@launch
+            }
+            val user = runCatching { authRepository.getCurrentProfile() }.getOrNull()
+            if (user == null || user.id != storedAccountId) {
+                mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Не удалось обновить аккаунт. Показаны сохранённые данные, если они доступны.")
                 return@launch
             }
             try {
                 val result = yuberaProfileApi.getMyProfile(authorization)
                 if (!result.authenticated || result.profile == null) {
-                    mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Профиль YUBERA недоступен. Повторите вход.")
+                    mutableAccountProfile.value = AccountProfileUiState(user = user, errorMessage = "Профиль YUBERA недоступен. Показаны сохранённые данные.")
                     return@launch
                 }
                 mutableAccountProfile.value = AccountProfileUiState(user = user)
