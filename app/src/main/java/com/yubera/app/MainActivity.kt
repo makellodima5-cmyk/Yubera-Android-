@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                         StartupUiState.Initializing, is StartupUiState.Failed -> StartupScreen(ready,startupViewModel::retry) { splashFinished=false }
                         is StartupUiState.Ready -> when(ready.destination) {
                             StartupDestination.SignIn -> AuthNavHost()
-                            StartupDestination.Home -> AppNavHost(pendingAnimeRoute=pendingAnimeRoute,onAnimeRouteHandled={pendingAnimeRoute=null})
+                            StartupDestination.Home -> AppNavHost(pendingAnimeRoute=pendingAnimeRoute,onAnimeRouteHandled={pendingAnimeRoute=null},onLogout={startupViewModel.forceSignInAfterLogout()})
                         }
                     }
                 }
