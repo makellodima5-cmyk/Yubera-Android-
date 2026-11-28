@@ -42,6 +42,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.theme.*
+import com.yubera.app.data.auth.YuberaXpStatus
 import kotlinx.coroutines.delay
 
 @Composable
@@ -64,10 +65,11 @@ fun ProfileScreen(
     var coverTick by remember { mutableIntStateOf(0) }
     val scroll = rememberScrollState()
 
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
     LaunchedEffect(Unit) { while (true) { delay(60_000); coverTick++ } }
-    DisposableEffect(viewModel) {
-        val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(viewModel, lifecycleOwner) {
+        val owner = lifecycleOwner
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) viewModel.refreshAccountProfile()
         }
@@ -112,7 +114,7 @@ fun ProfileScreen(
                         profile?.avatarFrame?.let { frame -> profileFrameResource(frame)?.let { Image(painterResource(it), "Рамка аватара", Modifier.fillMaxSize()) } }
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(profile?.displayName?.takeIf(String::isNotBlank) ?: account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } } ?: "Пользователь", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             if (profile?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
