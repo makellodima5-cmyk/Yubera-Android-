@@ -24,17 +24,8 @@ interface NewsDao {
     @Query("SELECT * FROM news_articles ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<NewsArticleEntity>>
 
-    @Query("SELECT * FROM news_articles WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Long): NewsArticleEntity?
-
-    @Query("SELECT MAX(lastFetchedAtEpochMillis) FROM news_articles")
-    suspend fun getLastFetchTime(): Long?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<NewsArticleEntity>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(item: NewsArticleEntity)
 
     @Query("""
         DELETE FROM news_articles
