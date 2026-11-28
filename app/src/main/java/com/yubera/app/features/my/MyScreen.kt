@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
@@ -36,15 +37,17 @@ import com.yubera.app.core.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-@Composable fun MyScreen(onAnimeClick:(String)->Unit,onOpenSection:(String)->Unit={},section:String?=null,onNotificationsClick:()->Unit={},viewModel:MyViewModel=hiltViewModel()){
+@Composable fun MyScreen(onAnimeClick:(String)->Unit,onOpenSection:(String)->Unit={},section:String?=null,onNotificationsClick:()->Unit={},resetKey:Int=0,viewModel:MyViewModel=hiltViewModel()){
  val s by viewModel.uiState.collectAsState();var centerIndex by rememberSaveable{mutableIntStateOf(0)}
+ val pageListState=rememberLazyListState()
+ LaunchedEffect(resetKey,section){if(section==null){pageListState.scrollToItem(0);centerIndex=0}}
  val rows=when(section){"watch-later"->s.watchLater;"history"->s.history;"subscriptions"->s.subscriptions;else->emptyList()}
  val sectionTitle=when(section){"watch-later"->"Смотреть позже";"history"->"История просмотра";"subscriptions"->"Подписки";else->"Моё"}
  Column(Modifier.fillMaxSize()){
   Row(Modifier.fillMaxWidth().padding(horizontal=18.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);IconButton(onNotificationsClick){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)}}
   if(section!=null){Row(Modifier.padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){TextButton({onOpenSection("")}){Text("‹ Моё")};Text(sectionTitle,color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
    if(rows.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("Здесь пока нет тайтлов.",color=YuberaMuted)}else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){items(rows,key={it.anime.id}){r->MyAnimeCard(r){onAnimeClick(r.anime.id)}}}
-  }else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(bottom=16.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
+  }else LazyColumn(state=pageListState,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(bottom=16.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
    item{Text("Моё",Modifier.padding(horizontal=18.dp),color=YuberaOnBackground,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)}
    item{Column(verticalArrangement=Arrangement.spacedBy(8.dp)){Row(Modifier.padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){Icon(Icons.Default.Favorite,null,tint=YuberaPrimary);Text("Избранное",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
     if(s.favorites.isEmpty())Card(Modifier.fillMaxWidth().padding(horizontal=18.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface)){Column(Modifier.padding(18.dp)){Text("Избранное пока пусто",color=YuberaOnBackground,fontWeight=FontWeight.SemiBold);Text("Добавляйте тайтлы с помощью сердечка на странице аниме.",color=YuberaMuted)}}else Carousel(s.favorites,centerIndex.coerceIn(0,s.favorites.lastIndex),{centerIndex=it},onAnimeClick,viewModel::removeFavorite)
@@ -58,10 +61,27 @@ import kotlin.math.abs
 @Composable private fun Carousel(fav:List<MyLibraryItem>,initial:Int,onCenter:(Int)->Unit,onOpen:(String)->Unit,onRemove:(String)->Unit){
  val scope=rememberCoroutineScope();var center by rememberSaveable{mutableIntStateOf(initial)};var drag by remember{mutableFloatStateOf(0f)};val n=fav.size
  LaunchedEffect(n,initial){center=if(n==0)0 else initial.coerceIn(0,n-1)}
- val cards=remember(center,fav){if(n==0)emptyList()else if(n==1)listOf(Triple(center,0,fav[center]))else if(n==2)(-1..1).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}else(-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}.distinctBy{it.third.anime.id}}
+ val cards=remember(center,fav){
+  when{
+   n<=0 -> emptyList()
+   n==1 -> listOf(Triple(center,0,fav[center]))
+   n==2 -> listOf(Triple(center,0,fav[center]),Triple((center+1)%n,1,fav[(center+1)%n]))
+   else -> (-2..2).map{off->val i=((center+off)%n+n)%n;Triple(i,off,fav[i])}
+  }
+ }
  Box(Modifier.fillMaxWidth().height(350.dp).pointerInput(n){detectHorizontalDragGestures(onHorizontalDrag={c,d->c.consume();drag+=d},onDragEnd={if(abs(drag)>48&&n>1){center=(center+(if(drag<0)1 else -1)+n)%n;onCenter(center)};drag=0f},onDragCancel={drag=0f})},contentAlignment=Alignment.Center){
-  cards.forEach{(idx,pos,item)->val scale by animateFloatAsState(if(pos==0)1f else if(abs(pos)==1).78f else .58f,tween(260),label="scale");val rotation by animateFloatAsState(pos*-18f,tween(260),label="rotation");val blur by animateFloatAsState(if(abs(pos)>1)2.2f else 0f,tween(260),label="blur")
-   Poster(item.anime,Modifier.width(214.dp).height(318.dp).graphicsLayer{translationX=pos*118f;scaleX=scale;scaleY=scale;rotationY=rotation;cameraDistance=12*density;alpha=if(abs(pos)>1).56f else 1f}.blur(blur.dp),pos==0,{if(pos==0)onOpen(item.anime.id)else{center=idx;onCenter(idx);scope.launch{delay(260);onOpen(item.anime.id)}}},{onRemove(item.anime.id)})
+  cards.forEach{(idx,pos,item)->
+   val scale by animateFloatAsState(if(pos==0)1f else if(abs(pos)==1).82f else .64f,tween(260),label="scale")
+   val rotation by animateFloatAsState(pos*-22f,tween(260),label="rotation")
+   val blur by animateFloatAsState(if(abs(pos)>1)2.0f else 0f,tween(260),label="blur")
+   Poster(item.anime,Modifier.width(214.dp).height(318.dp).graphicsLayer{
+    val angle=pos*.58f
+    translationX=kotlin.math.sin(angle)*215.dp.toPx()
+    translationY=(1f-kotlin.math.cos(angle))*16.dp.toPx()
+    translationZ=-abs(pos)*18.dp.toPx()
+    scaleX=scale;scaleY=scale;rotationY=rotation;cameraDistance=18*density
+    alpha=if(abs(pos)>1).58f else 1f
+   }.blur(blur.dp),pos==0,{if(pos==0)onOpen(item.anime.id)else{center=idx;onCenter(idx);scope.launch{delay(260);onOpen(item.anime.id)}}},{onRemove(item.anime.id)})
   }
  }
 }

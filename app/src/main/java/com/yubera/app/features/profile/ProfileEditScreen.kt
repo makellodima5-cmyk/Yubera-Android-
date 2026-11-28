@@ -41,8 +41,8 @@ private val supportFrames = listOf(
     FrameChoice("YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp","Союзник",R.drawable.yubera_contribution_avatar_frame_01_soyuznik,"Поддержка проекта"),
     FrameChoice("YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp","Сторонник",R.drawable.yubera_contribution_avatar_frame_02_storonnik,"Поддержка проекта"),
     FrameChoice("YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp","Преданный участник",R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik,"Поддержка проекта"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp","Почётный покровитель",R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel,"Поддержка проекта"),
-    FrameChoice("YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp","Легенда YUBERA",R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera,"Поддержка проекта")
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp","Почётный покровитель",R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel,"Поддержка проекта"),
+    FrameChoice("YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp","Легенда YUBERA",R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera,"Поддержка проекта")
 )
 private val plusFrames = listOf(
     FrameChoice("YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp","Sakura Gold",R.drawable.yubera_plus_avatar_frame_01_sakura_gold,"YUBERA Plus"),
@@ -69,7 +69,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
     }
     val original = state.profile?.let { it.bio == state.bio && it.visibility == state.visibility && it.avatarFrame == state.selectedFrame && state.selectedAvatarUri == null } ?: true
     fun leave() { if (original) onBack() else confirmDiscard = true }
-    BackHandler { leave() }
+    BackHandler(enabled = !state.saving) { leave() }
     LaunchedEffect(Unit) { viewModel.load() }
     if (confirmDiscard) AlertDialog(
         onDismissRequest = { confirmDiscard = false },
@@ -81,7 +81,9 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
 
     Column(Modifier.fillMaxSize().background(YuberaBackground)) {
         Row(Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ArrowBack, "Назад", tint = YuberaOnBackground, modifier = Modifier.size(24.dp).clickable { leave() })
+            Box(Modifier.size(48.dp).clickable { leave() }, contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.ArrowBack, "Назад", tint = YuberaOnBackground, modifier = Modifier.size(24.dp))
+            }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.yubera_logo_transparent), "YUBERA", Modifier.height(32.dp), contentScale = ContentScale.Fit) }
             Spacer(Modifier.width(24.dp))
         }
@@ -129,11 +131,26 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
 
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Публичность профиля", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                        Text(if (state.visibility == "public") "Профиль виден другим пользователям." else "Профиль закрыт от общего просмотра.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(if (state.visibility == "public") "Публичный" else "Приватный", color = YuberaOnBackground)
-                            Switch(checked = state.visibility == "public", onCheckedChange = { viewModel.setVisibility(if (it) "public" else "private") })
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                if (state.visibility == "public") "Публичный профиль" else "Закрытый профиль",
+                                color = YuberaOnBackground,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(
+                                checked = state.visibility == "public",
+                                onCheckedChange = { viewModel.setVisibility(if (it) "public" else "private") }
+                            )
+                        }
+                        Text(
+                            if (state.visibility == "public") {
+                                "Ваш профиль виден другим пользователям и доступен в поиске."
+                            } else {
+                                "Ваш профиль не отображается в общем поиске и недоступен для общего просмотра."
+                            },
+                            color = YuberaMuted,
+                            style = MaterialTheme.typography.bodySmall
                         }
                     }
                 }
@@ -141,6 +158,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Рамка аватара", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                        Text("Выберите рамку для своего аватара.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CategoryChip("За поддержку", state.category == "support") { viewModel.setCategory("support") }
                             CategoryChip("YUBERA Plus", state.category == "plus") { viewModel.setCategory("plus") }
@@ -209,8 +227,8 @@ private fun frameResource(frame: String): Int? = when(frame) {
     "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik
     "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik
     "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik
-    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
-    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
+    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
+    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
     "YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp" -> R.drawable.yubera_plus_avatar_frame_01_sakura_gold
     "YUBERA_Plus_Avatar_Frame_02_Mystic_Kitsune.webp" -> R.drawable.yubera_plus_avatar_frame_02_mystic_kitsune
     "YUBERA_Plus_Avatar_Frame_03_Samurai_Steel.webp" -> R.drawable.yubera_plus_avatar_frame_03_samurai_steel

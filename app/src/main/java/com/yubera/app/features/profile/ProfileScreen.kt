@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.yubera.app.BuildConfig
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
 import com.yubera.app.data.auth.YuberaXpStatus
@@ -201,10 +202,15 @@ fun ProfileScreen(
                 }
             }
 
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileDestinationCard(Icons.Default.Group, "Друзья", "Подписки и поиск", onFriends)
-                ProfileDestinationCard(Icons.Default.ReceiptLong, "Правовая информация", "Документы", onLegal)
-                ProfileDestinationCard(Icons.Default.Info, "О проекте", "YUBERA", onAbout)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ProfileDestinationCard(Icons.Default.Group, "Друзья", "Подписки, подписчики и поиск", onFriends)
+                ProfileDestinationCard(Icons.Default.ReceiptLong, "Правовая информация", "Пользовательское соглашение и политика конфиденциальности", onLegal)
+                ProfileDestinationCard(
+                    Icons.Default.Info,
+                    "О проекте",
+                    "Версия ${BuildConfig.VERSION_NAME} · Описание и цели проекта",
+                    onAbout
+                )
             }
             Spacer(Modifier.height(10.dp))
         }
@@ -254,13 +260,22 @@ private fun ProfileCounter(icon: androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 private fun ProfileDestinationCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    Card(Modifier.width(176.dp).height(84.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
-        Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(22.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Card(
+        Modifier.fillMaxWidth().heightIn(min = 76.dp).clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = YuberaSurface),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(24.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
+            Icon(Icons.Default.ArrowForward, contentDescription = null, tint = YuberaMuted, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -292,8 +307,8 @@ private fun profileFrameResource(frame: String): Int? = when(frame) {
     "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik
     "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik
     "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik
-    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
-    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
+    "YUBERA_Contribution_Avatar_Frame_04_Pochetnyy_Pokrovitel.webp" -> R.drawable.yubera_contribution_avatar_frame_04_pochetnyy_pokrovitel
+    "YUBERA_Contribution_Avatar_Frame_05_Legenda_YUBERA.webp" -> R.drawable.yubera_contribution_avatar_frame_05_legenda_yubera
     "YUBERA_Plus_Avatar_Frame_01_Sakura_Gold.webp" -> R.drawable.yubera_plus_avatar_frame_01_sakura_gold
     "YUBERA_Plus_Avatar_Frame_02_Mystic_Kitsune.webp" -> R.drawable.yubera_plus_avatar_frame_02_mystic_kitsune
     "YUBERA_Plus_Avatar_Frame_03_Samurai_Steel.webp" -> R.drawable.yubera_plus_avatar_frame_03_samurai_steel
