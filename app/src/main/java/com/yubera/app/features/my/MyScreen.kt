@@ -108,7 +108,7 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
     var drag by remember { mutableFloatStateOf(0f) }
     val n = fav.size
     LaunchedEffect(n, initial, fav.map { it.anime.id }) { center = if (n == 0) 0 else initial.coerceIn(0, n - 1) }
-    val offsets = when { n <= 0 -> emptyList(); n <= 4 -> listOf(-1, 0, 1); else -> listOf(-2, -1, 0, 1, 2) }
+    val offsets = favoriteCarouselOffsets(n)
     val cards = offsets.mapNotNull { offset -> if (n == 0) null else { val index = ((center + offset) % n + n) % n; Triple(index, offset, fav[index]) } }
     Box(
         Modifier.fillMaxWidth().height(350.dp).pointerInput(n) {
@@ -180,4 +180,12 @@ private fun Tile(icon: androidx.compose.ui.graphics.vector.ImageVector, title: S
             Icon(Icons.Default.ArrowForward, contentDescription = null, tint = YuberaMuted)
         }
     }
+}
+
+internal fun favoriteCarouselOffsets(itemCount: Int): List<Int> = when {
+    itemCount <= 0 -> emptyList()
+    itemCount == 1 -> listOf(0)
+    itemCount == 2 -> listOf(0, 1)
+    itemCount <= 4 -> listOf(-1, 0, 1)
+    else -> listOf(-2, -1, 0, 1, 2)
 }

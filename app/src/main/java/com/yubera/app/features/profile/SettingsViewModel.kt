@@ -23,6 +23,7 @@ import javax.inject.Inject
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,6 +36,7 @@ import kotlinx.coroutines.launch
 data class AccountProfileUiState(val user: TelegramSessionUser? = null, val isLoading: Boolean = false, val errorMessage: String? = null)
 data class AppUpdateUiState(val isChecking: Boolean = false, val checkResult: AppUpdateCheckResult? = null, val availableUpdate: AppUpdateInfo? = null, val isMandatory: Boolean = false, val downloadWorkInfo: WorkInfo? = null)
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: UserSettingsRepository,

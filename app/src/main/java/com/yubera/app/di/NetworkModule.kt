@@ -85,6 +85,10 @@ object NetworkModule {
         retrofit.create(TelegramLibrarySyncApi::class.java)
 
     @Provides
+    fun provideShikimoriAnimeApi(@Named("shikimori") retrofit: Retrofit): ShikimoriAnimeApi =
+        retrofit.create(ShikimoriAnimeApi::class.java)
+
+    @Provides
     fun provideShikimoriEpisodeUpdatesApi(@Named("shikimori") retrofit: Retrofit): ShikimoriEpisodeUpdatesApi =
         retrofit.create(ShikimoriEpisodeUpdatesApi::class.java)
 
