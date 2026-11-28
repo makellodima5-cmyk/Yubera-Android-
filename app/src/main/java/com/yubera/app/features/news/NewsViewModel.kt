@@ -18,10 +18,11 @@ class NewsViewModel @Inject constructor(private val repository: NewsRepository) 
  private val query = MutableStateFlow(""); private val category = MutableStateFlow(NewsCategory.ALL); private val savedOnly = MutableStateFlow(false); private val refreshing = MutableStateFlow(false); private val error = MutableStateFlow<String?>(null); private var loaded = false
  private val feed = combine(repository.observeNews(), repository.observeBookmarkedNews(), query, category, savedOnly) { all, saved, q, c, only -> FeedState(filterNews(all, saved, q, c, only), q, c, only) }
  val uiState = combine(feed, repository.observeBookmarkedIds(), refreshing, error) { f, ids, busy, message -> NewsUiState(f.articles, ids.toSet(), f.query, f.category, f.savedOnly, busy, message) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NewsUiState())
- fun ensureLoaded() { if (!loaded) { loaded = true; refresh() } }
+ fun ensureLoaded() { if (!loaded) { loaded = true; refreshInternal(force = false) } }
  fun onQueryChange(value: String) { query.value = value }
  fun selectCategory(value: NewsCategory) { category.value = value }
  fun showBookmarkedOnly(value: Boolean) { savedOnly.value = value }
  fun toggleBookmark(id: Long) { viewModelScope.launch { repository.setBookmarked(id, id !in uiState.value.bookmarkedIds) } }
- fun refresh() { if (refreshing.value) return; viewModelScope.launch { refreshing.value = true; error.value = null; try { repository.refresh() } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { error.value = "Не удалось обновить ленту. Сохранённые публикации остались доступны." } finally { refreshing.value = false } } }
+ fun refresh() = refreshInternal(force = true)
+ private fun refreshInternal(force: Boolean) { if (refreshing.value) return; viewModelScope.launch { refreshing.value = true; error.value = null; try { repository.refresh(force) } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { error.value = "Не удалось обновить ленту. Сохранённые публикации остались доступны." } finally { refreshing.value = false } } }
 }
