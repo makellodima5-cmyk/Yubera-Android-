@@ -113,7 +113,11 @@ class NativeAuthRepository @Inject constructor(
         }
     }
 
-    fun getSessionAuthorization(): String? = tokenStore.getAccessToken()?.let { "Bearer $it" }\n\n    fun getStoredAccountId(): String? = tokenStore.getAccountId()?.takeIf(String::isNotBlank)\n\n    suspend fun getCurrentProfile(): TelegramSessionUser? {
+    fun getSessionAuthorization(): String? = tokenStore.getAccessToken()?.let { "Bearer $it" }
+
+    fun getStoredAccountId(): String? = tokenStore.getAccountId()?.takeIf(String::isNotBlank)
+
+    suspend fun getCurrentProfile(): TelegramSessionUser? {
         val token = tokenStore.getAccessToken() ?: return null
         val accountId = tokenStore.getAccountId()?.takeIf(String::isNotBlank) ?: return null
         if (activeAccountStore.currentAccountId() != accountId) return null
