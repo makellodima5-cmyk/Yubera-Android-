@@ -15,4 +15,12 @@ class NewsCategoryTest {
         assertEquals(NewsCategory.EVENTS, NewsCategory.classify("Победители фестиваля", ""))
         assertEquals(NewsCategory.INDUSTRY, NewsCategory.classify("Изменения в производстве аниме", ""))
     }
+
+    @Test
+    fun doesNotClassifyFromWeakBodyOnlyMentions() {
+        assertEquals(
+            NewsCategory.ALL,
+            NewsCategory.classify("Обзор недели", "Упомянули фестиваль, интервью и новый трейлер.")
+        )
+    }
 }

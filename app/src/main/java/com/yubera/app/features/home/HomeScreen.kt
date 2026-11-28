@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Casino
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
@@ -130,31 +129,6 @@ fun HomeScreen(
                     if(state.continueWatching.isEmpty()) Text("Здесь появятся тайтлы, просмотр которых не завершён.",color=YuberaMuted,modifier=Modifier.padding(horizontal=18.dp))
                     else LazyRow(contentPadding=PaddingValues(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         items(state.continueWatching,key={it.anime.id}) { item -> HomeProgressCard(item.anime,item.progress){onContinueClick(item.anime.id,item.progress.episodeNumber)} }
-                    }
-                }
-            }
-            item {
-                Card(
-                    onClick = onSupportClick,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
-                    colors = CardDefaults.cardColors(containerColor = YuberaSurface),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().background(
-                            androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                listOf(Color(0xFF202126), Color(0xFF27282E), Color(0xFF1A1B20))
-                            )
-                        ).padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB59D), modifier = Modifier.size(30.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text("Поддержка и YUBERA Plus", color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Поддержать проект и открыть дополнительные возможности", color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.bodySmall)
-                        }
-                        Text("›", color = YuberaPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

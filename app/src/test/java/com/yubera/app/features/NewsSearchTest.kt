@@ -2,8 +2,10 @@ package com.yubera.app.features
 
 import com.yubera.app.core.database.entity.NewsArticleEntity
 import com.yubera.app.core.news.NewsCategory
+import com.yubera.app.features.news.chooseFeaturedNews
 import com.yubera.app.features.news.filterNews
 import com.yubera.app.features.news.searchNews
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -29,6 +31,31 @@ class NewsSearchTest {
     @Test
     fun searchMatchesAuthorName() {
         assertEquals(listOf(2L), articles.searchNews("Автор 2").map { it.id })
+    }
+
+    @Test
+    fun featuredSelectionPrefersFreshSubstantiveStoryWithMedia() {
+        val date = LocalDate.now().toString()
+        val plain = article(4, "Короткая новость", "", null, "ALL").copy(createdAt = date)
+        val rich = article(5, "Студия анонсировала новый проект", "Подробности о новом аниме-проекте и участниках производства.", null, "ANNOUNCEMENTS")
+            .copy(
+                createdAt = date,
+                imageUrl = "https://cdn.example.com/news.jpg",
+                bodyText = "Подробный текст публикации о новом аниме-проекте. ".repeat(8)
+            )
+
+        assertEquals(5L, chooseFeaturedNews(listOf(plain, rich))?.id)
+    }
+
+    @Test
+    fun staleArticleWithoutSupportingContentIsNotForcedAsFeatured() {
+        val stale = article(6, "Коротко", "", null, "ALL").copy(
+            createdAt = LocalDate.now().minusDays(180).toString(),
+            imageUrl = null,
+            videoUrl = null,
+            bodyText = null
+        )
+        assertEquals(null, chooseFeaturedNews(listOf(stale)))
     }
 
     @Test

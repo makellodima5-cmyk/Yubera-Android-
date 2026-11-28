@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -33,19 +34,39 @@ import com.yubera.app.core.ui.theme.*
  val state by viewModel.uiState.collectAsState()
  LaunchedEffect(viewModel) { viewModel.ensureLoaded() }
  Column(Modifier.fillMaxSize()){
-  Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);IconButton(onNotificationsClick){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)};IconButton(viewModel::refresh){Icon(Icons.Default.Refresh,"Обновить",tint=YuberaPrimary)};IconButton(onBookmarksClick){Icon(Icons.Default.Bookmark,"Закладки",tint=YuberaPrimary)}}
+  Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);IconButton(onNotificationsClick){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)};IconButton(viewModel::refresh){Icon(Icons.Default.Refresh,"Обновить",tint=YuberaPrimary)}}
   Text("Новости",Modifier.padding(horizontal=18.dp),color=YuberaOnBackground,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
   Text("Главные события мира аниме · Shikimori",Modifier.padding(horizontal=18.dp,vertical=2.dp),color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
-  OutlinedTextField(state.query,viewModel::onQueryChange,Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),placeholder={Text("Поиск новостей")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true)
+  Row(
+   Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),
+   verticalAlignment=Alignment.CenterVertically,
+   horizontalArrangement=Arrangement.spacedBy(8.dp)
+  ) {
+   OutlinedTextField(
+    value=state.query,
+    onValueChange=viewModel::onQueryChange,
+    modifier=Modifier.weight(1f),
+    placeholder={Text("Поиск новостей")},
+    leadingIcon={Icon(Icons.Default.Search,null)},
+    trailingIcon=if(state.query.isNotEmpty()) {
+     { IconButton(onClick={viewModel.onQueryChange("")}) { Icon(Icons.Default.Close,"Очистить поиск") } }
+    } else null,
+    singleLine=true
+   )
+   IconButton(
+    onClick=onBookmarksClick,
+    modifier=Modifier.size(48.dp).background(YuberaSurface,RoundedCornerShape(12.dp))
+   ) { Icon(Icons.Default.Bookmark,"Закладки",tint=YuberaPrimary) }
+  }
   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},label={Text(cat.title)})}}
   if(state.isRefreshing&&state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=YuberaPrimary)}
   else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else if (state.query.isNotBlank()) "Ничего не найдено" else if (state.selectedCategory != NewsCategory.ALL) "В этой категории пока нет новостей" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: if (state.query.isNotBlank()) "Измените запрос или выберите другую категорию." else "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
   else PullToRefreshBox(isRefreshing=state.isRefreshing,onRefresh=viewModel::refresh,modifier=Modifier.weight(1f).fillMaxWidth()){
    LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
    state.errorMessage?.let{item{Text(it,color=YuberaMuted)}}
-   val featured=state.articles.firstOrNull()
+   val featured=chooseFeaturedNews(state.articles)
    if(featured!=null)item{Featured(featured,state.bookmarkedIds.contains(featured.id),{onArticleClick(featured.id)},{viewModel.toggleBookmark(featured.id)})}
-   items(state.articles.drop(if(featured==null)0 else 1),key=NewsArticleEntity::id){a->NewsRow(a,state.bookmarkedIds.contains(a.id),{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}
+   items(state.articles.filterNot { featured != null && it.id == featured.id },key=NewsArticleEntity::id){a->NewsRow(a,state.bookmarkedIds.contains(a.id),{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}
    }
   }
  }
@@ -62,8 +83,13 @@ import com.yubera.app.core.ui.theme.*
  IconButton(bookmark){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else YuberaMuted)}
 }}}
 @Composable fun NewsBookmarksScreen(onBack:()->Unit,onArticleClick:(Long)->Unit,viewModel:NewsViewModel=hiltViewModel()){
- val state by viewModel.uiState.collectAsState();LaunchedEffect(viewModel){viewModel.showBookmarkedOnly(true);viewModel.ensureLoaded()}
- Column(Modifier.fillMaxSize()){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){TextButton(onClick={viewModel.showBookmarkedOnly(false);onBack()}){Text("‹ Новости")};Text("Закладки",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
+ val state by viewModel.uiState.collectAsState()
+ DisposableEffect(viewModel) {
+  viewModel.showBookmarkedOnly(true)
+  onDispose { viewModel.showBookmarkedOnly(false) }
+ }
+ LaunchedEffect(viewModel){viewModel.ensureLoaded()}
+ Column(Modifier.fillMaxSize()){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){TextButton(onClick=onBack){Text("‹ Новости")};Text("Закладки",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
  if(state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("Сохранённых публикаций пока нет",color=YuberaMuted)}
  else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){items(state.articles,key=NewsArticleEntity::id){a->NewsRow(a,true,{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}}
  }
