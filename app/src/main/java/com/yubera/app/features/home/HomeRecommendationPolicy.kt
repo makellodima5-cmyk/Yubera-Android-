@@ -20,7 +20,7 @@ internal object HomeRecommendationPolicy {
             val totalEpisodes = anime.episodes.takeIf { it > 0 } ?: return@mapNotNull null
             val status = anime.status.lowercase(Locale.ROOT)
             val isOngoingOrUpcoming = listOf("ongoing", "airing", "онгоинг", "выходит", "анонс", "upcoming", "planned", "not yet aired")
-                .any(status::contains)
+                .any { marker -> status.contains(marker) }
             if (isOngoingOrUpcoming) return@mapNotNull null
             val completedEpisode = maxOf(
                 row.completedEpisodeNumber ?: 0,
