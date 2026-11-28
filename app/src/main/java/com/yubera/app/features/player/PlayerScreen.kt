@@ -75,7 +75,8 @@ fun PlayerScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                val backInteraction = rememberYuberaPressInteractionSource()
+                IconButton(onClick = onBack, modifier = Modifier.yuberaPressScale(backInteraction), interactionSource = backInteraction) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад", tint = YuberaOnBackground)
                 }
                 Text(state.animeTitle, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium, maxLines = 1)
@@ -90,7 +91,8 @@ fun PlayerScreen(
             Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(state.errorMessage.orEmpty(), color = YuberaMuted)
-                    Button(onClick = viewModel::retry) { Text("Повторить") }
+                    val retryInteraction = rememberYuberaPressInteractionSource()
+                    Button(onClick = viewModel::retry, modifier = Modifier.yuberaPressScale(retryInteraction), interactionSource = retryInteraction) { Text("Повторить") }
                 }
             }
         } else {
@@ -102,9 +104,12 @@ fun PlayerScreen(
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp)
                 ) {
                     items(state.sources, key = { it.id }) { source ->
+                        val sourceInteraction = rememberYuberaPressInteractionSource()
                         FilterChip(
                             selected = state.selectedSourceId == source.id,
                             onClick = { viewModel.selectSource(source.id) },
+                            modifier = Modifier.yuberaPressScale(sourceInteraction),
+                            interactionSource = sourceInteraction,
                             label = { Text(source.title, maxLines = 1) }
                         )
                     }
@@ -117,9 +122,12 @@ fun PlayerScreen(
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp)
                 ) {
                     items(selectedSource?.episodes.orEmpty(), key = { it.number }) { episode ->
+                        val episodeInteraction = rememberYuberaPressInteractionSource()
                         FilterChip(
                             selected = state.selectedEpisodeNumber == episode.number,
                             onClick = { viewModel.selectEpisode(episode.number) },
+                            modifier = Modifier.yuberaPressScale(episodeInteraction),
+                            interactionSource = episodeInteraction,
                             label = { Text(episode.title.ifBlank { episode.number.toString() }) }
                         )
                     }
@@ -140,7 +148,8 @@ fun PlayerScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        IconButton(onClick = { retryNonce += 1 }) {
+                        val refreshInteraction = rememberYuberaPressInteractionSource()
+                        IconButton(onClick = { retryNonce += 1 }, modifier = Modifier.yuberaPressScale(refreshInteraction), interactionSource = refreshInteraction) {
                             Icon(Icons.Default.Refresh, contentDescription = "Перезагрузить плеер", tint = YuberaOnBackground)
                         }
                     }

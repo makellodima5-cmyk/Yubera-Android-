@@ -121,7 +121,8 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, modifier = Modifier.size(44.dp)) {
+            val backInteraction = rememberYuberaPressInteractionSource()
+            IconButton(onClick = onBack, modifier = Modifier.size(44.dp).yuberaPressScale(backInteraction), interactionSource = backInteraction) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад", tint = YuberaOnBackground)
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { YuberaLogo(width = 122.dp) }
@@ -143,16 +144,22 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val supportTabInteraction = rememberYuberaPressInteractionSource()
                 FilterChip(
                     selected = activeTab == SupportTab.Support,
                     onClick = { activeTab = SupportTab.Support },
+                    modifier = Modifier.weight(1f).yuberaPressScale(supportTabInteraction),
+                    interactionSource = supportTabInteraction,
                     label = { Text("Поддержка") },
                     leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
                     modifier = Modifier.weight(1f)
                 )
+                val plusTabInteraction = rememberYuberaPressInteractionSource()
                 FilterChip(
                     selected = activeTab == SupportTab.Plus,
                     onClick = { activeTab = SupportTab.Plus; viewModel.loadPlusStatus() },
+                    modifier = Modifier.weight(1f).yuberaPressScale(plusTabInteraction),
+                    interactionSource = plusTabInteraction,
                     label = { Text("YUBERA Plus") },
                     leadingIcon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
                     modifier = Modifier.weight(1f)
@@ -207,6 +214,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                 )
             },
             confirmButton = {
+                val applyCustomInteraction = rememberYuberaPressInteractionSource()
                 TextButton(
                     onClick = {
                         val value = customDraft.toIntOrNull()
@@ -215,10 +223,12 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                             customDialogOpen = false
                         }
                     },
-                    enabled = customDraft.toIntOrNull()?.let { it in 1..100_000 } == true
+                    enabled = customDraft.toIntOrNull()?.let { it in 1..100_000 } == true,
+                    modifier = Modifier.yuberaPressScale(applyCustomInteraction),
+                    interactionSource = applyCustomInteraction
                 ) { Text("Применить") }
             },
-            dismissButton = { TextButton(onClick = { customDialogOpen = false }) { Text("Отмена") } }
+            dismissButton = { val dismissInteraction = rememberYuberaPressInteractionSource(); TextButton(onClick = { customDialogOpen = false }, modifier = Modifier.yuberaPressScale(dismissInteraction), interactionSource = dismissInteraction) { Text("Отмена") } }
         )
     }
 }
@@ -261,8 +271,9 @@ private fun SupportDonationContent(
                     }
                 }
                 if (rowValues.size < 3) {
+                    val customAmountInteraction = rememberYuberaPressInteractionSource()
                     Surface(
-                        modifier = Modifier.weight(1f).height(58.dp).clickable(onClick = onCustom),
+                        modifier = Modifier.weight(1f).height(58.dp).yuberaPressScale(customAmountInteraction).clickable(interactionSource = customAmountInteraction, indication = androidx.compose.foundation.LocalIndication.current, onClick = onCustom),
                         color = if (customAmount.isNotBlank()) Color(0xFF51271F) else YuberaSurface,
                         shape = RoundedCornerShape(14.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, if (customAmount.isNotBlank()) YuberaPrimary else Color(0xFF3A3B44))
@@ -276,13 +287,16 @@ private fun SupportDonationContent(
         }
         Text("Выбрано: " + amount + " Stars", color = YuberaPrimary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         if (!authenticated) SupportNotice("Войдите в аккаунт YUBERA, чтобы создать счёт на поддержку.")
-        Button(onClick = onCreateInvoice, enabled = authenticated && amount in 1..100_000 && !invoiceCreating, modifier = Modifier.fillMaxWidth()) {
+        val invoiceInteraction = rememberYuberaPressInteractionSource()
+        Button(onClick = onCreateInvoice, enabled = authenticated && amount in 1..100_000 && !invoiceCreating, modifier = Modifier.fillMaxWidth().yuberaPressScale(invoiceInteraction), interactionSource = invoiceInteraction) {
             if (invoiceCreating) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
             else Text("Создать счёт — " + amount + " Stars")
         }
         if (!invoiceUrl.isNullOrBlank()) {
-            Button(onClick = onOpenInvoice, modifier = Modifier.fillMaxWidth()) { Text("Открыть счёт в Telegram") }
-            OutlinedButton(onClick = onCheckStatus, enabled = !paymentChecking, modifier = Modifier.fillMaxWidth()) {
+            val openInvoiceInteraction = rememberYuberaPressInteractionSource()
+            Button(onClick = onOpenInvoice, modifier = Modifier.fillMaxWidth().yuberaPressScale(openInvoiceInteraction), interactionSource = openInvoiceInteraction) { Text("Открыть счёт в Telegram") }
+            val statusInteraction = rememberYuberaPressInteractionSource()
+            OutlinedButton(onClick = onCheckStatus, enabled = !paymentChecking, modifier = Modifier.fillMaxWidth().yuberaPressScale(statusInteraction), interactionSource = statusInteraction) {
                 if (paymentChecking) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Text("Проверить статус оплаты")
             }
@@ -377,10 +391,12 @@ private fun YuberaPlusContent(
         } else {
             Text("Выберите период подписки", color = YuberaOnBackground, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val month1Interaction = rememberYuberaPressInteractionSource()
                 FilterChip(selected = state.plusMonths == 1, onClick = { onSelectMonths(1) },
-                    label = { Text("1 месяц · " + (plus?.price?.toString() ?: "—") + " Stars") }, modifier = Modifier.weight(1f))
+                    label = { Text("1 месяц · " + (plus?.price?.toString() ?: "—") + " Stars") }, modifier = Modifier.weight(1f).yuberaPressScale(month1Interaction), interactionSource = month1Interaction)
+                val month3Interaction = rememberYuberaPressInteractionSource()
                 FilterChip(selected = state.plusMonths == 3, onClick = { onSelectMonths(3) },
-                    label = { Text("3 месяца · " + (plus?.threeMonthPrice?.toString() ?: "—") + " Stars") }, modifier = Modifier.weight(1f))
+                    label = { Text("3 месяца · " + (plus?.threeMonthPrice?.toString() ?: "—") + " Stars") }, modifier = Modifier.weight(1f).yuberaPressScale(month3Interaction), interactionSource = month3Interaction)
             }
             if (state.plusMonths == 1) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -388,14 +404,17 @@ private fun YuberaPlusContent(
                     Text("Разрешить автопродление через Telegram", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Button(onClick = onCreateInvoice, enabled = state.isAuthenticated && plus != null && !state.plusInvoiceCreating, modifier = Modifier.fillMaxWidth()) {
+            val plusInvoiceInteraction = rememberYuberaPressInteractionSource()
+            Button(onClick = onCreateInvoice, enabled = state.isAuthenticated && plus != null && !state.plusInvoiceCreating, modifier = Modifier.fillMaxWidth().yuberaPressScale(plusInvoiceInteraction), interactionSource = plusInvoiceInteraction) {
                 if (state.plusInvoiceCreating) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Text("Оформить YUBERA Plus")
             }
             if (!state.isAuthenticated) SupportNotice("Войдите в аккаунт YUBERA, чтобы оформить подписку.")
             if (!state.plusInvoiceUrl.isNullOrBlank()) {
-                Button(onClick = onOpenInvoice, modifier = Modifier.fillMaxWidth()) { Text("Открыть счёт в Telegram") }
-                OutlinedButton(onClick = onCheckActivation, enabled = !state.plusChecking, modifier = Modifier.fillMaxWidth()) {
+                val plusOpenInvoiceInteraction = rememberYuberaPressInteractionSource()
+                Button(onClick = onOpenInvoice, modifier = Modifier.fillMaxWidth().yuberaPressScale(plusOpenInvoiceInteraction), interactionSource = plusOpenInvoiceInteraction) { Text("Открыть счёт в Telegram") }
+                val plusActivationInteraction = rememberYuberaPressInteractionSource()
+                OutlinedButton(onClick = onCheckActivation, enabled = !state.plusChecking, modifier = Modifier.fillMaxWidth().yuberaPressScale(plusActivationInteraction), interactionSource = plusActivationInteraction) {
                     if (state.plusChecking) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     else Text("Проверить активацию")
                 }

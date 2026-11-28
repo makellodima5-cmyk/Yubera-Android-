@@ -24,6 +24,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.ui.theme.*
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 
 @Composable
 fun NewsDetailScreen(
@@ -36,7 +38,8 @@ fun NewsDetailScreen(
     val context = LocalContext.current
 
     Column(Modifier.fillMaxSize()) {
-        TextButton(onClick = onBack) { Text("‹ Назад") }
+        val backInteraction = rememberYuberaPressInteractionSource()
+        TextButton(onClick = onBack, modifier = Modifier.yuberaPressScale(backInteraction), interactionSource = backInteraction) { Text("‹ Назад") }
         if (article == null) {
             Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
                 if (state.loading) CircularProgressIndicator()
@@ -62,7 +65,8 @@ fun NewsDetailScreen(
                 )
                 article.linkedTitle?.let { linked ->
                     if (article.linkedAnimeId != null) {
-                        TextButton(onClick = { onAnimeClick(article.linkedAnimeId.toString()) }) { Text("Тайтл: $linked") }
+                        val linkedInteraction = rememberYuberaPressInteractionSource()
+                        TextButton(onClick = { onAnimeClick(article.linkedAnimeId.toString()) }, modifier = Modifier.yuberaPressScale(linkedInteraction), interactionSource = linkedInteraction) { Text("Тайтл: $linked") }
                     } else {
                         Text("Связанный тайтл: $linked", color = YuberaMuted)
                     }
@@ -114,12 +118,15 @@ fun NewsDetailScreen(
                 if (state.loading) CircularProgressIndicator()
                 state.error?.let { Text(it, color = YuberaMuted) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { openSource(context, article.sourceUrl) }) { Text("Оригинал Shikimori") }
-                    TextButton(onClick = viewModel::toggleBookmark) {
+                    val originalInteraction = rememberYuberaPressInteractionSource()
+                    Button(onClick = { openSource(context, article.sourceUrl) }, modifier = Modifier.yuberaPressScale(originalInteraction), interactionSource = originalInteraction) { Text("Оригинал Shikimori") }
+                    val bookmarkInteraction = rememberYuberaPressInteractionSource()
+                    TextButton(onClick = viewModel::toggleBookmark, modifier = Modifier.yuberaPressScale(bookmarkInteraction), interactionSource = bookmarkInteraction) {
                         Icon(Icons.Default.Bookmark, null, tint = if (state.isBookmarked) YuberaPrimary else YuberaMuted)
                         Text(if (state.isBookmarked) "В закладках" else "Сохранить")
                     }
                 }
+                val shareInteraction = rememberYuberaPressInteractionSource()
                 TextButton(onClick = {
                     val intent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
@@ -127,7 +134,7 @@ fun NewsDetailScreen(
                         putExtra(Intent.EXTRA_TEXT, article.title + "\n" + article.sourceUrl)
                     }
                     context.startActivity(Intent.createChooser(intent, "Поделиться"))
-                }) { Text("Поделиться") }
+                }, modifier = Modifier.yuberaPressScale(shareInteraction), interactionSource = shareInteraction) { Text("Поделиться") }
             }
         }
     }
