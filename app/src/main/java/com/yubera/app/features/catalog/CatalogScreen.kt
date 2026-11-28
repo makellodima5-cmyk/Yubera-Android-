@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -41,6 +42,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
@@ -101,7 +104,8 @@ fun CatalogScreen(
             contentAlignment = Alignment.Center
         ) {
             YuberaLogo(width = 124.dp)
-            IconButton(onClick = onNotificationsClick, modifier = Modifier.align(Alignment.CenterEnd)) {
+            val notificationInteraction = rememberYuberaPressInteractionSource()
+            IconButton(onClick = onNotificationsClick, modifier = Modifier.align(Alignment.CenterEnd).yuberaPressScale(notificationInteraction), interactionSource = notificationInteraction) {
                 Icon(Icons.Default.Notifications, contentDescription = "Уведомления", tint = YuberaOnBackground)
             }
         }
@@ -120,9 +124,11 @@ fun CatalogScreen(
                 placeholder = { Text("Название аниме") },
                 singleLine = true
             )
+            val filterInteraction = rememberYuberaPressInteractionSource()
             IconButton(
                 onClick = { panel = !panel },
-                modifier = Modifier.padding(start = 6.dp).background(if (panel) YuberaPrimary.copy(alpha = 0.18f) else YuberaSurface, RoundedCornerShape(12.dp))
+                modifier = Modifier.padding(start = 6.dp).background(if (panel) YuberaPrimary.copy(alpha = 0.18f) else YuberaSurface, RoundedCornerShape(12.dp)).yuberaPressScale(filterInteraction),
+                interactionSource = filterInteraction
             ) {
                 Icon(Icons.Default.FilterList, "Фильтры", tint = YuberaPrimary)
             }
@@ -175,8 +181,8 @@ fun CatalogScreen(
                 Column {
                     AnimatedVisibility(
                         visible = panel,
-                        enter = if (rememberCatalogMotionAllowed()) fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f) else EnterTransition.None,
-                        exit = if (rememberCatalogMotionAllowed()) fadeOut() + shrinkOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f) else ExitTransition.None
+                        enter = if (rememberCatalogMotionAllowed()) fadeIn() + expandIn(expandFrom = Alignment.TopEnd) + scaleIn(initialScale = .92f) + androidx.compose.animation.slideInHorizontally(initialOffsetX = { it / 10 }) else EnterTransition.None,
+                        exit = if (rememberCatalogMotionAllowed()) fadeOut() + shrinkOut(shrinkTowards = Alignment.TopEnd) + scaleOut(targetScale = .92f) + androidx.compose.animation.slideOutHorizontally(targetOffsetX = { it / 10 }) else ExitTransition.None
                     ) {
                         FilterPanel(
                             state,
@@ -245,7 +251,8 @@ private fun FilterPanel(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.FilterList, contentDescription = null, tint = YuberaPrimary)
                 Text("Фильтры", Modifier.weight(1f).padding(start = 8.dp), color = YuberaOnBackground, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onClose) {
+                val closeInteraction = rememberYuberaPressInteractionSource()
+                IconButton(onClick = onClose, modifier = Modifier.yuberaPressScale(closeInteraction), interactionSource = closeInteraction) {
                     Icon(Icons.Default.Close, contentDescription = "Закрыть фильтры", tint = YuberaOnBackground)
                 }
             }
@@ -266,8 +273,10 @@ private fun FilterPanel(
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                OutlinedButton(onClick = { onReset(); from = ""; to = ""; error = null }, Modifier.weight(1f)) { Text("Сброс") }
-                Button(onClick = { error = f.validate(maxYear) ?: fromError ?: toError ?: rangeError; if (error == null) onApply() }, Modifier.weight(1f)) { Text("Применить") }
+                val resetInteraction = rememberYuberaPressInteractionSource()
+                OutlinedButton(onClick = { onReset(); from = ""; to = ""; error = null }, Modifier.weight(1f).yuberaPressScale(resetInteraction), interactionSource = resetInteraction) { Text("Сброс") }
+                val applyInteraction = rememberYuberaPressInteractionSource()
+                Button(onClick = { error = f.validate(maxYear) ?: fromError ?: toError ?: rangeError; if (error == null) onApply() }, Modifier.weight(1f).yuberaPressScale(applyInteraction), interactionSource = applyInteraction) { Text("Применить") }
             }
         }
     }
@@ -276,8 +285,9 @@ private fun FilterPanel(
 @Composable
 private fun GenreFilter(options: List<String>, selected: Set<String>, expandedFilter: String?, setExpandedFilter: (String?) -> Unit, onChange: (Set<String>) -> Unit) {
     val expanded = expandedFilter == "genres"
+    val interaction = rememberYuberaPressInteractionSource()
     Box {
-        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else "genres") }, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else "genres") }, modifier = Modifier.fillMaxWidth().yuberaPressScale(interaction), interactionSource = interaction) {
             Text(if (selected.isEmpty()) "Жанры: не выбрано" else "Жанры: ${selected.size}", Modifier.weight(1f), maxLines = 1)
             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
@@ -304,8 +314,9 @@ private fun SelectFilter(
     onSelect: (String?) -> Unit
 ) {
     val expanded = expandedFilter == key
+    val interaction = rememberYuberaPressInteractionSource()
     Box {
-        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else key) }, Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { setExpandedFilter(if (expanded) null else key) }, Modifier.fillMaxWidth().yuberaPressScale(interaction), interactionSource = interaction) {
             Text("$title: ${value ?: "Не выбрано"}", Modifier.weight(1f), maxLines = 1)
             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
@@ -331,7 +342,8 @@ private fun PaginationNumbers(page: Int, pageCount: Int, onPage: (Int) -> Unit) 
         if (index > 0 && number - numbers[index - 1] > 1) {
             Text("…", color = YuberaMuted)
         }
-        TextButton(onClick = { onPage(number) }) {
+        val interaction = rememberYuberaPressInteractionSource()
+        TextButton(onClick = { onPage(number) }, modifier = Modifier.yuberaPressScale(interaction), interactionSource = interaction) {
             Text(
                 (number + 1).toString(),
                 color = if (number == page) YuberaPrimary else YuberaMuted,

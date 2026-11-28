@@ -405,7 +405,8 @@ private fun RatingSection(
             Text(if (rating.authenticated) "Ваша оценка:" else "Войдите через Telegram, чтобы оценивать аниме.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
                 (1..10).forEach { value ->
-                    IconButton(onClick = { onRate(value) }, enabled = rating.authenticated && !loading && !saving, modifier = Modifier.size(34.dp)) {
+                    val ratingInteraction = rememberYuberaPressInteractionSource()
+                    IconButton(onClick = { onRate(value) }, enabled = rating.authenticated && !loading && !saving, modifier = Modifier.size(34.dp).yuberaPressScale(ratingInteraction), interactionSource = ratingInteraction) {
                         Icon(Icons.Default.Star, contentDescription = "Оценка ${value} из 10", tint = if (value <= (rating.myRating ?: 0)) YuberaPrimary else YuberaMuted.copy(alpha = 0.45f))
                     }
                 }

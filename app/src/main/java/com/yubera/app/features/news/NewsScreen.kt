@@ -29,12 +29,14 @@ import coil3.compose.AsyncImage
 import com.yubera.app.core.database.entity.NewsArticleEntity
 import com.yubera.app.core.news.NewsCategory
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.*
 @Composable fun NewsScreen(onArticleClick:(Long)->Unit,onBookmarksClick:()->Unit,onNotificationsClick:()->Unit={},viewModel:NewsViewModel=hiltViewModel()){
  val state by viewModel.uiState.collectAsState()
  LaunchedEffect(viewModel) { viewModel.ensureLoaded() }
  Column(Modifier.fillMaxSize()){
-  Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);IconButton(onNotificationsClick){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)};IconButton(viewModel::refresh){Icon(Icons.Default.Refresh,"Обновить",tint=YuberaPrimary)}}
+  Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);val notificationInteraction=rememberYuberaPressInteractionSource();IconButton(onNotificationsClick,Modifier.yuberaPressScale(notificationInteraction),interactionSource=notificationInteraction){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)};val refreshInteraction=rememberYuberaPressInteractionSource();IconButton(viewModel::refresh,Modifier.yuberaPressScale(refreshInteraction),interactionSource=refreshInteraction){Icon(Icons.Default.Refresh,"Обновить",tint=YuberaPrimary)}}
   Text("Новости",Modifier.padding(horizontal=18.dp),color=YuberaOnBackground,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
   Text("Главные события мира аниме · Shikimori",Modifier.padding(horizontal=18.dp,vertical=2.dp),color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
   Row(
@@ -49,7 +51,7 @@ import com.yubera.app.core.ui.theme.*
     placeholder={Text("Поиск новостей")},
     leadingIcon={Icon(Icons.Default.Search,null)},
     trailingIcon=if(state.query.isNotEmpty()) {
-     { IconButton(onClick={viewModel.onQueryChange("")}) { Icon(Icons.Default.Close,"Очистить поиск") } }
+     { val clearInteraction=rememberYuberaPressInteractionSource();IconButton(onClick={viewModel.onQueryChange("")},modifier=Modifier.yuberaPressScale(clearInteraction),interactionSource=clearInteraction) { Icon(Icons.Default.Close,"Очистить поиск") } }
     } else null,
     singleLine=true
    )
@@ -58,7 +60,7 @@ import com.yubera.app.core.ui.theme.*
     modifier=Modifier.size(48.dp).background(YuberaSurface,RoundedCornerShape(12.dp))
    ) { Icon(Icons.Default.Bookmark,"Закладки",tint=YuberaPrimary) }
   }
-  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},label={Text(cat.title)})}}
+  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->val chipInteraction=rememberYuberaPressInteractionSource();FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},modifier=Modifier.yuberaPressScale(chipInteraction),interactionSource=chipInteraction,label={Text(cat.title)})}}
   if(state.isRefreshing&&state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=YuberaPrimary)}
   else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else if (state.query.isNotBlank()) "Ничего не найдено" else if (state.selectedCategory != NewsCategory.ALL) "В этой категории пока нет новостей" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: if (state.query.isNotBlank()) "Измените запрос или выберите другую категорию." else "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
   else PullToRefreshBox(isRefreshing=state.isRefreshing,onRefresh=viewModel::refresh,modifier=Modifier.weight(1f).fillMaxWidth()){

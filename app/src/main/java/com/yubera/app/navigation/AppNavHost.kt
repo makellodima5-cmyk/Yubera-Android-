@@ -1,6 +1,11 @@
 package com.yubera.app.navigation
 
 import android.net.Uri
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
@@ -117,7 +122,11 @@ fun AppNavHost(
         NavHost(
             navController = navController,
             startDestination = AppDestination.Home.route,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            enterTransition = { fadeIn(tween(190)) + slideInHorizontally(tween(190), initialOffsetX = { it / 12 }) },
+            exitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160), targetOffsetX = { -it / 24 }) },
+            popEnterTransition = { fadeIn(tween(190)) + slideInHorizontally(tween(190), initialOffsetX = { -it / 12 }) },
+            popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160), targetOffsetX = { it / 24 }) }
         ) {
             composable(AppDestination.Home.route) {
                 HomeScreen(
