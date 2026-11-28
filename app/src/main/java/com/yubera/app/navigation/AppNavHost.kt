@@ -208,7 +208,7 @@ fun AppNavHost(
                 route = "news/{articleId}",
                 arguments = listOf(navArgument("articleId") { type = NavType.StringType })
             ) {
-                NewsDetailScreen(onBack = { navController.popBackStack() })
+                NewsDetailScreen(onBack = { navController.popBackStack() }, onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
             }
             composable(
                 route = "player/{animeId}?episode={episode}",
