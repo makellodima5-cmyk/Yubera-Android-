@@ -71,35 +71,16 @@ class HomeViewModel @Inject constructor(
 
         val byId = catalog.associateBy(AnimeCatalogItem::id)
         val now = System.currentTimeMillis()
-        // Completion markers survive when the one-row-per-title progress record moves
-        // to another episode. Kodik does not expose reliable telemetry in this WebView;
-        // the player records a conservative sequential-advance completion fallback.
-        val completedProgress = progress.filter { row ->
-            row.completedEpisodeNumber != null || EpisodeCompletionPolicy.isEpisodeCompleted(row)
-        }
-        val titlesWithCompletedEpisode = completedProgress
-            .mapTo(mutableSetOf()) { it.animeId }
-        val watchedGenres = completedProgress
-            .flatMap { byId[it.animeId]?.genres.orEmpty() }
-            .groupingBy { it.lowercase(Locale.ROOT) }.eachCount()
-        val eligible = catalog.filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
-        val recommendationPool = if (watchedGenres.isEmpty()) {
-            eligible.sortedWith(compareByDescending<AnimeCatalogItem> { it.rating ?: 0.0 }.thenBy { it.title }).take(20)
-        } else {
-            eligible.sortedWith(
-                compareByDescending<AnimeCatalogItem> { anime ->
-                    anime.genres.sumOf { watchedGenres[it.lowercase(Locale.ROOT)] ?: 0 } * 10.0 + (anime.rating ?: 0.0)
-                }.thenBy { it.title }
-            ).take(20)
-        }
-        val dailySeed = LocalDate.now().toEpochDay()
-        val rotation = if (recommendationPool.isEmpty()) 0 else Math.floorMod(dailySeed, recommendationPool.size.toLong()).toInt()
-        val rotatedPool = recommendationPool.drop(rotation) + recommendationPool.take(rotation)
-        val computedRecommendations = rotatedPool.take(5)
+        val fullyCompletedAnimeIds = HomeRecommendationPolicy.fullyCompletedAnimeIds(progress, catalog)
+        val computedRecommendations = HomeRecommendationPolicy.selectRecommendations(
+            catalog = catalog,
+            progress = progress,
+            dailySeed = LocalDate.now().toEpochDay()
+        )
 
         val cachedRecommendationIds = settings.homeRecommendationIds
         val storedRecommendationIds = cachedRecommendationIds.filter { id ->
-            byId[id] != null && id !in titlesWithCompletedEpisode && byId[id]?.kodikAvailable != false
+            byId[id] != null && id !in fullyCompletedAnimeIds && byId[id]?.kodikAvailable != false
         }
         val snapshotInvalidatedByCompletedTitle = storedRecommendationIds.size != cachedRecommendationIds.size
         val hasFreshRecommendationSnapshot = !snapshotInvalidatedByCompletedTitle && storedRecommendationIds.isNotEmpty() &&
@@ -117,7 +98,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in titlesWithCompletedEpisode && it.kodikAvailable != false }
+        val selectedRecommendations = selectedIds.mapNotNull(byId::get).filter { it.id !in fullyCompletedAnimeIds && it.kodikAvailable != false }
         val continueList = progress.asSequence()
             .filter { it.episodeNumber != null && (it.durationMillis <= 0L || it.positionMillis < it.durationMillis * 0.90) }
             .mapNotNull { row -> byId[row.animeId]?.let { ContinueWatchingItem(it, row) } }
