@@ -127,7 +127,7 @@ fun CatalogScreen(
             }
         }
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             CatalogSortOrder.entries.forEach {

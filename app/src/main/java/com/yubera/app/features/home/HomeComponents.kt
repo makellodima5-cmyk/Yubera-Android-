@@ -83,6 +83,30 @@ fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? =
 }
 
 @Composable
+
+@Composable
+fun HomeAnnouncementTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.width(320.dp).height(174.dp),
+        colors = CardDefaults.cardColors(containerColor = YuberaSurface),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(Modifier.fillMaxSize()) {
+            Box(Modifier.width(122.dp).fillMaxHeight().background(YuberaSurface)) {
+                AnimeImage(anime, Modifier.fillMaxSize(), preferBanner = true)
+            }
+            Column(Modifier.weight(1f).fillMaxHeight().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Pill("Анонс")
+                Text(anime.title, color = YuberaOnBackground, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                if (anime.genres.isNotEmpty()) Text(anime.genres.take(2).joinToString(" · "), color = YuberaMuted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                val meta = listOfNotNull(anime.year.takeIf { it > 0 }?.toString(), anime.kind).joinToString(" · ")
+                if (meta.isNotBlank()) Text(meta, color = YuberaMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+        }
+    }
+}
+
 fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onClick: () -> Unit) {
     val fraction=if(progress.durationMillis>0L)(progress.positionMillis.toFloat()/progress.durationMillis.toFloat()).coerceIn(0f,1f) else 0f
     Card(onClick=onClick,modifier=Modifier.width(292.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {

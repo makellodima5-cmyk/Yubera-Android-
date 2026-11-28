@@ -163,7 +163,7 @@ private fun AnimeStrip(title:String,items:List<AnimeCatalogItem>,category:String
     Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
         HomeSectionHeader(title,onAction={onViewAll(category)})
         LazyRow(contentPadding=PaddingValues(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            items(items,key=AnimeCatalogItem::id) { anime -> HomeAnimeTile(anime,onClick={onAnimeClick(anime.id)},badge=if(category=="announcements") "Анонс" else null) }
+            items(items,key=AnimeCatalogItem::id) { anime -> if(category=="announcements") HomeAnnouncementTile(anime,onClick={onAnimeClick(anime.id)}) else HomeAnimeTile(anime,onClick={onAnimeClick(anime.id)}) }
         }
     }
 }
