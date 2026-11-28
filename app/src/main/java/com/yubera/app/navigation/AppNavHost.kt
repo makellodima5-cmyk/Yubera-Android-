@@ -160,8 +160,25 @@ fun AppNavHost(
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
             composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
-            composable(AppDestination.Profile.route) { ProfileScreen(onEditProfile = { navController.navigate("profile-edit") }) }
+            composable(AppDestination.Profile.route) {
+                ProfileScreen(
+                    onEditProfile = { navController.navigate("profile-edit") },
+                    onNotifications = { navController.navigate("notifications") },
+                    onFriends = { navController.navigate("profile-friends") },
+                    onLegal = { navController.navigate("profile-legal") },
+                    onAbout = { navController.navigate("profile-about") },
+                    onAllCollections = { navController.navigate("profile-collections") },
+                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }
+                )
+            }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
+            composable("profile-friends") { HomeSimpleDestination("Друзья", "Подписки, подписчики и поиск пользователей будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Юридические документы будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-about") { HomeSimpleDestination("О проекте", "Описание и цели проекта YUBERA.", { navController.popBackStack() }) }
+            composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-collection/{collectionId}", arguments = listOf(navArgument("collectionId") { type = NavType.StringType })) {
+                HomeSimpleDestination("Подборка", "Просмотр содержимого подборки будет оформлен отдельным заданием.", { navController.popBackStack() })
+            }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
