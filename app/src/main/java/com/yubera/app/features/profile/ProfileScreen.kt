@@ -2,6 +2,7 @@ package com.yubera.app.features.profile
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -126,7 +127,7 @@ private fun ProfileAction(icon: androidx.compose.ui.graphics.vector.ImageVector,
 }
 
 @Composable
-fun ProfileAboutScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun ProfileAboutScreen(onBack: () -> Unit, onLogout: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val account by viewModel.accountProfile.collectAsState()
     val response by viewModel.communityData.collectAsState()
     val context = LocalContext.current
@@ -173,7 +174,7 @@ fun ProfileAboutScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltVi
                 }
             }
             Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { viewModel.logout(onBack) }, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { viewModel.logout(onLogout) }, modifier = Modifier.fillMaxWidth()) {
                     Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -182,7 +183,7 @@ fun ProfileAboutScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltVi
 }
 
 @Composable
-fun ProfileSettingsScreen(onBack: () -> Unit, onNotifications: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun ProfileSettingsScreen(onBack: () -> Unit, onNotifications: () -> Unit, onLogout: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsState()
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -206,7 +207,7 @@ fun ProfileSettingsScreen(onBack: () -> Unit, onNotifications: () -> Unit, viewM
             SettingSwitch("Push-уведомления", settings.pushNotificationsEnabled, onCheckedChange = viewModel::setPushNotifications)
             TextButton(onClick = onNotifications) { Text("Управление уведомлениями", color = YuberaPrimary) }
             Divider(color = YuberaMuted.copy(alpha = .25f))
-            TextButton(onClick = { viewModel.logout { } }) { Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = { viewModel.logout(onLogout) }) { Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error) }
         }
     }
 }
@@ -223,3 +224,43 @@ private fun SettingSwitch(title: String, checked: Boolean, onCheckedChange: (Boo
 private fun appVersion(context: android.content.Context): String = runCatching {
     context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "—"
 }.getOrDefault("—")
+
+@Composable
+fun ProfileNotificationSettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+    val settings by viewModel.settings.collectAsState()
+    val context = LocalContext.current
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
+            Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        }
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Уведомления", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    Text("Получать уведомления от YUBERA", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                    SettingSwitch("Все уведомления", settings.notificationsEnabled, onCheckedChange = viewModel::setNotifications)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Типы уведомлений", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    SettingSwitch("Новые серии", settings.newEpisodeNotificationsEnabled, onCheckedChange = viewModel::setNewEpisodes)
+                    SettingSwitch("Изменения в аниме", settings.animeInfoNotificationsEnabled, onCheckedChange = viewModel::setAnimeInfo)
+                    SettingSwitch("Push-уведомления", settings.pushNotificationsEnabled, onCheckedChange = viewModel::setPushNotifications)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Настройки системы", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    Text("Разрешения Android для уведомлений", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = {
+                        runCatching {
+                            context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                        }
+                    }) { Text("Открыть настройки Android", color = YuberaPrimary) }
+                }
+            }
+        }
+    }
+}
