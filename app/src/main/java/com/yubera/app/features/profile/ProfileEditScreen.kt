@@ -36,7 +36,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
 
-private data class FrameChoice(val id: String?, val title: String, val resource: Int?, val requirement: String)
+private data class FrameChoice(val id: String, val title: String, val resource: Int?, val requirement: String)
 private val supportFrames = listOf(
     FrameChoice("YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp","Союзник",R.drawable.yubera_contribution_avatar_frame_01_soyuznik_webp,"Поддержка проекта"),
     FrameChoice("YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp","Сторонник",R.drawable.yubera_contribution_avatar_frame_02_storonnik_webp,"Поддержка проекта"),
@@ -66,7 +66,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
     var confirmDiscard by remember { mutableStateOf(false) }
     var avatarError by remember { mutableStateOf<String?>(null) }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { viewModel.setAvatarUri(uri.toString()); avatarError = null }
+        if (uri != null) viewModel.setAvatarUri(uri.toString())
     }
     val original = state.profile?.let { it.bio == state.bio && it.visibility == state.visibility && it.avatarFrame == state.selectedFrame && state.selectedAvatarUri == null } ?: true
     fun leave() { if (original) onBack() else confirmDiscard = true }
@@ -112,7 +112,6 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                     }
                     Text("Максимальный размер файла — 2 МБ.", color = YuberaMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp))
                 }
-                avatarError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
