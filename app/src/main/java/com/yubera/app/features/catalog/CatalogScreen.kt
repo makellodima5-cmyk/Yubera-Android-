@@ -62,7 +62,7 @@ fun CatalogScreen(
     var skipInitialQueryFilterReset by remember { mutableStateOf(true) }
     var lastResetKey by rememberSaveable { mutableIntStateOf(resetKey) }
     val grid = rememberLazyGridState()
-    val actualPageCount = (state.items.size + 49) / 50
+    val actualPageCount = catalogPageCount(state.items.size)
     val count = maxOf(1, actualPageCount)
 
     LaunchedEffect(state.query, state.filters) {
@@ -150,7 +150,7 @@ fun CatalogScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(state.items.drop(page * 50).take(50), key = AnimeCatalogItem::id) { anime ->
+                    items(catalogPageItems(state.items, page), key = AnimeCatalogItem::id) { anime ->
                         PosterCard(anime) { onAnimeClick(anime) }
                     }
                 }

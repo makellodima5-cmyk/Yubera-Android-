@@ -132,7 +132,7 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
                     translationY = (1f - kotlin.math.cos(offset * .58f)) * 16.dp.toPx()
                     
                     scaleX = scale; scaleY = scale; rotationY = rotation; cameraDistance = 18 * density; this.alpha = alpha
-                }.blur(blur.dp).zIndex(-abs(offset).toFloat()),
+                }.blur(blur.dp),
                 offset == 0,
                 click = {
                     if (offset == 0) onOpen(item.anime.id)
