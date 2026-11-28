@@ -42,6 +42,8 @@ class SettingsViewModel @Inject constructor(
     private val appUpdateCoordinator: AppUpdateCoordinator,
     private val yuberaProfileApi: YuberaProfileApi,
     private val catalogRepository: CatalogRepository,
+    private val activeAccountStore: ActiveAccountStore,
+    private val notificationDao: AnimeEpisodeNotificationDao,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     val settings = repository.settings.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), UserSettings())
