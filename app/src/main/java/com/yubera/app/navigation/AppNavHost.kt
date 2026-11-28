@@ -40,6 +40,7 @@ import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
 import com.yubera.app.features.profile.ProfileEditScreen
+import com.yubera.app.features.profile.ProfileSettingsScreen
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -164,7 +165,7 @@ fun AppNavHost(
                 ProfileScreen(
                     onEditProfile = { navController.navigate("profile-edit") },
                     onNotifications = { navController.navigate("notifications") },
-                    onFriends = { navController.navigate("profile-friends") },
+                    onSettings = { navController.navigate("profile-settings") },
                     onLegal = { navController.navigate("profile-legal") },
                     onAbout = { navController.navigate("profile-about") },
                     onAllCollections = { navController.navigate("profile-collections") },
@@ -172,7 +173,7 @@ fun AppNavHost(
                 )
             }
             composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
-            composable("profile-friends") { HomeSimpleDestination("Друзья", "Подписки, подписчики и поиск пользователей будут доступны в отдельном разделе.", { navController.popBackStack() }) }
+            composable("profile-settings") { ProfileSettingsScreen(onBack = { navController.popBackStack() }, onNotifications = { navController.navigate("notifications") }) }
             composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Юридические документы будут доступны в отдельном разделе.", { navController.popBackStack() }) }
             composable("profile-about") { HomeSimpleDestination("О проекте", "Описание и цели проекта YUBERA.", { navController.popBackStack() }) }
             composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список всех подборок будет доступен в отдельном разделе.", { navController.popBackStack() }) }
