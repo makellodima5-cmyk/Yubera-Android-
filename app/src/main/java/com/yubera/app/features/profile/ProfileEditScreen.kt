@@ -1,6 +1,5 @@
 package com.yubera.app.features.profile
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -64,7 +63,6 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
     val state by viewModel.state.collectAsState()
     val profile = state.profile
     var confirmDiscard by remember { mutableStateOf(false) }
-    var avatarError by remember { mutableStateOf<String?>(null) }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) viewModel.setAvatarUri(uri.toString())
     }
