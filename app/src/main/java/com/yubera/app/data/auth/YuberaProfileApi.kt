@@ -28,8 +28,12 @@ data class YuberaCommunityResponse(
 data class YuberaCommunityProfile(
     val id: String = "",
     val displayName: String = "",
+    val customName: String? = null,
     val username: String? = null,
     val photoUrl: String? = null,
+    val avatarUrl: String? = null,
+    val avatarDataUrl: String? = null,
+    val createdAt: String? = null,
     val bio: String = "",
     val avatarFrame: String? = null,
     val availableSupportFrames: List<String> = emptyList(),
@@ -46,7 +50,15 @@ data class YuberaCommunityProfile(
     val followers: Int = 0,
     val following: Int = 0,
     val support: YuberaSupportStatus? = null,
-    val xp: YuberaXpStatus? = null
+    val xp: YuberaXpStatus? = null,
+    val stats: YuberaProfileStats? = null
+)
+
+@Serializable
+data class YuberaProfileStats(
+    val favorites: Int = 0,
+    val watchlist: Int = 0,
+    val history: Int = 0
 )
 
 @Serializable
@@ -85,7 +97,10 @@ data class YuberaProfileUpdateRequest(
     val action: String = "profile.update",
     val bio: String,
     val visibility: String,
-    val avatarFrame: String?
+    val avatarFrame: String?,
+    val customName: String = "",
+    val avatarAnimeId: String? = null,
+    val avatarDataUrl: String? = null
 )
 
 @Serializable
