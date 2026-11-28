@@ -49,7 +49,7 @@ import com.yubera.app.core.ui.theme.YuberaGold
 
 @Composable
 fun HomeAnimeTile(anime: AnimeCatalogItem, onClick: () -> Unit, badge: String? = null) {
-    Column(Modifier.width(150.dp).clickable(onClick = onClick)) {
+    val interaction = rememberYuberaPressInteractionSource()\n    Column(Modifier.width(150.dp).yuberaPressScale(interaction).clickable(interactionSource = interaction, indication = LocalIndication.current, onClick = onClick)) {
         Box(
             Modifier.fillMaxWidth().aspectRatio(.68f).clip(RoundedCornerShape(12.dp)).background(YuberaSurface)
         ) {
@@ -111,7 +111,7 @@ fun HomeAnnouncementTile(anime: AnimeCatalogItem, onClick: () -> Unit) {
 @Composable
 fun HomeProgressCard(anime: AnimeCatalogItem, progress: AnimeProgressEntity, onClick: () -> Unit) {
     val fraction=if(progress.durationMillis>0L)(progress.positionMillis.toFloat()/progress.durationMillis.toFloat()).coerceIn(0f,1f) else 0f
-    Card(onClick=onClick,modifier=Modifier.width(292.dp),colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {
+    val interaction = rememberYuberaPressInteractionSource()\n    Card(onClick=onClick,modifier=Modifier.width(292.dp).yuberaPressScale(interaction), interactionSource=interaction,colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)) {
         Row(Modifier.fillMaxWidth().padding(10.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
             Box(Modifier.size(width=104.dp,height=76.dp).clip(RoundedCornerShape(10.dp)).background(YuberaSurface)) {
                 AnimeImage(anime,Modifier.fillMaxSize())
@@ -163,7 +163,7 @@ fun HomeSectionHeader(title: String, actionLabel: String = "Смотреть в�
             Icon(icon,contentDescription=null,tint=YuberaPrimary,modifier=Modifier.size(20.dp))
             Text(title,color=YuberaOnBackground,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
         }
-        if(onAction!=null) Text("$actionLabel  ›",color=YuberaMuted,modifier=Modifier.clickable(onClick=onAction).padding(6.dp))
+        if(onAction!=null) { val interaction = rememberYuberaPressInteractionSource(); Text("$actionLabel  ›",color=YuberaMuted,modifier=Modifier.yuberaPressScale(interaction).clickable(interactionSource=interaction,indication=LocalIndication.current,onClick=onAction).padding(6.dp)) }
     }
 }
 

@@ -58,7 +58,7 @@ fun ProfileCollectionsScreen(
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(collections, key = YuberaCollectionSummary::id) { collection ->
                     val cover = catalog.firstOrNull { it.id in collection.animeIds }?.posterUrl
-                    Card(onClick = { onCollectionClick(collection.id) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)) {
+                    val interaction = rememberYuberaPressInteractionSource()\n                    Card(onClick = { onCollectionClick(collection.id) }, modifier = Modifier.fillMaxWidth().yuberaPressScale(interaction), interactionSource = interaction, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             if (!cover.isNullOrBlank()) AsyncImage(cover, "Обложка подборки", Modifier.height(112.dp).weight(0.7f), contentScale = ContentScale.Crop)
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -98,7 +98,7 @@ fun ProfileCollectionDetailScreen(
             titles.isEmpty() -> Text("В подборке пока нет доступных тайтлов.", color = YuberaMuted, modifier = Modifier.padding(18.dp))
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(titles, key = AnimeCatalogItem::id) { anime ->
-                    Card(onClick = { onAnimeClick(anime.id) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+                    val interaction = rememberYuberaPressInteractionSource()\n                    Card(onClick = { onAnimeClick(anime.id) }, modifier = Modifier.fillMaxWidth().yuberaPressScale(interaction), interactionSource = interaction, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
                         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             if (!anime.posterUrl.isNullOrBlank()) AsyncImage(anime.posterUrl, "Постер: " + anime.title, Modifier.height(96.dp).weight(0.7f), contentScale = ContentScale.Crop)
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

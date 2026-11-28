@@ -200,7 +200,7 @@ fun CatalogScreen(
 }
 
 @Composable private fun PosterCard(anime:AnimeCatalogItem,onClick:()->Unit){
- Column(Modifier.fillMaxWidth().clickable { onClick() }.padding(bottom=4.dp)){
+ val interaction = rememberYuberaPressInteractionSource()\n  Column(Modifier.fillMaxWidth().yuberaPressScale(interaction).clickable(interactionSource=interaction,indication=LocalIndication.current,onClick=onClick).padding(bottom=4.dp)){
  Box(Modifier.fillMaxWidth().aspectRatio(.68f).clip(RoundedCornerShape(14.dp)).background(YuberaSurface)){
  if(!anime.posterUrl.isNullOrBlank())AsyncImage(anime.posterUrl,"Постер: "+anime.title,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
  else Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(anime.title.take(1),color=YuberaPrimary)}
