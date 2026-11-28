@@ -24,7 +24,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -63,7 +62,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
     val state by viewModel.state.collectAsState()
     val profile = state.profile
     var confirmDiscard by remember { mutableStateOf(false) }
-    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.setAvatarUri(uri.toString())
     }
     val original = state.profile?.let { it.bio == state.bio && it.visibility == state.visibility && it.avatarFrame == state.selectedFrame && state.selectedAvatarUri == null } ?: true
@@ -105,7 +104,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                             Text(profile.displayName, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             profile.username?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
                             Text("Аватар", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
-                            OutlinedButton(onClick = { avatarPicker.launch("image/*") }) { Icon(Icons.Default.PhotoCamera, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text("Загрузить") }
+                            OutlinedButton(onClick = { avatarPicker.launch(arrayOf("image/jpeg", "image/png", "image/webp")) }) { Icon(Icons.Default.PhotoCamera, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text("Загрузить") }
                         }
                     }
                     Text("Максимальный размер файла — 2 МБ.", color = YuberaMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp))
@@ -120,7 +119,7 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                         BasicTextField(
                             value = state.bio, onValueChange = viewModel::setBio, maxLines = 5,
                             textStyle = TextStyle(color = YuberaOnBackground, fontSize = 15.sp),
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).background(Color(0xFF202127), RoundedCornerShape(12.dp)).padding(12.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).background(YuberaSurfaceElevated, RoundedCornerShape(12.dp)).padding(12.dp),
                             decorationBox = { inner -> Box { if (state.bio.isEmpty()) Text("Расскажите о себе", color = YuberaMuted); inner() } }
                         )
                     }
@@ -129,9 +128,9 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Публичность профиля", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
-                        Text(if (state.visibility == "public") "Профиль виден другим пользователям." else "Профиль закрыт от общего просмотра.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                        Text(if (state.visibility == "public") "Ваш профиль виден другим пользователям и доступен в поиске." else "Ваш профиль не виден в общем поиске и недоступен для общего просмотра.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(if (state.visibility == "public") "Публичный" else "Приватный", color = YuberaOnBackground)
+                            Text(if (state.visibility == "public") "Публичный профиль" else "Закрытый профиль", color = YuberaOnBackground)
                             Switch(checked = state.visibility == "public", onCheckedChange = { viewModel.setVisibility(if (it) "public" else "private") })
                         }
                     }
@@ -168,10 +167,10 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = { leave() }, modifier = Modifier.weight(1f), enabled = !state.saving) { Text("Отменить") }
                 Button(onClick = { viewModel.save(onBack) }, modifier = Modifier.weight(1f), enabled = !state.saving, colors = ButtonDefaults.buttonColors(containerColor = YuberaPrimary)) {
                     if (state.saving) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Сохранить изменения")
                 }
+                OutlinedButton(onClick = { leave() }, modifier = Modifier.weight(1f), enabled = !state.saving) { Text("Отменить") }
             }
         }
     }
@@ -188,7 +187,7 @@ private fun FrameOption(id: String?, title: String, resource: Int?, requirement:
         Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(64.dp))
             if (resource != null) Image(painterResource(resource), null, Modifier.fillMaxSize())
-            if (!available) Icon(Icons.Default.Lock, null, tint = Color(0xFFE0A45A), modifier = Modifier.align(Alignment.TopEnd).size(18.dp).background(Color(0xFF16171C), CircleShape))
+            if (!available) Icon(Icons.Default.Lock, null, tint = YuberaAccent, modifier = Modifier.align(Alignment.TopEnd).size(18.dp).background(YuberaBackground, CircleShape))
             if (selected) Icon(Icons.Default.Check, null, tint = YuberaPrimary, modifier = Modifier.align(Alignment.BottomEnd).size(22.dp).background(Color(0xFF16171C), CircleShape))
         }
         Text(title, color = YuberaOnBackground, style = MaterialTheme.typography.labelMedium, maxLines = 2)

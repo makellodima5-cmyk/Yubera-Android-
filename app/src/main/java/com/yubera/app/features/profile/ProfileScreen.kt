@@ -69,7 +69,7 @@ fun ProfileScreen(
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
     LaunchedEffect(resetKey) { scroll.scrollTo(0); viewModel.refreshAccountProfile() }
-    LaunchedEffect(Unit) { while (true) { delay(60_000); coverTick++ } }
+    LaunchedEffect(Unit) { while (true) { delay(3_600_000); coverTick++ } }
     DisposableEffect(viewModel, lifecycleOwner) {
         val owner = lifecycleOwner
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -117,7 +117,7 @@ fun ProfileScreen(
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(profile?.displayName?.takeIf(String::isNotBlank) ?: account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } } ?: "Пользователь", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(account.user?.let { u -> listOfNotNull(u.firstName, u.lastName).joinToString(" ").ifBlank { u.username?.let { "@$it" } ?: "Пользователь" } } ?: "Пользователь", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             if (profile?.isPlus == true) Text("PLUS", color = YuberaPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
                         profile?.username?.takeIf(String::isNotBlank)?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
@@ -203,10 +203,10 @@ fun ProfileScreen(
                 }
             }
 
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileDestinationCard(Icons.Default.Group, "Друзья", "Подписки и поиск", onFriends)
-                ProfileDestinationCard(Icons.Default.ReceiptLong, "Правовая информация", "Документы", onLegal)
-                ProfileDestinationCard(Icons.Default.Info, "О проекте", "YUBERA", onAbout)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ProfileDestinationCard(Icons.Default.Group, "Друзья", "Подписки, подписчики и поиск", onFriends)
+                ProfileDestinationCard(Icons.Default.ReceiptLong, "Правовая информация", "Пользовательское соглашение и политика конфиденциальности", onLegal)
+                ProfileDestinationCard(Icons.Default.Info, "О проекте", "Версия ${context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()} · Описание проекта", onAbout)
             }
             Spacer(Modifier.height(10.dp))
         }
@@ -256,7 +256,7 @@ private fun ProfileCounter(icon: androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 private fun ProfileDestinationCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    Card(Modifier.width(176.dp).height(84.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
+    Card(Modifier.fillMaxWidth().heightIn(min = 76.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp)) {
         Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(icon, null, tint = YuberaPrimary, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

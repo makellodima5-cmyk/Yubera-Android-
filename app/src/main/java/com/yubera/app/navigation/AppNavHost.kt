@@ -39,6 +39,8 @@ import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
+import com.yubera.app.features.profile.ProfileEditScreen
+import com.yubera.app.features.profile.SettingsViewModel
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -159,7 +161,25 @@ fun AppNavHost(
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
             composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
             composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
-            composable(AppDestination.Profile.route) { ProfileScreen() }
+            composable(AppDestination.Profile.route) { entry ->
+                val profileViewModel: SettingsViewModel = hiltViewModel(entry)
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onEditProfile = { navController.navigate("profile-edit") },
+                    onNotifications = { navController.navigate("notifications") },
+                    onFriends = { navController.navigate("profile-friends") },
+                    onLegal = { navController.navigate("profile-legal") },
+                    onAbout = { navController.navigate("profile-about") },
+                    onAllCollections = { navController.navigate("profile-collections") },
+                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }
+                )
+            }
+            composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
+            composable("profile-friends") { HomeSimpleDestination("Друзья", "Раздел подписок, подписчиков и поиска пользователей описан отдельным ТЗ.", { navController.popBackStack() }) }
+            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Пользовательское соглашение и политика конфиденциальности проекта.", { navController.popBackStack() }) }
+            composable("profile-about") { HomeSimpleDestination("О проекте", "YUBERA · Информация о проекте и его целях.", { navController.popBackStack() }) }
+            composable("profile-collections") { HomeSimpleDestination("Мои подборки", "Список подборок пользователя.", { navController.popBackStack() }) }
+            composable("profile-collection/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { HomeSimpleDestination("Подборка", "Просмотр выбранной подборки.", { navController.popBackStack() }) }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",

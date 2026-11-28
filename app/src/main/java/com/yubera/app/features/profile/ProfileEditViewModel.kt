@@ -151,7 +151,20 @@ class ProfileEditViewModel @Inject constructor(
                     avatarDataUrl = compressedAvatar
                 ))
                 if (!result.ok) throw IllegalStateException(result.error ?: "Не удалось сохранить профиль.")
-                mutable.value = mutable.value.copy(saving = false, saved = true)
+                val updatedProfile = s.profile.copy(
+                    bio = s.bio,
+                    visibility = s.visibility,
+                    avatarFrame = s.selectedFrame,
+                    avatarDataUrl = compressedAvatar ?: s.profile.avatarDataUrl,
+                    avatarUrl = if (compressedAvatar != null) null else s.profile.avatarUrl
+                )
+                val accountId = auth.getStoredAccountId()
+                if (accountId != null) {
+                    val cached = profileCache.getString("community_${accountId}", null)
+                    val base = cached?.let { runCatching { profileJson.decodeFromString<YuberaCommunityResponse>(it) }.getOrNull() }
+                    if (base != null) profileCache.edit().putString("community_${accountId}", profileJson.encodeToString(base.copy(profile = updatedProfile))).apply()
+                }
+                mutable.value = mutable.value.copy(profile = updatedProfile, saving = false, saved = true)
                 onSaved()
             } catch (e: Exception) {
                 mutable.value = mutable.value.copy(saving = false, error = e.message ?: "Ошибка сохранения. Изменения не потеряны.")
