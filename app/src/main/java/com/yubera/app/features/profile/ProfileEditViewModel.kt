@@ -53,6 +53,8 @@ class ProfileEditViewModel @Inject constructor(
     val state = mutable.asStateFlow()
     val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    init { viewModelScope.launch { runCatching { catalogRepository.refreshIfStale() } } }
+
     fun load() {
         if (mutable.value.loading && mutable.value.profile != null) return
         mutable.value = mutable.value.copy(loading = true, error = null)
