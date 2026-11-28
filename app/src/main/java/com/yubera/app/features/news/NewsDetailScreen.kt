@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.ui.theme.*
 
-@Composable fun NewsDetailScreen(onBack: () -> Unit, viewModel: NewsDetailViewModel = hiltViewModel()) {
+@Composable fun NewsDetailScreen(onBack: () -> Unit, onAnimeClick: (String) -> Unit = {}, viewModel: NewsDetailViewModel = hiltViewModel()) {
  val s by viewModel.uiState.collectAsState(); val a = s.article; val context = LocalContext.current
  Column(Modifier.fillMaxSize()) {
   TextButton(onBack) { Text("‹ Назад") }
@@ -31,7 +31,7 @@ import com.yubera.app.core.ui.theme.*
    Text(a.category, color = YuberaPrimary, style = MaterialTheme.typography.labelMedium)
    Text(a.title, color = YuberaOnBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
    Text(listOfNotNull(a.authorName.takeIf(String::isNotBlank), a.createdAt.take(10), a.commentsCount.takeIf { it > 0 }?.let { "$it комментариев" }).joinToString(" · "), color = YuberaMuted)
-   a.linkedTitle?.let { Text("Связанный тайтл: $it", color = YuberaMuted) }
+   a.linkedTitle?.let { linked -> if (a.linkedAnimeId != null) TextButton(onClick = { onAnimeClick(a.linkedAnimeId.toString()) }) { Text("Тайтл: $linked") } else Text("Связанный тайтл: $linked", color = YuberaMuted) }
    Text(a.bodyText?.takeIf(String::isNotBlank) ?: a.summary.ifBlank { "Текст публикации отсутствует." }, color = YuberaOnBackground)
    a.videoUrl?.let { url -> youtubeId(url)?.let { id ->
     AndroidView(factory = { ctx -> WebView(ctx).apply { settings.javaScriptEnabled = true; settings.domStorageEnabled = true; settings.mediaPlaybackRequiresUserGesture = true; webViewClient = object : WebViewClient() { override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean { val target = runCatching { Uri.parse(url) }.getOrNull(); return target?.scheme != "https" || target.host !in setOf("youtube-nocookie.com", "www.youtube-nocookie.com") } }; loadUrl("https://www.youtube-nocookie.com/embed/" + id) } }, modifier = Modifier.fillMaxWidth().height(220.dp))
