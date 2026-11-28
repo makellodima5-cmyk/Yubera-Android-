@@ -79,7 +79,7 @@ fun HomeScreen(
                 if (state.unreadNotificationCount > 0) {
                     Box(
                         Modifier.align(Alignment.TopEnd).padding(top=9.dp,end=10.dp).size(7.dp)
-                            .background(Color(0xFFFF4545),CircleShape)
+                            .background(YuberaRed,CircleShape)
                     )
                 }
             }
