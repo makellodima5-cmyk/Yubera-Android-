@@ -30,6 +30,7 @@ import com.yubera.app.core.ui.components.YuberaLogo
 import com.yubera.app.core.ui.theme.*
 @Composable fun NewsScreen(onArticleClick:(Long)->Unit,onBookmarksClick:()->Unit,onNotificationsClick:()->Unit={},viewModel:NewsViewModel=hiltViewModel()){
  val state by viewModel.uiState.collectAsState()
+ LaunchedEffect(viewModel) { viewModel.ensureLoaded() }
  Column(Modifier.fillMaxSize()){
   Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){YuberaLogo(Modifier.weight(1f),124.dp);IconButton(onNotificationsClick){Icon(Icons.Default.Notifications,"Уведомления",tint=YuberaOnBackground)};IconButton(viewModel::refresh){Icon(Icons.Default.Refresh,"Обновить",tint=YuberaPrimary)};IconButton(onBookmarksClick){Icon(Icons.Default.Bookmark,"Закладки",tint=YuberaPrimary)}}
   Text("Новости",Modifier.padding(horizontal=18.dp),color=YuberaOnBackground,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
@@ -58,7 +59,7 @@ import com.yubera.app.core.ui.theme.*
  IconButton(bookmark){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else YuberaMuted)}
 }}}
 @Composable fun NewsBookmarksScreen(onBack:()->Unit,onArticleClick:(Long)->Unit,viewModel:NewsViewModel=hiltViewModel()){
- val state by viewModel.uiState.collectAsState();LaunchedEffect(Unit){viewModel.showBookmarkedOnly(true)}
+ val state by viewModel.uiState.collectAsState();LaunchedEffect(viewModel){viewModel.showBookmarkedOnly(true);viewModel.ensureLoaded()}
  Column(Modifier.fillMaxSize()){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){TextButton(onBack){Text("‹ Новости")};Text("Закладки",color=YuberaOnBackground,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
  if(state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("Сохранённых публикаций пока нет",color=YuberaMuted)}
  else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){items(state.articles,key=NewsArticleEntity::id){a->NewsRow(a,true,{onArticleClick(a.id)},{viewModel.toggleBookmark(a.id)})}}
