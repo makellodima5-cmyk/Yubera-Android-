@@ -5,16 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.catalog.CatalogRepository
-import com.yubera.app.core.database.entity.AnimeLibraryEntity
+import com.yubera.app.core.database.entity.AnimeLibraryEntity\nimport com.yubera.app.core.database.entity.AnimeProgressEntity
 import com.yubera.app.core.database.entity.AnimeSubscriptionEntity
-import com.yubera.app.core.domain.library.PersonalLibraryRepository
-import com.yubera.app.core.player.KodikRepository
+import com.yubera.app.core.domain.library.PersonalLibraryRepository\nimport com.yubera.app.core.domain.library.EpisodeCompletionPolicy
+import com.yubera.app.core.player.KodikRepository\nimport com.yubera.app.core.player.KodikLinkPolicy
 import com.yubera.app.core.player.KodikSource
 import com.yubera.app.data.anime.AnimeCommentDto
 import com.yubera.app.data.anime.AnimeCommentReplyPageResponse
 import com.yubera.app.data.anime.AnimeCommentThreadDto
 import com.yubera.app.data.anime.AnimeRatingResponse
-import com.yubera.app.data.anime.AnimeSocialRepository
+import com.yubera.app.data.anime.AnimeSocialRepository\nimport com.yubera.app.data.anime.ShikimoriRelatedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -63,7 +63,7 @@ class AnimeDetailViewModel @Inject constructor(
     private val animeId: String = savedStateHandle.get<String>("animeId").orEmpty()
     private val sourcesState = MutableStateFlow<List<KodikSource>>(emptyList())
     private val sourcesLoadingState = MutableStateFlow(false)
-    private val socialState = MutableStateFlow(
+    private val relatedIdsState = MutableStateFlow<List<String>>(emptyList())\n    private val socialState = MutableStateFlow(
         AnimeSocialUiState(hasLocalSession = socialRepository.hasSession())
     )
 
@@ -102,16 +102,42 @@ class AnimeDetailViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnimeDetailUiState())
 
-    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog()) { current, all ->
-        current?.let { selected ->
-            all.filter { candidate -> candidate.id != selected.id && candidate.genres.any(selected.genres::contains) }
-                .sortedByDescending { candidate -> candidate.genres.count(selected.genres::contains) }
-                .take(12)
-        }.orEmpty()
+    val relatedAnime = combine(catalogRepository.observeAnime(animeId), catalogRepository.observeCatalog(), relatedIdsState) { current, all, ids ->
+        AnimeRelatedPolicy.select(current, all, ids)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         refreshSocial()
+        loadRelatedAnimeIds()
+    }
+
+    private fun loadRelatedAnimeIds() {
+        val id = animeId.toLongOrNull()?.takeIf { it > 0 } ?: return
+        viewModelScope.launch {
+            relatedIdsState.value = relatedRepository.getAnimeIds(id).map(Long::toString)
+        }
+    }
+
+    fun recordEpisodeOpened(sourceId: String, episodeNumber: Int) {
+        val source = uiState.value.availableSources.firstOrNull { it.id == sourceId } ?: return
+        val episode = source.episodes.firstOrNull { it.number == episodeNumber } ?: return
+        if (!KodikLinkPolicy.isTrustedHttpsUrl(episode.link)) return
+        viewModelScope.launch {
+            val previous = libraryRepository.progress.first().firstOrNull { it.animeId == animeId }
+            if (previous?.episodeNumber == episodeNumber) return@launch
+            val now = System.currentTimeMillis()
+            val opened = AnimeProgressEntity(
+                animeId = animeId,
+                seasonNumber = previous?.seasonNumber,
+                episodeNumber = episodeNumber,
+                positionMillis = 0L,
+                durationMillis = 0L,
+                updatedAtEpochMillis = now,
+                completedEpisodeNumber = previous?.completedEpisodeNumber,
+                completedAtEpochMillis = previous?.completedAtEpochMillis
+            )
+            libraryRepository.saveProgress(EpisodeCompletionPolicy.markSequentialAdvance(opened, previous, episodeNumber, now))
+        }
     }
 
     fun toggleFavorite(enabled: Boolean) {
