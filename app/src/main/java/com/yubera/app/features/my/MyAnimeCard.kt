@@ -27,12 +27,16 @@ import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
 import com.yubera.app.core.ui.theme.YuberaSurface
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 
 @Composable
 fun MyAnimeCard(item: MyLibraryItem, onClick: () -> Unit) {
+    val interaction = rememberYuberaPressInteractionSource()
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().yuberaPressScale(interaction),
+        interactionSource = interaction,
         colors = CardDefaults.cardColors(containerColor = YuberaSurface),
         shape = RoundedCornerShape(16.dp)
     ) {

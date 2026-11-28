@@ -201,8 +201,10 @@ fun AnimeDetailScreen(
                         SectionTitle("Видео")
                         if (anime.kodikAvailable == true && hasTrailer) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                FilterChip(selected = !trailerMode, onClick = { trailerMode = false }, label = { Text("Смотреть аниме") })
-                                FilterChip(selected = trailerMode, onClick = { trailerMode = true }, label = { Text("Трейлер") })
+                                val watchModeInteraction = rememberYuberaPressInteractionSource()
+                                FilterChip(selected = !trailerMode, onClick = { trailerMode = false }, modifier = Modifier.yuberaPressScale(watchModeInteraction), interactionSource = watchModeInteraction, label = { Text("Смотреть аниме") })
+                                val trailerModeInteraction = rememberYuberaPressInteractionSource()
+                                FilterChip(selected = trailerMode, onClick = { trailerMode = true }, modifier = Modifier.yuberaPressScale(trailerModeInteraction), interactionSource = trailerModeInteraction, label = { Text("Трейлер") })
                             }
                         }
                         if (trailerMode && hasTrailer) {
@@ -317,7 +319,8 @@ fun AnimeDetailScreen(
                     else {
                         Text("Выберите озвучку. Android пока сохраняет общую подписку на тайтл; выбранная озвучка не передаётся серверу.")
                         state.availableSources.forEach { source ->
-                            FilterChip(selected = selectedVoiceId == source.id, onClick = { selectedVoiceId = source.id }, label = { Text(source.title) })
+                            val voiceInteraction = rememberYuberaPressInteractionSource()
+                            FilterChip(selected = selectedVoiceId == source.id, onClick = { selectedVoiceId = source.id }, modifier = Modifier.yuberaPressScale(voiceInteraction), interactionSource = voiceInteraction, label = { Text(source.title) })
                         }
                     }
                 }
