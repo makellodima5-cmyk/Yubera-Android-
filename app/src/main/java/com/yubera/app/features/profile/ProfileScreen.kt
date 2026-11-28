@@ -5,6 +5,14 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -130,7 +138,7 @@ fun ProfileScreen(
                             }
                         }
                         TextButton(onClick = onEditProfile) {
-                            Icon(androidx.compose.material.icons.Icons.Default.Edit, "Редактировать профиль")
+                            Icon(Icons.Default.Edit, "Редактировать профиль")
                         }
                     }
                     if (account.isLoading || (community == null && account.errorMessage == null)) {
