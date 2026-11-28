@@ -2,7 +2,7 @@ package com.yubera.app.features.profile
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
+import android.provider.Settings as AndroidSettings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -256,7 +256,7 @@ fun ProfileNotificationSettingsScreen(onBack: () -> Unit, viewModel: SettingsVie
                     Text("Разрешения Android для уведомлений", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = {
                         runCatching {
-                            context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                            context.startActivity(Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName))
                         }
                     }) { Text("Открыть настройки Android", color = YuberaPrimary) }
                 }
