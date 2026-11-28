@@ -78,7 +78,7 @@ class ProfileEditViewModel @Inject constructor(
                 }
                 mutable.value = ProfileEditState(
                     profile = p, bio = p.bio, visibility = p.visibility, selectedFrame = p.avatarFrame,
-                    category = if (p.isAdmin) "admin" else "support", loading = false
+                    category = profileFrameCategory(p.avatarFrame, p.isAdmin), loading = false
                 )
                 if (accountId != null) profileCache.edit().putString("community_${accountId}", profileJson.encodeToString(result)).apply()
             } catch (_: Exception) {

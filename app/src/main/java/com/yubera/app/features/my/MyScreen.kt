@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -132,7 +133,7 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
                     translationY = (1f - kotlin.math.cos(offset * .58f)) * 16.dp.toPx()
                     
                     scaleX = scale; scaleY = scale; rotationY = rotation; cameraDistance = 18 * density; this.alpha = alpha
-                }.blur(blur.dp),
+                }.blur(blur.dp).zIndex(-abs(offset).toFloat()),
                 offset == 0,
                 click = {
                     if (offset == 0) onOpen(item.anime.id)

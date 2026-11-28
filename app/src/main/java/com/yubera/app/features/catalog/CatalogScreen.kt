@@ -10,7 +10,6 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -128,12 +127,22 @@ fun CatalogScreen(
                 Icon(Icons.Default.FilterList, "Фильтры", tint = YuberaPrimary)
             }
         }
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            CatalogSortOrder.entries.forEach {
-                FilterChip(state.sortOrder == it, { viewModel.onSortOrderSelected(it); page = 0; pendingScrollToTop = true }, label = { Text(it.title, maxLines = 1) })
+            CatalogSortOrder.entries.chunked(2).forEach { rowOrders ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    rowOrders.forEach { order ->
+                        FilterChip(
+                            selected = state.sortOrder == order,
+                            onClick = { viewModel.onSortOrderSelected(order); page = 0; pendingScrollToTop = true },
+                            modifier = Modifier.weight(1f),
+                            label = { Text(order.title, maxLines = 1) }
+                        )
+                    }
+                    if (rowOrders.size == 1) Spacer(Modifier.weight(1f))
+                }
             }
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
