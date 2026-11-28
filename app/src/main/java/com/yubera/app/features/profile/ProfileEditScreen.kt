@@ -57,7 +57,7 @@ internal val adminFrames = (1..8).map { n ->
         5 -> R.drawable.admin_frame_05; 6 -> R.drawable.admin_frame_06; 7 -> R.drawable.admin_frame_07; else -> R.drawable.admin_frame_08
     }
     FrameChoice("Admin_Frame_%02d.webp".format(n),"Административная рамка %d".format(n),res,"Администратор")
-}
+} + FrameChoice("Ramka_Admin_01.webp", "Административная рамка 01", R.drawable.ramka_admin_01, "Администратор")
 
 @Composable
 fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hiltViewModel()) {
@@ -224,6 +224,7 @@ private fun frameResource(frame: String): Int? = when(frame) {
     "Admin_Frame_06.webp" -> R.drawable.admin_frame_06
     "Admin_Frame_07.webp" -> R.drawable.admin_frame_07
     "Admin_Frame_08.webp" -> R.drawable.admin_frame_08
+    "Ramka_Admin_01.webp" -> R.drawable.ramka_admin_01
     "YUBERA_Contribution_Avatar_Frame_01_Soyuznik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_01_soyuznik
     "YUBERA_Contribution_Avatar_Frame_02_Storonnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_02_storonnik
     "YUBERA_Contribution_Avatar_Frame_03_Predanniy_Uchastnik.webp.webp" -> R.drawable.yubera_contribution_avatar_frame_03_predanniy_uchastnik
