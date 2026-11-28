@@ -129,15 +129,18 @@ fun AnimeDetailScreen(
             ) {
                 TitleHero(anime)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { viewModel.toggleFavorite(!state.isFavorite) }, modifier = Modifier.weight(1f)) {
+                    val favoriteInteraction = rememberYuberaPressInteractionSource()
+                    OutlinedButton(onClick = { viewModel.toggleFavorite(!state.isFavorite) }, modifier = Modifier.weight(1f).yuberaPressScale(favoriteInteraction), interactionSource = favoriteInteraction) {
                         Text(if (state.isFavorite) "♥ В избранном" else "♡ В избранное", maxLines = 1)
                     }
-                    OutlinedButton(onClick = { viewModel.toggleWatchLater(!state.isInWatchLater) }, modifier = Modifier.weight(1f)) {
+                    val watchLaterInteraction = rememberYuberaPressInteractionSource()
+                    OutlinedButton(onClick = { viewModel.toggleWatchLater(!state.isInWatchLater) }, modifier = Modifier.weight(1f).yuberaPressScale(watchLaterInteraction), interactionSource = watchLaterInteraction) {
                         Text(if (state.isInWatchLater) "✓ В моём списке" else "+ Смотреть позже", maxLines = 1)
                     }
                 }
                 if (anime.status.contains("ongoing", true) || anime.status.contains("онгоинг", true) || anime.nextEpisodeAt != null) {
-                    Button(onClick = { viewModel.loadSubscriptionSources(); showSubscribeDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                    val subscribeInteraction = rememberYuberaPressInteractionSource()
+                    Button(onClick = { viewModel.loadSubscriptionSources(); showSubscribeDialog = true }, modifier = Modifier.fillMaxWidth().yuberaPressScale(subscribeInteraction), interactionSource = subscribeInteraction) {
                         Text(if (state.isSubscribed) "Подписка включена" else "Подписаться на серии")
                     }
                 }
@@ -421,7 +424,8 @@ private fun SectionTitle(title: String) {
 
 @Composable
 private fun RelatedAnimeCard(anime: AnimeCatalogItem, onClick: () -> Unit) {
-    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp), modifier = Modifier.width(146.dp)) {
+    val interaction = rememberYuberaPressInteractionSource()
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(14.dp), modifier = Modifier.width(146.dp).yuberaPressScale(interaction), interactionSource = interaction) {
         Box {
             AsyncImage(model = anime.posterUrl, contentDescription = anime.title, modifier = Modifier.fillMaxWidth().height(206.dp), contentScale = ContentScale.Crop)
             Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(YuberaBackground.copy(alpha = 0.92f)).padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {

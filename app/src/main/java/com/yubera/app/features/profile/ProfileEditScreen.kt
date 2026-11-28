@@ -35,6 +35,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 
 internal data class FrameChoice(val id: String, val title: String, val resource: Int?, val requirement: String)
 private val supportFrames = listOf(
@@ -108,7 +110,8 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                             Text(profile.displayName, color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             profile.username?.let { Text("@$it", color = YuberaMuted, style = MaterialTheme.typography.bodySmall) }
                             Text("Аватар", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
-                            OutlinedButton(onClick = { avatarPicker.launch("image/*") }) { Icon(Icons.Default.PhotoCamera, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text("Загрузить") }
+                            val uploadInteraction = rememberYuberaPressInteractionSource()
+                            OutlinedButton(onClick = { avatarPicker.launch("image/*") }, modifier = Modifier.yuberaPressScale(uploadInteraction), interactionSource = uploadInteraction) { Icon(Icons.Default.PhotoCamera, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text("Загрузить") }
                         }
                     }
                     Text("Максимальный размер файла — 2 МБ.", color = YuberaMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp))
@@ -187,8 +190,10 @@ fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hilt
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = { leave() }, modifier = Modifier.weight(1f), enabled = !state.saving) { Text("Отменить") }
-                Button(onClick = { viewModel.save(onBack) }, modifier = Modifier.weight(1f), enabled = !state.saving, colors = ButtonDefaults.buttonColors(containerColor = YuberaPrimary)) {
+                val cancelInteraction = rememberYuberaPressInteractionSource()
+                OutlinedButton(onClick = { leave() }, modifier = Modifier.weight(1f).yuberaPressScale(cancelInteraction), interactionSource = cancelInteraction, enabled = !state.saving) { Text("Отменить") }
+                val saveInteraction = rememberYuberaPressInteractionSource()
+                Button(onClick = { viewModel.save(onBack) }, modifier = Modifier.weight(1f).yuberaPressScale(saveInteraction), interactionSource = saveInteraction, enabled = !state.saving, colors = ButtonDefaults.buttonColors(containerColor = YuberaPrimary)) {
                     if (state.saving) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Сохранить изменения")
                 }
             }
@@ -203,7 +208,8 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
 
 @Composable
 private fun FrameOption(id: String?, title: String, resource: Int?, requirement: String, available: Boolean, selected: Boolean, onClick: () -> Unit) {
-    Column(Modifier.width(112.dp).clip(RoundedCornerShape(14.dp)).background(YuberaSurfaceElevated).clickable(enabled = available, onClick = onClick).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    val interaction = rememberYuberaPressInteractionSource()
+    Column(Modifier.width(112.dp).yuberaPressScale(interaction).clip(RoundedCornerShape(14.dp)).background(YuberaSurfaceElevated).clickable(interactionSource = interaction, indication = androidx.compose.foundation.LocalIndication.current, enabled = available, onClick = onClick).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.AccountCircle, null, tint = YuberaMuted, modifier = Modifier.size(64.dp))
             if (resource != null) Image(painterResource(resource), null, Modifier.fillMaxSize())

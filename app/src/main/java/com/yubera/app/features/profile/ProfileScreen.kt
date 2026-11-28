@@ -42,6 +42,8 @@ import coil3.compose.AsyncImage
 import com.yubera.app.BuildConfig
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.data.auth.YuberaXpStatus
 import kotlinx.coroutines.delay
 
@@ -190,8 +192,11 @@ fun ProfileScreen(
                     collections.forEach { collection ->
                         val chosenId = remember(collection.id, collection.animeIds, coverTick) { chooseCollectionCover(context, collection.id, collection.animeIds) }
                         val poster = catalog.firstOrNull { it.id == chosenId }?.posterUrl
+                        val interaction = rememberYuberaPressInteractionSource()
                         Card(
-                            modifier = Modifier.width(210.dp).height(265.dp).clickable { onCollection(collection.id) },
+                            onClick = { onCollection(collection.id) },
+                            modifier = Modifier.width(210.dp).height(265.dp).yuberaPressScale(interaction),
+                            interactionSource = interaction,
                             colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp)
                         ) {
                             Box(Modifier.fillMaxSize()) {
@@ -251,7 +256,9 @@ private fun ProfileLevelSupportCard(xp: YuberaXpStatus?, supportTitle: String?) 
                     Text(supportTitle ?: "Без статуса", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            LinearProgressIndicator(progress = { (xp?.progress ?: 0f).coerceIn(0f,100f)/100f }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = YuberaSurfaceElevated)
+            val progressTarget = (xp?.progress ?: 0f).coerceIn(0f,100f)/100f
+    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(progressTarget, androidx.compose.animation.core.tween(420), label = "profileXpProgress")
+    LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = YuberaSurfaceElevated)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(if (xp != null && xp.nextThreshold != null) "${xp.total} / ${xp.nextThreshold} XP" else "${xp?.total ?: 0} XP", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
                 Text(if (xp?.nextLevel != null) "До ${xp.nextLevel} уровня: ${xp.remaining} XP" else if (xp != null) "Максимальный уровень" else "—", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
@@ -273,8 +280,11 @@ private fun ProfileCounter(icon: androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 private fun ProfileDestinationCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    val interaction = rememberYuberaPressInteractionSource()
     Card(
-        Modifier.fillMaxWidth().heightIn(min = 76.dp).clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp).yuberaPressScale(interaction),
+        interactionSource = interaction,
         colors = CardDefaults.cardColors(containerColor = YuberaSurface),
         shape = RoundedCornerShape(14.dp)
     ) {

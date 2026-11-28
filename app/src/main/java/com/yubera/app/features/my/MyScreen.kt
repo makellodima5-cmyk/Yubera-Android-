@@ -39,6 +39,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -121,19 +123,20 @@ private fun Carousel(fav: List<MyLibraryItem>, initial: Int, onCenter: (Int) -> 
         contentAlignment = Alignment.Center
     ) {
         cards.forEach { (index, offset, item) ->
-            val scale by animateFloatAsState(if (offset == 0) 1f else if (abs(offset) == 1) .82f else .64f, tween(duration), label = "carousel-scale")
-            val rotation by animateFloatAsState(offset * -22f, tween(duration), label = "carousel-rotation")
-            val blur by animateFloatAsState(if (abs(offset) > 1) 2f else 0f, tween(duration), label = "carousel-blur")
-            val alpha by animateFloatAsState(if (abs(offset) > 1) .58f else 1f, tween(duration), label = "carousel-alpha")
-            val animatedTranslationX by animateFloatAsState(offset * 120f, tween(duration), label = "carousel-translation")
+            val visualOffset = offset + (drag / 120f).coerceIn(-0.9f, 0.9f)
+            val scale by animateFloatAsState((1f - abs(visualOffset) * .18f).coerceIn(.55f, 1f), tween(duration), label = "carousel-scale")
+            val rotation by animateFloatAsState(visualOffset * -18f, tween(duration), label = "carousel-rotation")
+            val blur by animateFloatAsState((abs(visualOffset) - 1f).coerceAtLeast(0f) * 1.6f, tween(duration), label = "carousel-blur")
+            val alpha by animateFloatAsState((1f - abs(visualOffset) * .15f).coerceIn(.4f, 1f), tween(duration), label = "carousel-alpha")
+            val animatedTranslationX by animateFloatAsState(visualOffset * 120f, tween(duration), label = "carousel-translation")
             Poster(
                 item.anime,
                 Modifier.width(214.dp).height(318.dp).graphicsLayer {
                     this.translationX = animatedTranslationX.dp.toPx()
-                    translationY = (1f - kotlin.math.cos(offset * .58f)) * 16.dp.toPx()
+                    translationY = (1f - kotlin.math.cos(visualOffset * .58f)) * 16.dp.toPx()
                     
                     scaleX = scale; scaleY = scale; rotationY = rotation; cameraDistance = 18 * density; this.alpha = alpha
-                }.blur(blur.dp).zIndex(-abs(offset).toFloat()),
+                }.blur(blur.dp).zIndex(-abs(visualOffset).toFloat()),
                 offset == 0,
                 click = {
                     if (offset == 0) onOpen(item.anime.id)
@@ -163,7 +166,7 @@ private fun Poster(a: AnimeCatalogItem, modifier: Modifier, central: Boolean, cl
                 Text(a.title, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (central) Text(listOfNotNull(a.kind, a.year.takeIf { it > 0 }?.toString()).joinToString(" · "), color = Color.White.copy(.7f), style = MaterialTheme.typography.labelSmall)
             }
-            IconButton(remove, Modifier.align(Alignment.BottomEnd).padding(8.dp).size(38.dp).background(Color.Black.copy(.5f), RoundedCornerShape(50))) { Icon(Icons.Default.Favorite, "Удалить из избранного", tint = YuberaRed) }
+            IconButton(remove, Modifier.align(Alignment.BottomEnd).padding(8.dp).size(38.dp).background(Color.Black.copy(.5f), RoundedCornerShape(50)).yuberaPressScale(rememberYuberaPressInteractionSource())) { Icon(Icons.Default.Favorite, "Удалить из избранного", tint = YuberaRed) }
         }
     }
 }

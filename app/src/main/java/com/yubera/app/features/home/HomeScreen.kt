@@ -50,6 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.components.YuberaLogo
+import com.yubera.app.core.ui.components.yuberaPressScale
+import com.yubera.app.core.ui.components.rememberYuberaPressInteractionSource
 import com.yubera.app.core.ui.theme.YuberaMuted
 import com.yubera.app.core.ui.theme.YuberaOnBackground
 import com.yubera.app.core.ui.theme.YuberaPrimary
@@ -139,14 +141,16 @@ fun HomeScreen(
             if(state.ongoing.isNotEmpty()) item { AnimeStrip("Онгоинги",state.ongoing,"ongoing",onAnimeClick,onViewAll) }
             item {
                 Row(Modifier.fillMaxWidth().padding(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    Card(onClick={state.catalogue.filter { it.kodikAvailable == true }.randomOrNull()?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
+                    val randomInteraction = rememberYuberaPressInteractionSource()
+                    Card(onClick={state.catalogue.filter { it.kodikAvailable == true }.randomOrNull()?.let{onAnimeClick(it.id)}},modifier=Modifier.weight(1f).yuberaPressScale(randomInteraction),interactionSource=randomInteraction,colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Casino,contentDescription="Случайный выбор",tint=YuberaPrimary)
                             Text("Случайное аниме",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
                             Text("Подобрать тайтл",color=YuberaMuted,style=MaterialTheme.typography.bodySmall)
                         }
                     }
-                    Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=YuberaSurface)) {
+                    val collectionsInteraction = rememberYuberaPressInteractionSource()
+                    Card(onClick=onCollectionsClick,modifier=Modifier.weight(1f).yuberaPressScale(collectionsInteraction),interactionSource=collectionsInteraction,colors=CardDefaults.cardColors(containerColor=YuberaSurface))
                         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Bookmarks,contentDescription="Подборки",tint=YuberaPrimary)
                             Text("Подборки",fontWeight=FontWeight.Bold,color=YuberaOnBackground)
