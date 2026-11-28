@@ -70,7 +70,8 @@ data class YuberaCollectionSummary(
     val is_public: Int = 0,
     val title_count: Int = 0,
     val like_count: Int = 0,
-    val liked: Boolean = false
+    val liked: Boolean = false,
+    val animeIds: List<String> = emptyList()
 )
 
 @Serializable
@@ -98,8 +99,6 @@ data class YuberaProfileUpdateRequest(
     val bio: String,
     val visibility: String,
     val avatarFrame: String?,
-    val customName: String = "",
-    val avatarAnimeId: String? = null,
     val avatarDataUrl: String? = null
 )
 
