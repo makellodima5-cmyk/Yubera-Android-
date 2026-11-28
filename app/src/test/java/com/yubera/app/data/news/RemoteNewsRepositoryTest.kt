@@ -6,6 +6,7 @@ import com.yubera.app.core.database.entity.NewsArticleEntity
 import com.yubera.app.core.database.entity.NewsBookmarkEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -61,7 +62,7 @@ private class FakeNewsDao(initial: NewsArticleEntity?) : NewsDao {
     override suspend fun deleteUnbookmarkedOutsideFeed(currentFeedIds: List<Long>) { }
 }
 
-private fun MutableStateFlow<NewsArticleEntity?>.mapNullableList(): Flow<List<NewsArticleEntity>> = kotlinx.coroutines.flow.map(this) { it?.let(::listOf).orEmpty() }
+private fun MutableStateFlow<NewsArticleEntity?>.mapNullableList(): Flow<List<NewsArticleEntity>> = map { it?.let(::listOf).orEmpty() }
 
 private class FakeBookmarkDao : NewsBookmarkDao {
     override fun observeBookmarkedIds(): Flow<List<Long>> = flowOf(emptyList())
