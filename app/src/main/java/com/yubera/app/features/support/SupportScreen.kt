@@ -151,8 +151,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                     modifier = Modifier.weight(1f).yuberaPressScale(supportTabInteraction),
                     interactionSource = supportTabInteraction,
                     label = { Text("Поддержка") },
-                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                    modifier = Modifier.weight(1f)
+                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) }
                 )
                 val plusTabInteraction = rememberYuberaPressInteractionSource()
                 FilterChip(
@@ -161,8 +160,7 @@ fun SupportScreen(onBack: () -> Unit, viewModel: SupportViewModel = hiltViewMode
                     modifier = Modifier.weight(1f).yuberaPressScale(plusTabInteraction),
                     interactionSource = plusTabInteraction,
                     label = { Text("YUBERA Plus") },
-                    leadingIcon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
-                    modifier = Modifier.weight(1f)
+                    leadingIcon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) }
                 )
             }
             if (activeTab == SupportTab.Support) {
@@ -377,14 +375,17 @@ private fun YuberaPlusContent(
             }
             if (sub.isRecurring) {
                 if (sub.autoRenew) {
-                    OutlinedButton(onClick = { onChangeRenewal(false) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Отключить автопродление") }
+                    val renewalOffInteraction = rememberYuberaPressInteractionSource()
+                    OutlinedButton(onClick = { onChangeRenewal(false) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth().yuberaPressScale(renewalOffInteraction), interactionSource = renewalOffInteraction) { Text("Отключить автопродление") }
                 } else {
-                    OutlinedButton(onClick = { onChangeRenewal(true) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth()) { Text("Включить автопродление") }
+                    val renewalOnInteraction = rememberYuberaPressInteractionSource()
+                    OutlinedButton(onClick = { onChangeRenewal(true) }, enabled = !state.plusBusy, modifier = Modifier.fillMaxWidth().yuberaPressScale(renewalOnInteraction), interactionSource = renewalOnInteraction) { Text("Включить автопродление") }
                 }
             } else {
                 Text("Автопродление недоступно для этой подписки. Продлить её можно после окончания текущего периода.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             }
-            OutlinedButton(onClick = onCheckActivation, enabled = !state.plusChecking, modifier = Modifier.fillMaxWidth()) {
+            val plusActivationStatusInteraction = rememberYuberaPressInteractionSource()
+            OutlinedButton(onClick = onCheckActivation, enabled = !state.plusChecking, modifier = Modifier.fillMaxWidth().yuberaPressScale(plusActivationStatusInteraction), interactionSource = plusActivationStatusInteraction) {
                 if (state.plusChecking) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Text("Обновить статус")
             }

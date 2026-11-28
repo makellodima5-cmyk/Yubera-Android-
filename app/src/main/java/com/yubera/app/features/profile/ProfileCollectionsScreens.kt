@@ -48,7 +48,8 @@ fun ProfileCollectionsScreen(
     val catalog by viewModel.catalog.collectAsState()
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
     Column(Modifier.fillMaxSize()) {
-        TextButton(onBack) { Text("‹ Профиль") }
+        val backCollectionsInteraction = rememberYuberaPressInteractionSource()
+        TextButton(onBack, modifier = Modifier.yuberaPressScale(backCollectionsInteraction), interactionSource = backCollectionsInteraction) { Text("‹ Профиль") }
         Text("Мои подборки", color = YuberaOnBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp))
         val collections = response?.collections.orEmpty()
         when {
@@ -90,7 +91,8 @@ fun ProfileCollectionDetailScreen(
     val collection = response?.collections?.firstOrNull { it.id == collectionId }
     val titles = collection?.animeIds.orEmpty().mapNotNull { id -> catalog.firstOrNull { it.id == id } }
     Column(Modifier.fillMaxSize()) {
-        TextButton(onBack) { Text("‹ Подборки") }
+        val backDetailInteraction = rememberYuberaPressInteractionSource()
+        TextButton(onBack, modifier = Modifier.yuberaPressScale(backDetailInteraction), interactionSource = backDetailInteraction) { Text("‹ Подборки") }
         Text(collection?.title ?: "Подборка", color = YuberaOnBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp))
         when {
             response == null -> Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp) ) {

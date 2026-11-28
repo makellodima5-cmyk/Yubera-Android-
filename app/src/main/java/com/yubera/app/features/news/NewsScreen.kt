@@ -55,14 +55,16 @@ import com.yubera.app.core.ui.theme.*
     } else null,
     singleLine=true
    )
+   val bookmarkNavInteraction=rememberYuberaPressInteractionSource()
    IconButton(
     onClick=onBookmarksClick,
-    modifier=Modifier.size(48.dp).background(YuberaSurface,RoundedCornerShape(12.dp))
+    modifier=Modifier.size(48.dp).background(YuberaSurface,RoundedCornerShape(12.dp)).yuberaPressScale(bookmarkNavInteraction),
+    interactionSource=bookmarkNavInteraction
    ) { Icon(Icons.Default.Bookmark,"Закладки",tint=YuberaPrimary) }
   }
   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){NewsCategory.entries.forEach{cat->val chipInteraction=rememberYuberaPressInteractionSource();FilterChip(selected=state.selectedCategory==cat,onClick={viewModel.selectCategory(cat)},modifier=Modifier.yuberaPressScale(chipInteraction),interactionSource=chipInteraction,label={Text(cat.title)})}}
   if(state.isRefreshing&&state.articles.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=YuberaPrimary)}
-  else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else if (state.query.isNotBlank()) "Ничего не найдено" else if (state.selectedCategory != NewsCategory.ALL) "В этой категории пока нет новостей" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: if (state.query.isNotBlank()) "Измените запрос или выберите другую категорию." else "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp)) { Text("Повторить") } }
+  else if (state.articles.isEmpty()) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) { Text((if (state.errorMessage != null) "Не удалось загрузить новости" else if (state.query.isNotBlank()) "Ничего не найдено" else if (state.selectedCategory != NewsCategory.ALL) "В этой категории пока нет новостей" else "Новостей пока нет"), color = YuberaOnBackground); Text(state.errorMessage ?: if (state.query.isNotBlank()) "Измените запрос или выберите другую категорию." else "Попробуйте обновить ленту.", color = YuberaMuted, modifier = Modifier.padding(top = 8.dp)); val emptyRetryInteraction=rememberYuberaPressInteractionSource();Button(onClick = viewModel::refresh, modifier = Modifier.padding(top = 12.dp).yuberaPressScale(emptyRetryInteraction),interactionSource=emptyRetryInteraction) { Text("Повторить") } }
   else PullToRefreshBox(isRefreshing=state.isRefreshing,onRefresh=viewModel::refresh,modifier=Modifier.weight(1f).fillMaxWidth()){
    LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
    state.errorMessage?.let{item{Text(it,color=YuberaMuted)}}
@@ -77,12 +79,12 @@ import com.yubera.app.core.ui.theme.*
  if(!a.imageUrl.isNullOrBlank())AsyncImage(a.imageUrl,"Обложка новости",Modifier.fillMaxSize(),contentScale=ContentScale.Crop)else Box(Modifier.fillMaxSize().background(YuberaSurfaceElevated))
  Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,YuberaScrim))))
  Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp).padding(end=48.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){Text(category(a.category).title.uppercase(),color=YuberaPrimary,style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold);Text(a.title,color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge,maxLines=3,overflow=TextOverflow.Ellipsis);Text(a.summary,color=Color.White.copy(.82f),style=MaterialTheme.typography.bodySmall,maxLines=2,overflow=TextOverflow.Ellipsis);Text(a.createdAt.take(10),color=Color.White.copy(.7f),style=MaterialTheme.typography.labelSmall)}
- IconButton(bookmark,Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(.45f),RoundedCornerShape(50))){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else Color.White)}
+ val bookmarkInteraction=rememberYuberaPressInteractionSource();IconButton(bookmark,Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(.45f),RoundedCornerShape(50)).yuberaPressScale(bookmarkInteraction),interactionSource=bookmarkInteraction){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else Color.White)}
 }}}
 @Composable private fun NewsRow(a:NewsArticleEntity,saved:Boolean,open:()->Unit,bookmark:()->Unit){val interaction=rememberYuberaPressInteractionSource();Card(onClick=open,Modifier.fillMaxWidth().yuberaPressScale(interaction),interactionSource=interaction,colors=CardDefaults.cardColors(containerColor=YuberaSurface),shape=RoundedCornerShape(16.dp)){Row(Modifier.padding(10.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){
  Box(Modifier.size(110.dp,102.dp).clip(RoundedCornerShape(12.dp)).background(YuberaSurfaceElevated)){if(!a.imageUrl.isNullOrBlank())AsyncImage(a.imageUrl,"Изображение",Modifier.fillMaxSize(),contentScale=ContentScale.Crop)else Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(category(a.category).title.take(1),color=YuberaPrimary,style=MaterialTheme.typography.headlineMedium)};if(a.videoUrl!=null)Text("▶ Трейлер",Modifier.align(Alignment.BottomStart).background(Color.Black.copy(.65f)).padding(4.dp),color=Color.White,style=MaterialTheme.typography.labelSmall)}
  Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)){Text(category(a.category).title.uppercase(),color=YuberaPrimary,style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.Bold);Text(a.title,color=YuberaOnBackground,fontWeight=FontWeight.SemiBold,maxLines=3,overflow=TextOverflow.Ellipsis);a.linkedTitle?.let{Text(it,color=YuberaMuted,style=MaterialTheme.typography.labelSmall,maxLines=1)};Text(a.createdAt.take(10),color=YuberaMuted,style=MaterialTheme.typography.labelSmall)}
- IconButton(bookmark){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else YuberaMuted)}
+ val bookmarkInteraction=rememberYuberaPressInteractionSource();IconButton(bookmark,Modifier.yuberaPressScale(bookmarkInteraction),interactionSource=bookmarkInteraction){Icon(Icons.Default.Bookmark,"Закладка",tint=if(saved)YuberaPrimary else YuberaMuted)}
 }}}
 @Composable fun NewsBookmarksScreen(onBack:()->Unit,onArticleClick:(Long)->Unit,viewModel:NewsViewModel=hiltViewModel()){
  val state by viewModel.uiState.collectAsState()
