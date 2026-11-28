@@ -20,7 +20,8 @@ interface YuberaProfileApi {
 @Serializable
 data class YuberaCommunityResponse(
     val authenticated: Boolean = false,
-    val profile: YuberaCommunityProfile? = null
+    val profile: YuberaCommunityProfile? = null,
+    val collections: List<YuberaCollectionSummary> = emptyList()
 )
 
 @Serializable
@@ -36,12 +37,41 @@ data class YuberaCommunityProfile(
     val isAdmin: Boolean = false,
     val visibility: String = "private",
     val isPlus: Boolean = false,
+    val publicCollections: Int = 0,
+    val publicTitles: Int = 0,
+    val collectionLikes: Int = 0,
+    val personalCollections: Int = 0,
+    val personalTitles: Int = 0,
+    val personalCollectionLikes: Int = 0,
+    val followers: Int = 0,
+    val following: Int = 0,
     val support: YuberaSupportStatus? = null,
     val xp: YuberaXpStatus? = null
 )
 
 @Serializable
-data class YuberaXpStatus(val total: Int = 0, val level: Int = 1, val title: String = "", val remaining: Int = 0, val progress: Float = 0f)
+data class YuberaCollectionSummary(
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val cover_key: String? = null,
+    val is_public: Int = 0,
+    val title_count: Int = 0,
+    val like_count: Int = 0,
+    val liked: Boolean = false
+)
+
+@Serializable
+data class YuberaXpStatus(
+    val total: Int = 0,
+    val level: Int = 1,
+    val title: String = "",
+    val remaining: Int = 0,
+    val progress: Float = 0f,
+    val nextLevel: Int? = null,
+    val nextTitle: String? = null,
+    val nextThreshold: Int? = null
+)
 
 @Serializable
 data class YuberaSupportStatus(
