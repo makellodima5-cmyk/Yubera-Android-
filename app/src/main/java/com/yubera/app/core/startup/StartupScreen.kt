@@ -112,7 +112,7 @@ private fun SplashWaves(phase:Float) {
             val center=((phase+index*.34f)%1f)*w
             val halfWidth=w*.24f
             val shine=Brush.horizontalGradient(
-                colors=listOf(Color.Transparent,YuberaWavePrimary.copy(.12f),YuberaWavePrimary.copy(.62f),YuberaWaveGold.copy(.90f),Color(0xFFFFA04E).copy(.62f),Color(0xFFFF5A1F).copy(.12f),Color.Transparent),
+                colors=listOf(Color.Transparent,YuberaWavePrimary.copy(.12f),YuberaWavePrimary.copy(.62f),YuberaWaveGold.copy(.90f),YuberaWavePrimary.copy(.62f),YuberaWavePrimary.copy(.12f),Color.Transparent),
                 startX=center-halfWidth,
                 endX=center+halfWidth
             )
