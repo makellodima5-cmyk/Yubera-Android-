@@ -71,7 +71,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
             Spacer(Modifier.height(2.dp))
             Image(painterResource(R.drawable.yubera_logo_vertical),"Фирменный знак и название YUBERA",Modifier.width(156.dp),contentScale=ContentScale.Fit)
             Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
-                Text("Твой мир аниме\nв одном приложении",color=Color(0xFFD0CDD4),fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(bottom=22.dp))
+                Text("Твой мир аниме\nв одном приложении",color=YuberaMuted,fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,modifier=Modifier.padding(bottom=22.dp))
                 WelcomeButton("Войти",Icons.Default.Login,true,onSignIn)
                 WelcomeButton("Регистрация",Icons.Default.PersonAdd,false,onRegister,Modifier.padding(top=12.dp))
             }
@@ -82,7 +82,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
 @Composable private fun WelcomeButton(text:String,icon:androidx.compose.ui.graphics.vector.ImageVector,primary:Boolean,onClick:()->Unit,modifier:Modifier=Modifier) {
     val motionAllowed=rememberMotionAllowed(); val shape=RoundedCornerShape(22.dp); val interaction=remember{MutableInteractionSource()}; val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if(pressed && motionAllowed).975f else 1f,tween(if(pressed)150 else 190),label="welcomePress")
-    Box(modifier.fillMaxWidth().height(58.dp).scale(scale).background(if(primary)Brush.horizontalGradient(listOf(Color(0xFFFF7A12),Color(0xFFFF4E17))) else Brush.linearGradient(listOf(Color(0xC015141C),Color(0xC015141C))),shape).border(1.dp,if(primary)Color(0xFFFFA15B).copy(.7f) else Color(0xFF77727F),shape).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),contentAlignment=Alignment.Center) {
+    Box(modifier.fillMaxWidth().height(58.dp).scale(scale).background(if(primary)Brush.horizontalGradient(listOf(YuberaPrimary,YuberaAccent)) else Brush.linearGradient(listOf(YuberaSurface.copy(alpha = 0.75f),Color(0xC015141C))),shape).border(1.dp,if(primary)YuberaAccent.copy(.7f) else YuberaBorder,shape).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),contentAlignment=Alignment.Center) {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) { Icon(icon,null,tint=Color.White,modifier=Modifier.size(21.dp)); Spacer(Modifier.width(10.dp)); Text(text,color=Color.White,fontSize=18.sp,fontWeight=FontWeight.SemiBold) }
     }
 }
@@ -117,7 +117,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     val motionAllowed=rememberMotionAllowed(); val interaction=remember{MutableInteractionSource()}
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if(pressed && motionAllowed).975f else 1f,tween(if(pressed)150 else 190),label="telegramActionPress")
-    Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(Color(0xFF229ED9),RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,enabled=enabled,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
+    Row(Modifier.fillMaxWidth().height(58.dp).scale(scale).background(YuberaTelegramBlue,RoundedCornerShape(18.dp)).clickable(interactionSource=interaction,indication=null,enabled=enabled,role=Role.Button,onClick=onClick).padding(horizontal=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         TelegramPlane(Modifier.size(22.dp).semantics { contentDescription = "Telegram" })
         Spacer(Modifier.width(11.dp))
         Text(text,color=Color.White,fontSize=17.sp,fontWeight=FontWeight.SemiBold)
@@ -128,7 +128,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
         val p=Path().apply{moveTo(size.width*.04f,size.height*.43f);lineTo(size.width*.94f,size.height*.06f);lineTo(size.width*.73f,size.height*.94f);lineTo(size.width*.49f,size.height*.65f);lineTo(size.width*.32f,size.height*.79f);lineTo(size.width*.35f,size.height*.55f);close()}
         drawPath(p,Color.White)
         val fold=Path().apply{moveTo(size.width*.35f,size.height*.55f);lineTo(size.width*.94f,size.height*.06f);lineTo(size.width*.49f,size.height*.65f);close()}
-        drawPath(fold,Color(0xFFB9E6FA))
+        drawPath(fold,YuberaTelegramFold)
     }
 }
 @Composable private fun RegistrationLink(onClick:()->Unit,modifier:Modifier=Modifier,prefix:String="Или ",linkText:String="зарегистрироваться") {
@@ -136,7 +136,7 @@ private object AuthRoute { const val Welcome="welcome"; const val SignIn="sign-i
     val pressed by interaction.collectIsPressedAsState()
     Row(modifier.fillMaxWidth().heightIn(min=48.dp).clickable(interactionSource=interaction,indication=null,role=Role.Button,onClick=onClick).padding(horizontal=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         Text(prefix,color=YuberaMuted,fontSize=15.sp)
-        Text(linkText,color=if(pressed) Color(0xFFFFB16E) else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
+        Text(linkText,color=if(pressed) YuberaAccent else Color(0xFFFF7A12),fontSize=15.sp,textDecoration=TextDecoration.Underline,fontWeight=FontWeight.Medium)
     }
 }
 
