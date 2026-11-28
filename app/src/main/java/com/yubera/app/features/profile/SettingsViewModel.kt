@@ -1,9 +1,11 @@
 package com.yubera.app.features.profile
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import com.yubera.app.core.session.NativeAuthRepository
+import com.yubera.app.core.catalog.CatalogRepository
 import com.yubera.app.data.auth.YuberaProfileApi
 import com.yubera.app.data.auth.YuberaCommunityResponse
 import com.yubera.app.data.auth.TelegramSessionUser
@@ -14,7 +16,12 @@ import com.yubera.app.features.updates.AppUpdateCheckResult
 import com.yubera.app.features.updates.AppUpdateCoordinator
 import com.yubera.app.features.updates.AppUpdateInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,17 +36,23 @@ class SettingsViewModel @Inject constructor(
     private val repository: UserSettingsRepository,
     private val authRepository: NativeAuthRepository,
     private val appUpdateCoordinator: AppUpdateCoordinator,
-    private val yuberaProfileApi: YuberaProfileApi
+    private val yuberaProfileApi: YuberaProfileApi,
+    private val catalogRepository: CatalogRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     val settings = repository.settings.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), UserSettings())
     private val mutableAccountProfile = MutableStateFlow(AccountProfileUiState())
     val accountProfile = mutableAccountProfile.asStateFlow()
     private val mutableCommunityData = MutableStateFlow<YuberaCommunityResponse?>(null)
     val communityData = mutableCommunityData.asStateFlow()
+    val catalog = catalogRepository.observeCatalog().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val profileCache = context.getSharedPreferences("yubera_profile_cache", Context.MODE_PRIVATE)
+    private val profileJson = Json { ignoreUnknownKeys = true; explicitNulls = false }
     private val mutableAppUpdate = MutableStateFlow(AppUpdateUiState(availableUpdate = appUpdateCoordinator.storedUpdate(), isMandatory = appUpdateCoordinator.storedMandatory()))
     val appUpdate = mutableAppUpdate.asStateFlow()
 
     init {
+        viewModelScope.launch { runCatching { catalogRepository.refreshIfStale() } }
         viewModelScope.launch { appUpdateCoordinator.observeDownload().collect { work -> mutableAppUpdate.update { it.copy(downloadWorkInfo = work) } } }
     }
 
@@ -67,24 +80,29 @@ class SettingsViewModel @Inject constructor(
         if (mutableAccountProfile.value.isLoading) return
         viewModelScope.launch {
             mutableAccountProfile.value = AccountProfileUiState(isLoading = true)
-            try {
-                val user = authRepository.getCurrentProfile()
-                val authorization = authRepository.getSessionAuthorization()
-                if (user == null || authorization == null) {
-                    mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Не удалось подтвердить активную Telegram-сессию. Войдите в аккаунт заново.")
-                    mutableCommunityData.value = null
-                    return@launch
+            val authorization = authRepository.getSessionAuthorization()
+            val user = runCatching { authRepository.getCurrentProfile() }.getOrNull()
+            if (user != null) {
+                profileCache.getString("community_${user.id}", null)?.let { cached ->
+                    runCatching { profileJson.decodeFromString<YuberaCommunityResponse>(cached) }
+                        .getOrNull()?.let { if (mutableCommunityData.value == null) mutableCommunityData.value = it }
                 }
+            }
+            if (authorization == null || user == null) {
+                mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Профиль аккаунта временно недоступен.")
+                return@launch
+            }
+            try {
                 val result = yuberaProfileApi.getMyProfile(authorization)
                 if (!result.authenticated || result.profile == null) {
                     mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Профиль YUBERA недоступен. Повторите вход.")
-                    mutableCommunityData.value = null
                     return@launch
                 }
                 mutableAccountProfile.value = AccountProfileUiState(user = user)
                 mutableCommunityData.value = result
+                profileCache.edit().putString("community_${user.id}", profileJson.encodeToString(result)).apply()
             } catch (_: Exception) {
-                mutableAccountProfile.value = AccountProfileUiState(errorMessage = "Не удалось загрузить профиль. Проверьте соединение и повторите попытку.")
+                mutableAccountProfile.value = AccountProfileUiState(user = user, errorMessage = "Не удалось обновить профиль. Показаны сохранённые данные.")
             }
         }
     }
