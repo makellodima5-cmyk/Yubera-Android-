@@ -40,11 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.R
-import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.theme.*
 import com.yubera.app.data.auth.YuberaXpStatus
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onEditProfile: () -> Unit = {},
