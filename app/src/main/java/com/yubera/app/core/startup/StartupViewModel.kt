@@ -24,10 +24,6 @@ class StartupViewModel @Inject constructor(
         initialize()
     }
 
-    fun forceSignInAfterLogout() {
-        _uiState.value = StartupUiState.Ready(StartupDestination.SignIn)
-    }
-
     fun retry() {
         if (_uiState.value is StartupUiState.Failed) {
             initialize()
