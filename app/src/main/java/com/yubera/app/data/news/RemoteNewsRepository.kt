@@ -42,3 +42,5 @@ class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi
 
  companion object { const val PAGE_SIZE = 30; const val MAX_PAGES = 3; const val MAX_SUMMARY = 2400; const val MAX_BODY = 40000; const val FEED_TTL = 30 * 60 * 1000L; const val ARTICLE_TTL = 24 * 60 * 60 * 1000L }
 }
+
+internal fun extractNewsVideoUrl(raw: String): String? = Regex("""(?i)(https?://(?:www\.)?(?:youtube\.com/(?:watch\?v=[^\s&<>]+|embed/[^\s?<>]+)|youtu\.be/[^\s?<>]+))""").find(raw)?.groupValues?.getOrNull(1)?.replace("http://", "https://")?.trimEnd('.', ',', ')', ']')
