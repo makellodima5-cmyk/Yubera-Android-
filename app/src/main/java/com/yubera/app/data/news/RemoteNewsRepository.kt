@@ -1,4 +1,6 @@
 package com.yubera.app.data.news
+
+import android.text.Html
 import com.yubera.app.core.database.dao.NewsBookmarkDao
 import com.yubera.app.core.database.dao.NewsDao
 import com.yubera.app.core.database.entity.NewsArticleEntity
@@ -10,26 +12,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-class RemoteNewsRepository @Inject constructor(private val api:ShikimoriNewsApi,private val newsDao:NewsDao,private val bookmarkDao:NewsBookmarkDao):NewsRepository{
+
+class RemoteNewsRepository @Inject constructor(private val api: ShikimoriNewsApi, private val newsDao: NewsDao, private val bookmarkDao: NewsBookmarkDao) : NewsRepository {
  override fun observeNews(): Flow<List<NewsArticleEntity>> = newsDao.observeFeed()
  override fun observeBookmarkedNews(): Flow<List<NewsArticleEntity>> = newsDao.observeBookmarked()
  override fun observeBookmarkedIds(): Flow<List<Long>> = bookmarkDao.observeBookmarkedIds()
- override fun observeNewsArticle(articleId:Long): Flow<NewsArticleEntity?> = newsDao.observeAll().map{it.firstOrNull{a->a.id==articleId}}
- override suspend fun setBookmarked(articleId:Long,bookmarked:Boolean)=withContext(Dispatchers.IO){if(bookmarked)bookmarkDao.save(NewsBookmarkEntity(articleId,System.currentTimeMillis()))else bookmarkDao.remove(articleId)}
- override suspend fun refresh()=withContext(Dispatchers.IO){
-  val topics=api.getNews(page=1,limit=PAGE_SIZE)
-  val rows=topics.filter{it.id>0&&it.topicTitle.isNotBlank()}.distinctBy{it.id}.map{topic->
-   val body=topic.body.orEmpty();val summary=plainText(body).take(MAX_SUMMARY_LENGTH)
-   NewsArticleEntity(topic.id,topic.topicTitle.trim(),summary,topic.createdAt,topic.commentsCount?.coerceAtLeast(0)?:0,topic.user?.nickname.orEmpty(),topic.linked?.russian?.takeIf(String::isNotBlank)?:topic.linked?.name?.takeIf(String::isNotBlank),NewsCategory.classify(topic.topicTitle,summary).name,"https://shikimori.io/forum/news/\${topic.id}",extractImage(body),extractVideo(body))
+ override fun observeNewsArticle(articleId: Long): Flow<NewsArticleEntity?> = newsDao.observeAll().map { it.firstOrNull { row -> row.id == articleId } }
+ override suspend fun setBookmarked(articleId: Long, bookmarked: Boolean) = withContext(Dispatchers.IO) { if (bookmarked) bookmarkDao.save(NewsBookmarkEntity(articleId, System.currentTimeMillis())) else bookmarkDao.remove(articleId) }
+ override suspend fun refresh(force: Boolean) = withContext(Dispatchers.IO) {
+  val last = newsDao.getLastFetchTime() ?: 0L; val now = System.currentTimeMillis(); if (!force && now - last < FEED_TTL) return@withContext
+  val found = linkedMapOf<Long, ShikimoriTopicDto>()
+  for (page in 1..MAX_PAGES) { val items = api.getNews(page = page, limit = PAGE_SIZE); items.filter { it.id > 0 && it.topicTitle.isNotBlank() }.forEach { found[it.id] = it }; if (items.size < PAGE_SIZE) break }
+  if (found.isEmpty()) return@withContext
+  val rows = found.values.map { topic ->
+   val text = cleanText(topic.body.orEmpty()); val previous = newsDao.getById(topic.id)
+   NewsArticleEntity(topic.id, topic.topicTitle.trim(), text.take(MAX_SUMMARY), topic.createdAt, topic.commentsCount?.coerceAtLeast(0) ?: 0, topic.user?.nickname.orEmpty(), topic.linked?.russian?.takeIf(String::isNotBlank) ?: topic.linked?.name, NewsCategory.classify(topic.topicTitle, text).name, sourceUrl(topic.id), imageFrom(topic.body.orEmpty()) ?: previous?.imageUrl, videoFrom(topic.body.orEmpty()) ?: previous?.videoUrl, previous?.bodyText ?: text.take(MAX_BODY).ifBlank { null }, topic.linkedId ?: topic.linked?.id ?: previous?.linkedAnimeId, now)
   }
-  if(rows.isNotEmpty())newsDao.replaceFeed(rows)
+  newsDao.replaceFeed(rows)
  }
- private fun plainText(value:String)=value.replace(Regex("""(?is)<script[^>]*>.*?</script>""")," ").replace(Regex("""(?is)<style[^>]*>.*?</style>""")," ").replace(Regex("""<[^>]*>""")," ").replace(Regex("""\[[^\]]*\]""")," ").replace("&nbsp;"," ").replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace(Regex("""\s+""")," ").trim()
- private fun extractImage(body:String):String?{
-  val html=Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(body)?.groupValues?.getOrNull(1)
-  val markdown=Regex("""(?is)!\[[^]]*\]\((https://[^)]+)\)""").find(body)?.groupValues?.getOrNull(1)
-  return listOf(html,markdown).firstOrNull{it!=null&&!it.contains("avatar",true)}
+ override suspend fun refreshArticle(articleId: Long) = withContext(Dispatchers.IO) {
+  val cached = newsDao.getById(articleId); val now = System.currentTimeMillis()
+  if (cached?.bodyText?.isNotBlank() == true && cached.lastFetchedAtEpochMillis?.let { now - it < ARTICLE_TTL } == true) return@withContext
+  val remote = api.getTopic(articleId); val text = cleanText(remote.body.orEmpty()).take(MAX_BODY); val raw = remote.body.orEmpty()
+  newsDao.upsert(NewsArticleEntity(remote.id, remote.topicTitle.ifBlank { cached?.title.orEmpty() }, text.take(MAX_SUMMARY).ifBlank { cached?.summary.orEmpty() }, remote.createdAt.ifBlank { cached?.createdAt.orEmpty() }, remote.commentsCount?.coerceAtLeast(0) ?: cached?.commentsCount ?: 0, remote.user?.nickname?.takeIf(String::isNotBlank) ?: cached?.authorName.orEmpty(), remote.linked?.russian?.takeIf(String::isNotBlank) ?: remote.linked?.name ?: cached?.linkedTitle, NewsCategory.classify(remote.topicTitle, text).name, sourceUrl(remote.id), imageFrom(raw) ?: cached?.imageUrl, videoFrom(raw) ?: cached?.videoUrl, text.ifBlank { cached?.bodyText }, remote.linkedId ?: remote.linked?.id ?: cached?.linkedAnimeId, now))
  }
- private fun extractVideo(body:String):String?=Regex("""(?i)(https?://(?:www\.)?(?:youtube\.com/watch\?v=[^\s&<>]+|youtu\.be/[^\s?<>]+|youtube\.com/embed/[^\s?<>]+))""").find(body)?.groupValues?.getOrNull(1)?.replace("http://","https://")?.trimEnd('.',',',')',']')
- companion object{const val PAGE_SIZE=30;const val MAX_SUMMARY_LENGTH=2400}
+ private fun sourceUrl(id: Long) = "https://shikimori.one/forum/news/" + id
+ private fun cleanText(raw: String): String { val safe = raw.replace(Regex("(?is)<script[^>]*>.*?</script>"), " ").replace(Regex("(?is)<style[^>]*>.*?</style>"), " "); return Html.fromHtml(safe, Html.FROM_HTML_MODE_COMPACT).toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim() }
+ private fun imageFrom(raw: String): String? = Regex("""(?is)<img[^>]+src=["'](https://[^"']+)["']""").find(raw)?.groupValues?.getOrNull(1)?.takeIf { it.length <= 2048 && !it.contains("avatar", true) }
+ private fun videoFrom(raw: String): String? = Regex("""(?i)(https?://(?:www\\.)?(?:youtube\\.com/watch\\?v=[^\\s&<>]+|youtu\\.be/[^\\s?<>]+|youtube\\.com/embed/[^\\s?<>]+))""").find(raw)?.groupValues?.getOrNull(1)?.replace("http://", "https://")?.trimEnd('.', ',', ')', ']')
+ companion object { const val PAGE_SIZE = 30; const val MAX_PAGES = 3; const val MAX_SUMMARY = 2400; const val MAX_BODY = 40000; const val FEED_TTL = 30 * 60 * 1000L; const val ARTICLE_TTL = 24 * 60 * 60 * 1000L }
 }

@@ -35,10 +35,15 @@ import com.yubera.app.features.home.HomeViewModel
 import com.yubera.app.features.home.HomeSimpleDestination
 import com.yubera.app.features.my.MyScreen
 import com.yubera.app.features.news.NewsScreen
+import com.yubera.app.features.news.NewsViewModel
 import com.yubera.app.features.news.NewsDetailScreen
 import com.yubera.app.features.news.NewsBookmarksScreen
 import com.yubera.app.features.player.PlayerScreen
 import com.yubera.app.features.profile.ProfileScreen
+import com.yubera.app.features.profile.ProfileEditScreen
+import com.yubera.app.features.profile.ProfileCollectionsScreen
+import com.yubera.app.features.profile.ProfileCollectionDetailScreen
+import com.yubera.app.features.profile.SettingsViewModel
 import com.yubera.app.features.support.SupportScreen
 
 @Composable
@@ -157,9 +162,34 @@ fun AppNavHost(
                 MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { section -> if(section.isBlank()) navController.popBackStack() else navController.navigate("my-list/${Uri.encode(section)}") }, onNotificationsClick = { navController.navigate("notifications") })
             }
             composable("my-list/{section}", arguments = listOf(navArgument("section") { type = NavType.StringType })) { entry -> MyScreen(onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }, onOpenSection = { navController.popBackStack() }, section = entry.arguments?.getString("section")) }
-            composable("news-bookmarks") { NewsBookmarksScreen(onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") }) }
-            composable(AppDestination.News.route) { NewsScreen(onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") }) }
-            composable(AppDestination.Profile.route) { ProfileScreen() }
+            composable(AppDestination.News.route) { backStackEntry ->
+                val newsViewModel: NewsViewModel = hiltViewModel(backStackEntry)
+                NewsScreen(viewModel = newsViewModel, onArticleClick = { id -> navController.navigate("news/$id") }, onBookmarksClick = { navController.navigate("news-bookmarks") }, onNotificationsClick = { navController.navigate("notifications") })
+            }
+            composable("news-bookmarks") { backStackEntry ->
+                val feedEntry = remember(backStackEntry) { navController.getBackStackEntry(AppDestination.News.route) }
+                val newsViewModel: NewsViewModel = hiltViewModel(feedEntry)
+                NewsBookmarksScreen(viewModel = newsViewModel, onBack = { navController.popBackStack() }, onArticleClick = { id -> navController.navigate("news/$id") })
+            }
+            composable(AppDestination.Profile.route) { entry ->
+                val profileViewModel: SettingsViewModel = hiltViewModel(entry)
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onEditProfile = { navController.navigate("profile-edit") },
+                    onNotifications = { navController.navigate("notifications") },
+                    onFriends = { navController.navigate("profile-friends") },
+                    onLegal = { navController.navigate("profile-legal") },
+                    onAbout = { navController.navigate("profile-about") },
+                    onAllCollections = { navController.navigate("profile-collections") },
+                    onCollection = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }
+                )
+            }
+            composable("profile-edit") { ProfileEditScreen(onBack = { navController.popBackStack() }) }
+            composable("profile-friends") { HomeSimpleDestination("Друзья", "Раздел подписок, подписчиков и поиска пользователей описан отдельным ТЗ.", { navController.popBackStack() }) }
+            composable("profile-legal") { HomeSimpleDestination("Правовая информация", "Пользовательское соглашение и политика конфиденциальности проекта.", { navController.popBackStack() }) }
+            composable("profile-about") { HomeSimpleDestination("О проекте", "YUBERA · Информация о проекте и его целях.", { navController.popBackStack() }) }
+            composable("profile-collections") { ProfileCollectionsScreen(onBack = { navController.popBackStack() }, onCollectionClick = { id -> navController.navigate("profile-collection/${Uri.encode(id)}") }) }
+            composable("profile-collection/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry -> ProfileCollectionDetailScreen(collectionId = entry.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() }, onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") }) }
             composable("support") { SupportScreen(onBack = { navController.popBackStack() }) }
             composable(
                 route = "anime/{animeId}",
@@ -178,7 +208,7 @@ fun AppNavHost(
                 route = "news/{articleId}",
                 arguments = listOf(navArgument("articleId") { type = NavType.StringType })
             ) {
-                NewsDetailScreen(onBack = { navController.popBackStack() })
+                NewsDetailScreen(onBack = { navController.popBackStack() }, onAnimeClick = { id -> navController.navigate("anime/${Uri.encode(id)}") })
             }
             composable(
                 route = "player/{animeId}?episode={episode}",
