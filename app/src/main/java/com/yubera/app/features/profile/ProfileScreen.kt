@@ -196,7 +196,7 @@ fun ProfileScreen(
                         ) {
                             Box(Modifier.fillMaxSize()) {
                                 if (!poster.isNullOrBlank()) AsyncImage(poster, collection.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                                else Box(Modifier.fillMaxSize().background(Color(0xFF292A30)), contentAlignment = Alignment.Center) { Icon(Icons.Default.BookmarkBorder, null, tint = YuberaMuted, modifier = Modifier.size(52.dp)) }
+                                else Box(Modifier.fillMaxSize().background(YuberaSurfaceElevated), contentAlignment = Alignment.Center) { Icon(Icons.Default.BookmarkBorder, null, tint = YuberaMuted, modifier = Modifier.size(52.dp)) }
                                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .15f), Color.Black.copy(alpha = .9f)), startY = 0f, endY = 900f)))
                                 Column(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(collection.title, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -251,7 +251,7 @@ private fun ProfileLevelSupportCard(xp: YuberaXpStatus?, supportTitle: String?) 
                     Text(supportTitle ?: "Без статуса", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            LinearProgressIndicator(progress = { (xp?.progress ?: 0f).coerceIn(0f,100f)/100f }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = Color(0xFF383940))
+            LinearProgressIndicator(progress = { (xp?.progress ?: 0f).coerceIn(0f,100f)/100f }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = YuberaPrimary, trackColor = YuberaSurfaceElevated)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(if (xp != null && xp.nextThreshold != null) "${xp.total} / ${xp.nextThreshold} XP" else "${xp?.total ?: 0} XP", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
                 Text(if (xp?.nextLevel != null) "До ${xp.nextLevel} уровня: ${xp.remaining} XP" else if (xp != null) "Максимальный уровень" else "—", color = YuberaMuted, style = MaterialTheme.typography.labelSmall)
