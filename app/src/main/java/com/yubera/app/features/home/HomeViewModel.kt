@@ -164,7 +164,16 @@ class HomeViewModel @Inject constructor(
     }
 }
 
-private fun String.toReleaseDate(): LocalDate? {
+
+internal fun isContinueWatchingEligible(anime: AnimeCatalogItem, progress: AnimeProgressEntity): Boolean {
+    if (progress.episodeNumber == null) return false
+    val status = anime.status.lowercase(Locale.ROOT)
+    val ongoing = listOf("ongoing", "airing", "онгоинг", "выходит", "анонс", "upcoming", "planned", "not yet aired")
+        .any(status::contains)
+    if (!ongoing && anime.episodes > 0 && (progress.completedEpisodeNumber ?: 0) >= anime.episodes) return false
+    return progress.durationMillis <= 0L || progress.positionMillis < progress.durationMillis * 0.90
+}
+\nprivate fun String.toReleaseDate(): LocalDate? {
     val value = trim()
     runCatching { LocalDate.parse(value.take(10)) }.getOrNull()?.let { return it }
     val formats = listOf(

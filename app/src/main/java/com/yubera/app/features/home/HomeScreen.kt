@@ -190,7 +190,7 @@ fun HomeCategoryScreen(category:String,onAnimeClick:(String)->Unit,onContinueCli
         if(items.isEmpty()) Text("Здесь пока нет тайтлов.",color=YuberaMuted,modifier=Modifier.padding(18.dp))
         else LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
             if(category=="continue") items(state.continueWatching,key={it.anime.id}) { row -> HomeProgressCard(row.anime,row.progress){onContinueClick(row.anime.id,row.progress.episodeNumber)} }
-            else items(items,key=AnimeCatalogItem::id) { anime -> HomeAnimeTile(anime,onClick={onAnimeClick(anime.id)}) }
+            else items(items,key=AnimeCatalogItem::id) { anime -> if(category=="announcements") HomeAnnouncementTile(anime,onClick={onAnimeClick(anime.id)}) else HomeAnimeTile(anime,onClick={onAnimeClick(anime.id)}) }
         }
     }
 }
