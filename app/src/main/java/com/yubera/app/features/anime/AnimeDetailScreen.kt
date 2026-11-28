@@ -6,6 +6,7 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -173,15 +175,22 @@ fun AnimeDetailScreen(
                     playerEpisodeNumber = 1
                 }
                 val hasTrailer = !anime.youtubeTrailerId.isNullOrBlank()
-                LaunchedEffect(anime.id, state.availableSources) {
+                LaunchedEffect(anime.id, state.availableSources, state.progress) {
                     val selected = state.availableSources.firstOrNull { it.id == playerVoiceId }
                         ?: state.availableSources.firstOrNull()
-                    if (selected != null && selected.id != playerVoiceId) {
-                        playerVoiceId = selected.id
-                        playerEpisodeNumber = selected.episodes.firstOrNull()?.number ?: 1
-                    } else if (selected != null && selected.episodes.none { it.number == playerEpisodeNumber }) {
-                        playerEpisodeNumber = selected.episodes.firstOrNull()?.number ?: 1
+                    if (selected != null) {
+                        if (playerVoiceId == null) {
+                            playerVoiceId = selected.id
+                            val preferredEpisode = state.progress?.episodeNumber
+                            playerEpisodeNumber = selected.episodes.firstOrNull { it.number == preferredEpisode }?.number
+                                ?: selected.episodes.firstOrNull()?.number ?: 1
+                        } else if (selected.episodes.none { it.number == playerEpisodeNumber }) {
+                            playerEpisodeNumber = selected.episodes.firstOrNull()?.number ?: 1
+                        }
                     }
+                }
+                LaunchedEffect(anime.id, playerVoiceId, playerEpisodeNumber, state.availableSources) {
+                    playerVoiceId?.let { sourceId -> viewModel.recordEpisodeOpened(sourceId, playerEpisodeNumber) }
                 }
                 if (anime.kodikAvailable == true || hasTrailer) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -209,7 +218,7 @@ fun AnimeDetailScreen(
                                                 selected = playerVoiceId == source.id,
                                                 onClick = {
                                                     playerVoiceId = source.id
-                                                    playerEpisodeNumber = source.episodes.firstOrNull()?.number ?: 1
+                                                    playerEpisodeNumber = source.episodes.firstOrNull { it.number == playerEpisodeNumber }?.number ?: source.episodes.firstOrNull()?.number ?: 1
                                                 },
                                                 label = { Text(source.title, maxLines = 1) }
                                             )
@@ -219,10 +228,13 @@ fun AnimeDetailScreen(
                                 Text("Серия", color = YuberaMuted, style = MaterialTheme.typography.labelMedium)
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 4.dp)) {
                                     items(selectedSource?.episodes.orEmpty(), key = { it.number }) { episode ->
-                                        FilterChip(
+                                        val progress = episodeProgressPresentation(state.progress, episode.number)
+                                        EpisodeProgressCard(
+                                            episodeNumber = episode.number,
                                             selected = playerEpisodeNumber == episode.number,
-                                            onClick = { playerEpisodeNumber = episode.number },
-                                            label = { Text(episode.number.toString()) }
+                                            completed = progress.completed,
+                                            progressFraction = progress.fraction,
+                                            onClick = { playerEpisodeNumber = episode.number }
                                         )
                                     }
                                 }
@@ -338,6 +350,29 @@ private fun TitleHero(anime: AnimeCatalogItem) {
             listOfNotNull(anime.status.takeIf(String::isNotBlank), anime.kind?.takeIf(String::isNotBlank), anime.year.takeIf { it > 0 }?.toString(),
                 anime.episodes.takeIf { it > 0 }?.let { "$it сер." }, anime.episodesAired?.takeIf { it > 0 }?.let { "Вышло $it" }).forEach { MetaPill(it) }
             anime.genres.forEach { MetaPill(it) }
+        }
+    }
+}
+
+
+@Composable
+private fun EpisodeProgressCard(
+    episodeNumber: Int,
+    selected: Boolean,
+    completed: Boolean,
+    progressFraction: Float,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.width(64.dp).height(68.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = if (selected) YuberaSurface else YuberaSurface.copy(alpha = 0.7f)),
+        border = BorderStroke(1.dp, if (selected) YuberaPrimary else YuberaSurface.copy(alpha = 0.45f))
+    ) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(if (completed) "✓" else episodeNumber.toString(), color = if (completed || selected) YuberaPrimary else YuberaOnBackground, fontWeight = FontWeight.SemiBold)
+            LinearProgressIndicator(progress = { progressFraction.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(3.dp), color = YuberaPrimary, trackColor = YuberaSurface.copy(alpha = 0.65f))
         }
     }
 }
