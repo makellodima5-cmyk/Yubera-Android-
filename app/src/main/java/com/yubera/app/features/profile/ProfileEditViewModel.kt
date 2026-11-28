@@ -95,11 +95,6 @@ class ProfileEditViewModel @Inject constructor(
 
     private fun initialFrameCategory(profile: YuberaCommunityProfile): String = profileFrameCategory(profile.avatarFrame, profile.isAdmin)
 
-internal fun profileFrameCategory(frame: String?, isAdmin: Boolean): String = when {
-    frame?.startsWith("Admin_Frame_") == true || frame == "Ramka_Admin_01.webp" -> if (isAdmin) "admin" else "support"
-    frame?.startsWith("YUBERA_Plus_Avatar_Frame_") == true -> "plus"
-    else -> "support"
-}
 
 private suspend fun compressAvatar(uri: Uri): String? = withContext(Dispatchers.IO) {
         var source: Bitmap? = null
@@ -167,3 +162,10 @@ private suspend fun compressAvatar(uri: Uri): String? = withContext(Dispatchers.
         }
     }
 }
+
+internal fun profileFrameCategory(frame: String?, isAdmin: Boolean): String = when {
+    frame?.startsWith("Admin_Frame_") == true || frame == "Ramka_Admin_01.webp" -> if (isAdmin) "admin" else "support"
+    frame?.startsWith("YUBERA_Plus_Avatar_Frame_") == true -> "plus"
+    else -> "support"
+}
+
