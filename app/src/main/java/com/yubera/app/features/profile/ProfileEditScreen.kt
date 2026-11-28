@@ -1,6 +1,5 @@
 package com.yubera.app.features.profile
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -33,11 +32,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.yubera.app.core.catalog.AnimeCatalogItem
 import com.yubera.app.core.ui.theme.*
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ProfileEditScreen(onBack: () -> Unit, viewModel: ProfileEditViewModel = hiltViewModel()) {
