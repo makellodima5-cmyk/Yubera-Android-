@@ -1,5 +1,7 @@
 package com.yubera.app.features.profile
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,6 +34,7 @@ import coil3.compose.AsyncImage
 import com.yubera.app.BuildConfig
 import com.yubera.app.R
 import com.yubera.app.core.ui.theme.*
+import com.yubera.app.core.network.YuberaEndpoints
 import com.yubera.app.data.settings.ThemeMode
 import com.yubera.app.features.my.MyViewModel
 
@@ -117,6 +121,62 @@ private fun ProfileAction(icon: androidx.compose.ui.graphics.vector.ImageVector,
                 Text(subtitle, color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
             }
             Icon(Icons.Default.ArrowForward, null, tint = YuberaMuted)
+        }
+    }
+}
+
+@Composable
+fun ProfileAboutScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+    val account by viewModel.accountProfile.collectAsState()
+    val response by viewModel.communityData.collectAsState()
+    val context = LocalContext.current
+    val name = response?.profile?.displayName?.takeIf(String::isNotBlank)
+        ?: account.user?.let { user -> listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { user.username ?: "Пользователь" } }
+        ?: "Пользователь"
+    LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Назад", color = YuberaPrimary) }
+            Text("Об аккаунте", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        }
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Имя пользователя", color = YuberaMuted, modifier = Modifier.weight(1f))
+                        Text(name, color = YuberaOnBackground)
+                    }
+                    account.user?.createdAt?.let { formatRegistrationDate(it) }?.let { date ->
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Дата создания аккаунта", color = YuberaMuted, modifier = Modifier.weight(1f))
+                            Text(date, color = YuberaOnBackground)
+                        }
+                    }
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("YUBERA", color = YuberaOnBackground, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("Версия ${BuildConfig.VERSION_NAME}", color = YuberaMuted)
+                    }
+                    Text("YUBERA — ваше личное пространство для аниме, каталога и истории просмотра.", color = YuberaMuted)
+                    TextButton(onClick = {
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(YuberaEndpoints.SITE_ORIGIN))) }
+                    }) { Text("Открыть Website", color = YuberaPrimary) }
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Правовая информация", color = YuberaOnBackground, style = MaterialTheme.typography.titleMedium)
+                    Text("Пользовательское соглашение и политика конфиденциальности пока не подключены как отдельные ссылки в Android. Открыть официальный Website можно выше.", color = YuberaMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { viewModel.logout(onBack) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
