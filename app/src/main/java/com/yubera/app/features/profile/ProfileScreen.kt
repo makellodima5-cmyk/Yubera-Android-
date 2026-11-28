@@ -54,6 +54,7 @@ fun ProfileScreen(
     onAbout: () -> Unit = {},
     onAllCollections: () -> Unit = {},
     onCollection: (String) -> Unit = {},
+    resetKey: Int = 0,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val account by viewModel.accountProfile.collectAsState()
@@ -67,6 +68,7 @@ fun ProfileScreen(
 
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(viewModel) { viewModel.refreshAccountProfile() }
+    LaunchedEffect(resetKey) { scroll.scrollTo(0); viewModel.refreshAccountProfile() }
     LaunchedEffect(Unit) { while (true) { delay(60_000); coverTick++ } }
     DisposableEffect(viewModel, lifecycleOwner) {
         val owner = lifecycleOwner
