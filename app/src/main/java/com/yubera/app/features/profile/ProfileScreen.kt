@@ -165,7 +165,11 @@ fun ProfileScreen(
                 }
             }
             val collections = response?.collections.orEmpty()
-            if (collections.isEmpty()) {
+            if (collections.isEmpty() && response == null && account.isLoading) {
+                Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = YuberaPrimary); Text("Загружаем подборки…", color = YuberaMuted) }
+                }
+            } else if (collections.isEmpty()) {
                 Card(colors = CardDefaults.cardColors(containerColor = YuberaSurface), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Text("У вас пока нет подборок.", color = YuberaMuted, modifier = Modifier.padding(16.dp))
                 }
