@@ -93,9 +93,11 @@ class ProfileEditViewModel @Inject constructor(
     fun setFrame(value: String?) = mutable.value.let { mutable.value = it.copy(selectedFrame = value) }
     fun setAvatarUri(value: String?) = mutable.value.let { mutable.value = it.copy(selectedAvatarUri = value) }
 
-    private fun initialFrameCategory(profile: YuberaCommunityProfile): String = when {
-    profile.avatarFrame?.startsWith("Admin_Frame_") == true || profile.avatarFrame == "Ramka_Admin_01.webp" -> if (profile.isAdmin) "admin" else "support"
-    profile.avatarFrame?.startsWith("YUBERA_Plus_Avatar_Frame_") == true -> "plus"
+    private fun initialFrameCategory(profile: YuberaCommunityProfile): String = profileFrameCategory(profile.avatarFrame, profile.isAdmin)
+
+internal fun profileFrameCategory(frame: String?, isAdmin: Boolean): String = when {
+    frame?.startsWith("Admin_Frame_") == true || frame == "Ramka_Admin_01.webp" -> if (isAdmin) "admin" else "support"
+    frame?.startsWith("YUBERA_Plus_Avatar_Frame_") == true -> "plus"
     else -> "support"
 }
 
