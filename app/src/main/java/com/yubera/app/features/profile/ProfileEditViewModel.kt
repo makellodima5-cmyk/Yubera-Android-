@@ -9,8 +9,6 @@ import com.yubera.app.data.auth.YuberaProfileUpdateRequest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Rect
 import android.net.Uri
 import android.util.Base64
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -63,7 +61,7 @@ class ProfileEditViewModel @Inject constructor(
                 mutable.value = ProfileEditState(
                     profile = p,
                     bio = p.bio,
-                                        visibility = p.visibility,
+                    visibility = p.visibility,
                     selectedFrame = p.avatarFrame,
                     category = if (p.isAdmin) "admin" else "support",
                     loading = false
@@ -85,7 +83,9 @@ class ProfileEditViewModel @Inject constructor(
         var cropped: Bitmap? = null
         var resized: Bitmap? = null
         try {
-            val decoded = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return@withContext null
+            val raw = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
+            if (raw.size > 2 * 1024 * 1024) return@withContext null
+            val decoded = BitmapFactory.decodeByteArray(raw, 0, raw.size) ?: return@withContext null
             source = decoded
             val side = minOf(decoded.width, decoded.height)
             val x = (decoded.width - side) / 2
